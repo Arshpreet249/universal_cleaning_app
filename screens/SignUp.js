@@ -1,93 +1,140 @@
-import React from 'react'
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ScrollView } from 'react-native'
+import React, { useState } from 'react'
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Alert
+} from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { Ionicons } from '@expo/vector-icons'
+import { REACT_APP_HOST_API_URL } from '../components/variable'
 
 const SignUp = () => {
   const navigation = useNavigation()
 
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    mobile: '',
+    password: '',
+    confirm_password: ''
+  })
+
+  const [loading, setLoading] = useState(false)
+
+  const handleChange = (key, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [key]: value
+    }))
+  }
+
+  const handleRegister = async () => {
+    if (formData.password !== formData.confirm_password) {
+      Alert.alert('Error', 'Passwords do not match')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/create-user/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...formData,
+          role: 'User'
+        })
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        Alert.alert('Success', data.message || 'Check your email for OTP')
+        navigation.navigate('OtpScreen', { email: formData.email }) // optional
+      } else {
+        Alert.alert('Error', data.error || 'Registration failed')
+      }
+    } catch (err) {
+      console.log(err)
+      Alert.alert('Error', 'Something went wrong')
+    }
+
+    setLoading(false)
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={{
-          position: 'absolute',
-          top: 50,
-          left: 20,
-          zIndex: 10,
-          padding: 8,
-          borderRadius: 20,
-          backgroundColor: 'rgba(255, 255, 255, 0.7)',
-
-        }}
-      >
-        <Ionicons name="arrow-back" size={22} color="#0096c7" />
-      </TouchableOpacity>
-
-      {/* Top Image */}
+      
       <Image
         source={require('../assets/images/login.webp')}
         style={styles.headerImage}
         resizeMode="cover"
       />
 
-      {/* Form Card */}
       <View style={styles.card}>
-
         <Text style={styles.title}>Sign Up</Text>
 
-        {/* Email */}
         <TextInput
           placeholder="Email"
-          placeholderTextColor="#9CA3AF"
           style={styles.input}
+          value={formData.email}
+          onChangeText={(text) => handleChange('email', text)}
         />
 
-        {/* Name */}
         <TextInput
-          placeholder="Name"
-          placeholderTextColor="#9CA3AF"
+          placeholder="Username"
           style={styles.input}
+          value={formData.username}
+          onChangeText={(text) => handleChange('username', text)}
         />
+
         <TextInput
           placeholder="Phone Number"
-          placeholderTextColor="#9CA3AF"
           style={styles.input}
           keyboardType="phone-pad"
           maxLength={10}
+          value={formData.mobile}
+          onChangeText={(text) => handleChange('mobile', text)}
         />
 
-        {/* Password */}
         <TextInput
           placeholder="Password"
-          placeholderTextColor="#9CA3AF"
           secureTextEntry
           style={styles.input}
+          value={formData.password}
+          onChangeText={(text) => handleChange('password', text)}
         />
 
-        {/* Confirm Password */}
         <TextInput
           placeholder="Confirm Password"
-          placeholderTextColor="#9CA3AF"
           secureTextEntry
           style={styles.input}
+          value={formData.confirm_password}
+          onChangeText={(text) => handleChange('confirm_password', text)}
         />
 
-        {/* Button */}
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Create Account</Text>
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Create Account</Text>
+          )}
         </TouchableOpacity>
-        {/* Footer */}
+
         <View style={styles.footer}>
           <Text style={{ color: '#6B7280' }}>Already have an account?</Text>
-
           <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
             <Text style={styles.signinText}> Sign In</Text>
           </TouchableOpacity>
         </View>
-
       </View>
-
     </ScrollView>
   )
 }
@@ -157,3 +204,4 @@ const styles = StyleSheet.create({
     fontWeight: '600'
   }
 })
+
