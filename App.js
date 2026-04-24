@@ -33,6 +33,8 @@
 //   )
 // }
 
+
+
 import React from 'react'
 import { Platform } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
@@ -40,63 +42,52 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
-// Screens
-import Home from './screens/Home'
-import AllPackages from './screens/AllPackages'
-import SignIn from './screens/SignIn'
-import SignUp from './screens/SignUp'
-import Menu from './screens/Menu'
+import MainTabs from './MainTabs'
+import { ProductProvider } from './context/ProductContext'
+
+import PackageDetail from './screens/PackageDetail'
 import Auth from './screens/Auth'
+import AllPackages from './screens/AllPackages'
 
 const Stack = createNativeStackNavigator()
 
 export default function App() {
   return (
     <SafeAreaProvider>
+       <ProductProvider>
       <NavigationContainer>
-
         <Stack.Navigator
           screenOptions={{
-            // ✅ Platform correct alignment
             headerTitleAlign: Platform.OS === 'ios' ? 'center' : 'left',
-
-            // ✅ Back arrow color
             headerTintColor: Platform.OS === 'ios' ? '#007AFF' : '#000',
-
-            // ✅ Remove "Back" text
             headerBackTitleVisible: false,
 
-            // ✅ Android layout fix (NO extra space)
             ...(Platform.OS === 'android' && {
               headerShadowVisible: false,
-              headerStyle: {
-                elevation: 0,
-                height: 70
-              }
+              headerStyle: { elevation: 0, height: 70 }
             }),
 
             animation: 'slide_from_right'
           }}
         >
 
-          {/* HOME */}
-          <Stack.Screen name="Home" component={Home} options={{ headerShown: false }}/>
+          {/* MAIN APP (TABS) */}
+          <Stack.Screen 
+            name="Main" 
+            component={MainTabs} 
+            options={{ headerShown: false }} 
+          />
 
-          {/* SCREENS */}
-          <Stack.Screen name="Menu" component={Menu} options={{ title: 'My Account' }}/>
-
-          <Stack.Screen name="AllPackages" component={AllPackages} options={{ title: 'Packages' }}/>
-
-          {/* <Stack.Screen name="SignIn" component={SignIn} options={{ title: 'Sign In' }}/>
-
-          <Stack.Screen name="SignUp" component={SignUp} options={{ title: 'Sign Up' }}/> */}
-          <Stack.Screen name='Auth' component={Auth} options={{title: 'Authentication'}} />
+          {/* OTHER SCREENS */}
+          <Stack.Screen name="PackageDetail" component={PackageDetail} options={{ title: 'Packages' }} />
+          <Stack.Screen name="Auth" component={Auth} options={{ title: 'Authentication' }} />
+          <Stack.Screen name='AllPackages' component={AllPackages} options={{title: 'Allpackages'}}/>
 
         </Stack.Navigator>
 
         <StatusBar style="auto" />
-
       </NavigationContainer>
+      </ProductProvider>
     </SafeAreaProvider>
   )
 }
