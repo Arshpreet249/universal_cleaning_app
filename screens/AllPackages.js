@@ -45,11 +45,7 @@ const AllPackages = () => {
       >
         {/* IMAGE */}
         <Image
-          source={
-            item.icon_url
-              ? { uri: item.icon_url }
-              : require('../assets/images/home_cleaning.webp')
-          }
+          source={{ uri: item.view_images_url }}
           style={{
             width: '100%',
             height: 110,
@@ -78,7 +74,7 @@ const AllPackages = () => {
             marginTop: 4,
           }}
         >
-         
+
         </Text>
 
         {/* BUTTON */}
@@ -108,8 +104,9 @@ const AllPackages = () => {
         style={{
           padding: 16,
           backgroundColor: '#6C63FF',
-          flexDirection: 'row',
-          alignItems: 'center',
+          display: 'flex',
+          justifyContent: 'space-evenly',
+          alignItems: 'center'
         }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>

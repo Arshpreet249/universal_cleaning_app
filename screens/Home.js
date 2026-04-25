@@ -31,6 +31,7 @@ const Home = () => {
       const res = await axios.get(`${apiBaseUrl}get-products/`)
       setProducts(res.data || [])
       // console.log(res.data)
+      console.log('ALL PRODUCTS:', res.data)
     } catch (error) {
       console.log('API ERROR:', error.message)
     } finally {
@@ -277,11 +278,7 @@ const Home = () => {
                       }
                     >
                       <Image
-                        source={
-                          item.icon_url
-                            ? { uri: item.icon_url }
-                            : require('../assets/images/home_cleaning.webp')
-                        }
+                        source={{ uri: item.view_images_url }}
                         style={{
                           width: '50%',
                           height: '100%',
@@ -351,11 +348,7 @@ const Home = () => {
                       <View style={{ height: 170, overflow: 'hidden' }}>
                         {/* API IMAGE */}
                         <Image
-                          source={
-                            item.icon_url
-                              ? { uri: item.icon_url }
-                              : require('../assets/images/home_cleaning.webp')
-                          }
+                          source={ { uri:item.view_images_url  }}
                           style={{
                             position: 'absolute',
                             width: '100%',
