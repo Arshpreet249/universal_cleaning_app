@@ -17,12 +17,15 @@ import { LinearGradient } from 'expo-linear-gradient'
 
 const Home = () => {
   const navigation = useNavigation()
-  // const [products, setProducts] = useState([])
+
   const { products, setProducts } = useContext(ProductContext)
   const [loading, setLoading] = useState(true)
+  const [promotions, setPromotions] = useState([])
+  const [promoLoading, setPromoLoading] = useState(true)
 
   useEffect(() => {
     fetchProducts()
+    fetchPromotions()
   }, [])
 
   const fetchProducts = async () => {
@@ -31,14 +34,57 @@ const Home = () => {
       const res = await axios.get(`${apiBaseUrl}get-products/`)
       setProducts(res.data || [])
       // console.log(res.data)
-      console.log('ALL PRODUCTS:', res.data)
+
     } catch (error) {
       console.log('API ERROR:', error.message)
     } finally {
       setLoading(false)
     }
   }
+  const fetchPromotions = async () => {
+    try {
+      setPromoLoading(true)
+      const res = await axios.get(`${apiBaseUrl}get-poromotios/`)
 
+      console.log('PROMOTIONS:', res.data)
+      setPromotions(res.data || [])
+    } catch (error) {
+      console.log('PROMO API ERROR:', error.message)
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
+  const updatePromotion = async (promoId) => {
+    try {
+      const formData = new FormData()
+
+      formData.append('title', 'Updated Offer')
+      formData.append('description', 'Updated description')
+      formData.append('promo_code', 'NEWCODE123')
+      formData.append('per_user_count', '2')
+      formData.append('status', 'True')
+
+
+      const res = await axios.put(
+        `${apiBaseUrl}get-poromotios/${promoId}/`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      )
+
+      console.log('UPDATED PROMO:', res.data)
+
+      // 🔁 Refresh list after update
+      fetchPromotions()
+
+    } catch (error) {
+      console.log('UPDATE ERROR:', error.response?.data || error.message)
+    }
+  }
   const parseDescription = (item) => {
     try {
       return JSON.parse(item.description)
@@ -134,75 +180,79 @@ const Home = () => {
           )}
         </View>
 
+
         {/* ================= PROMOS ================= */}
         <View style={{ marginHorizontal: 16, marginTop: 20 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
             Promos
           </Text>
 
-          {/* Banner 1 */}
-          <TouchableOpacity
-            style={{
-              height: 160,
-              borderRadius: 16,
-              overflow: 'hidden',
-              marginBottom: 16,
-            }}
-          >
-            <Image
-              source={require('../assets/images/banner.webp')}
-              style={{
-                width: '100%',
-                height: '100%',
-                position: 'absolute',
-              }}
-              resizeMode="cover"
-            />
+          {promoLoading ? (
+            <ActivityIndicator size="large" color="blue" />
+          ) : promotions.length === 0 ? (
+            <Text style={{ padding: 10, color: '#777' }}>
+              No promotions available
+            </Text>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', width: '100%' }} >
 
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: 'rgba(0,0,0,0.4)',
-                padding: 16,
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>
-                Special Offer 🎉
-              </Text>
+                {promotions.map((promo) => (
+                  <TouchableOpacity
+                    key={promo.id}
+                    style={{
+                      width: '100%',
+                      height: 150,
+                      borderRadius: 16,
+                      overflow: 'hidden',
+                      marginRight: 12,
+                    }}
+                  >
+                    <Image
+                      source={{
+                        uri: promo.image_url || 'https://via.placeholder.com/300'
+                      }}
+                      style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                      }}
+                      resizeMode="cover"
+                    />
 
-              <Text style={{ color: '#fff', fontSize: 14, marginTop: 6 }}>
-                Get up to 50% OFF on Home Services
-              </Text>
-            </View>
-          </TouchableOpacity>
+                    <View
+                      style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(0,0,0,0.4)',
+                        padding: 16,
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      {/* TEXT */}
+                      <View>
+                        <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
+                          {promo.title}
+                        </Text>
 
-          {/* Banner 2 */}
-          <TouchableOpacity
-            style={{
-              height: 140,
-              borderRadius: 16,
-              overflow: 'hidden',
-              flexDirection: 'row',
-              backgroundColor: '#fff',
-              elevation: 3,
-            }}
-          >
-            <View style={{ flex: 1, padding: 14, justifyContent: 'center' }}>
-              <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
-                Cleaning Services
-              </Text>
+                        <Text style={{ color: '#fff', fontSize: 13, marginTop: 6 }}>
+                          {promo.description}
 
-              <Text style={{ fontSize: 13, marginTop: 4 }}>
-                Flat ₹199 OFF on first booking
-              </Text>
-            </View>
+                          
+                        </Text>
+                         <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginTop: 10 }}>
+                          {promo.promo_code}
+                        </Text>
+                      </View>
 
-            <Image
-              source={require('../assets/images/home_cleaning.webp')}
-              style={{ width: 120, height: '100%' }}
-            />
-          </TouchableOpacity>
+
+
+                    </View>
+                  </TouchableOpacity>
+                ))}
+
+              </View>
+            </ScrollView>
+          )}
         </View>
 
 
@@ -282,7 +332,8 @@ const Home = () => {
                         style={{
                           width: '50%',
                           height: '100%',
-                          borderRadius: 8,
+                          borderTopLeftRadius: 8,
+                          borderBottomLeftRadius: 8
                           // backgroundColor: '#e9ecef'
                         }}
                       />
@@ -298,6 +349,7 @@ const Home = () => {
                       >
                         {data.package_name}
                       </Text>
+
                     </TouchableOpacity>
                   )
                 })}
@@ -348,7 +400,7 @@ const Home = () => {
                       <View style={{ height: 170, overflow: 'hidden' }}>
                         {/* API IMAGE */}
                         <Image
-                          source={ { uri:item.view_images_url  }}
+                          source={{ uri: item.view_images_url }}
                           style={{
                             position: 'absolute',
                             width: '100%',
@@ -388,17 +440,17 @@ const Home = () => {
                           justifyContent: 'space-between',
                         }}
                       >
-                        <Text style={{ fontSize: 12, color: '#666', marginLeft: 10}}>
+                        <Text style={{ fontSize: 12, color: '#666', marginLeft: 10 }}>
                           Tuesday 20th April
                         </Text>
-                         <Text style={{ fontSize: 12, color: '#666', marginLeft: 10 }}>
+                        <Text style={{ fontSize: 12, color: '#666', marginLeft: 10 }}>
                           Tuesday 20th April
                         </Text>
-                         <Text style={{ fontSize: 12, color: '#666',marginLeft: 10 }}>
+                        <Text style={{ fontSize: 12, color: '#666', marginLeft: 10 }}>
                           Tuesday 20th April
                         </Text>
 
-                        
+
                       </View>
 
                     </TouchableOpacity>
@@ -434,7 +486,7 @@ const Home = () => {
               </Text>
 
               <Text style={{ color: '#fff', fontSize: 13, marginTop: 6 }}>
-                Earn ₹100 for every referral
+                Earn $50 for every referral
               </Text>
 
               <View

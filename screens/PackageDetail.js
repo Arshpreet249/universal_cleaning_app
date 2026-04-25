@@ -1,270 +1,3 @@
-// import React, { useState } from 'react'
-// import {
-//   View,
-//   Text,
-//   ScrollView,
-//   Image,
-//   StyleSheet,
-//   TouchableOpacity,
-// } from 'react-native'
-// import { useNavigation } from '@react-navigation/native'
-// const PackageDetail = ({ route }) => {
-//   const { item } = route.params
-//   const navigation = useNavigation()
-
-//   const [selectedItems, setSelectedItems] = useState([])
-
-//   // ✅ SAFE PARSE
-//   const parseDescription = (data) => {
-//     try {
-//       return typeof data === 'string' ? JSON.parse(data) : data
-//     } catch {
-//       return null
-//     }
-//   }
-
-//   const parsed = parseDescription(item.description)
-
-//   // ✅ GET DATA ARRAY
-//   const getDataArray = (parsed) => {
-//     if (!parsed) return []
-
-//     if (Array.isArray(parsed.pricing)) return parsed.pricing
-//     if (Array.isArray(parsed.packages)) return parsed.packages
-//     if (Array.isArray(parsed.sub_packages)) return parsed.sub_packages
-//     if (parsed.pricing_options?.option_b) return parsed.pricing_options.option_b
-
-//     return []
-//   }
-
-//   const data = getDataArray(parsed)
-
-//   // ✅ DYNAMIC HEADERS FROM API KEYS
-//   const getHeaders = (data) => {
-//     if (!data.length) return []
-
-//     const sample = data[0]
-
-//     return Object.keys(sample)
-//       .filter(
-//         key =>
-//           key !== 'payment_type' // ignore internal field
-//       )
-//       .map(key =>
-//         key === 'price_sgd'
-//           ? 'PRICE'
-//           : key.toUpperCase().replace(/_/g, ' ')
-//       )
-//   }
-
-//   const headers = getHeaders(data)
-
-//   // ✅ RENDER ROW VALUES DYNAMICALLY
-//   const renderRowValues = (item, headers) => {
-//     return headers.map((header, index) => {
-//       let key =
-//         header === 'PRICE'
-//           ? 'price_sgd'
-//           : header.toLowerCase().replace(/ /g, '_')
-
-//       let value = item[key]
-
-//       // formatting
-//       if (key === 'duration_hours' && value)
-//         value = `${value} hrs`
-
-//       if (key === 'duration_minutes' && value)
-//         value = `${value} mins`
-
-//       return (
-//         <Text key={index} style={styles.cell}>
-//           {value ? `${key === 'price_sgd' ? '$' : ''}${value}` : '-'}
-//         </Text>
-//       )
-//     })
-//   }
-
-//   // ✅ MULTI SELECT
-//   const toggleSelection = (row, index) => {
-//     const exists = selectedItems.find(i => i.id === index)
-
-//     if (exists) {
-//       setSelectedItems(selectedItems.filter(i => i.id !== index))
-//     } else {
-//       setSelectedItems([...selectedItems, { ...row, id: index }])
-//     }
-//   }
-
-//   // ✅ ADD TO BASKET
-// const addToBasket = () => {
-//   navigation.navigate('Main', {
-//     screen: 'Basket',
-//     params: {
-//       items: selectedItems,
-//     },
-//   })
-// }
-//   return (
-//     <ScrollView style={styles.container}>
-//       {/* IMAGE */}
-//       <Image
-//         source={{
-//           uri:
-//             item.icon_url 
-//         }}
-//         style={styles.image}
-//       />
-
-//       <View style={styles.content}>
-//         {/* TITLE */}
-//         <Text style={styles.title}>
-//           {parsed?.package_name || 'Package'}
-//         </Text>
-
-//         {/* HORIZONTAL SCROLL FOR TABLE */}
-//         <ScrollView horizontal>
-//           <View>
-//             {/* HEADER */}
-//             {headers.length > 0 && (
-//               <View style={styles.tableHeader}>
-//                 <View style={{ width: 30 }} />
-//                 {headers.map((h, i) => (
-//                   <Text key={i} style={styles.headerText}>
-//                     {h}
-//                   </Text>
-//                 ))}
-//               </View>
-//             )}
-
-//             {/* ROWS */}
-//             {data.map((row, index) => {
-//               const isSelected = selectedItems.some(
-//                 i => i.id === index
-//               )
-
-//               return (
-//                 <TouchableOpacity
-//                   key={index}
-//                   style={[
-//                     styles.row,
-//                     isSelected && styles.selectedRow,
-//                   ]}
-//                   onPress={() => toggleSelection(row, index)}
-//                 >
-                
-
-//                   {/* DYNAMIC CELLS */}
-//                   {renderRowValues(row, headers)}
-
-//                     {/* CHECKBOX */}
-//                   <View style={styles.checkbox}>
-//                     <Text style={{ color: '#2563eb' }}>
-//                       {isSelected ? '✓' : ''}
-//                     </Text>
-//                   </View>
-//                 </TouchableOpacity>
-//               )
-//             })}
-//           </View>
-//         </ScrollView>
-
-//         {/* ADD TO BASKET */}
-//         {selectedItems.length > 0 && (
-//           <TouchableOpacity
-//             style={styles.cartBtn}
-//             onPress={addToBasket}
-//           >
-//             <Text style={styles.cartText}>
-//               Add {selectedItems.length} packages to Basket
-//             </Text>
-//           </TouchableOpacity>
-//         )}
-//       </View>
-//     </ScrollView>
-//   )
-// }
-
-// export default PackageDetail
-
-// // 🎨 STYLES
-// const styles = StyleSheet.create({
-//   container: { flex: 1 },
-
-//   image: { width: '100%', height: 220 },
-
-//   content: {
-//     backgroundColor: '#fff',
-//     marginTop: -20,
-//     borderTopLeftRadius: 20,
-//     borderTopRightRadius: 20,
-//     padding: 16,
-//   },
-
-//   title: {
-//     fontSize: 22,
-//     fontWeight: 'bold',
-//     marginBottom: 16,
-//   },
-
-//   tableHeader: {
-//     flexDirection: 'row',
-//     backgroundColor: '#e5e7eb',
-//     padding: 10,
-//     borderRadius: 10,
-//   },
-
-//   headerText: {
-//     minWidth: 100,
-//     fontSize: 11,
-//     fontWeight: 'bold',
-//     color: '#2563eb',
-//   },
-
-//   row: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     paddingVertical: 12,
-//     borderBottomWidth: 1,
-//     borderColor: '#e5e7eb',
-//   },
-
-//   selectedRow: {
-//     backgroundColor: '#dbeafe',
-//     borderRadius: 10,
-//   },
-
-//   checkbox: {
-//     width: 24,
-//     height: 24,
-//     borderWidth: 1,
-//     borderColor: '#2563eb',
-//     marginRight: 6,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     borderRadius: 4,
-//     padding: 4
-//   },
-
-//   cell: {
-//     minWidth: 100,
-//     fontSize: 12,
-//     color: '#374151',
-//   },
-
-//   cartBtn: {
-//     marginTop: 20,
-//     backgroundColor: '#2563eb',
-//     padding: 14,
-//     borderRadius: 10,
-//     alignItems: 'center',
-//   },
-
-//   cartText: {
-//     color: '#fff',
-//     fontWeight: 'bold',
-//   },
-// })
-
 import React, { useState } from 'react'
 import {
   View,
@@ -308,7 +41,30 @@ const PackageDetail = ({ route }) => {
 
   const data = getDataArray(parsed)
 
-  // ✅ DYNAMIC HEADERS
+   // ✅ GET STARTING PRICE
+  const getStartingPrice = (data) => {
+    if (!data || data.length === 0) return null
+
+    let prices = data
+      .map(item => {
+        let price = item.price_sgd
+
+        // handle range like "590–650"
+        if (typeof price === 'string') {
+          const num = price.split(/[–-]/)[0]
+          return parseFloat(num)
+        }
+
+        return price
+      })
+      .filter(Boolean)
+
+    return Math.min(...prices)
+  }
+
+  const startingPrice = getStartingPrice(data)
+
+  // ✅ HEADERS
   const getHeaders = (data) => {
     if (!data.length) return []
 
@@ -360,7 +116,7 @@ const PackageDetail = ({ route }) => {
     }
   }
 
-  // ✅ ADD TO BASKET
+  // ✅ NAVIGATE
   const addToBasket = () => {
     navigation.navigate('Main', {
       screen: 'Basket',
@@ -370,14 +126,61 @@ const PackageDetail = ({ route }) => {
     })
   }
 
+  // =========================
+  // 🔥 EXTRA UI FUNCTIONS
+  // =========================
+
+  const SectionTitle = ({ title }) => (
+    <Text style={styles.sectionTitle}>{title}</Text>
+  )
+
+  const renderList = (data) => {
+    if (!data) return null
+
+    return data.map((item, index) => (
+      <Text key={index} style={styles.listItem}>
+        • {typeof item === 'string' ? item : item.description || '-'}
+      </Text>
+    ))
+  }
+
+  const renderTerms = (terms) => {
+    if (!terms) return null
+
+    return terms.map((item, index) => (
+      <View key={index} style={{ marginBottom: 10 }}>
+        <Text style={styles.termHeading}>{item.heading || item.condition}</Text>
+
+        {Array.isArray(item.description)
+          ? item.description.map((d, i) => (
+              <Text key={i} style={styles.listItem}>
+                • {d}
+              </Text>
+            ))
+          : (
+            <Text style={styles.listItem}>
+              • {item.description}
+            </Text>
+          )}
+      </View>
+    ))
+  }
+
+  const renderRefund = (refund) => {
+    if (!refund) return null
+
+    return Object.entries(refund).map(([key, value], index) => (
+      <Text key={index} style={styles.listItem}>
+        • {key.replace(/_/g, ' ').toUpperCase()} : {value}
+      </Text>
+    ))
+  }
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, }}>
       <ScrollView style={styles.container}>
         {/* IMAGE */}
-        <Image
-          source={{ uri: item.view_images_url }}
-          style={styles.image}
-        />
+        <Image source={{ uri: item.view_images_url}} style={styles.image} />
 
         <View style={styles.content}>
           {/* TITLE */}
@@ -385,13 +188,34 @@ const PackageDetail = ({ route }) => {
             {parsed?.package_name || 'Package'}
           </Text>
 
+           {/* 🔥 STARTING PRICE UI */}
+          {startingPrice && (
+            <View style={styles.priceContainer}>
+              <View>
+                <Text style={styles.startingText}>Starting from</Text>
+                <Text style={styles.price}>
+                  ${startingPrice}
+                  <Text style={styles.per}> /hr(s)</Text>
+                </Text>
+              </View>
+            </View>
+          )}
+           {/* DESCRIPTION */}
+          {parsed?.description && (
+            <>
+              <SectionTitle title="Description" />
+              {Array.isArray(parsed.description)
+                ? renderList(parsed.description)
+                : <Text style={styles.listItem}>{parsed.description}</Text>}
+            </>
+          )}
+
           {/* TABLE */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View>
-              {/* HEADER */}
               {headers.length > 0 && (
                 <View style={styles.tableHeader}>
-                  <Text style={[styles.headerText, { width: 40 }]} />
+                  <Text style={{ width: 40 }} />
                   {headers.map((h, i) => (
                     <Text key={i} style={styles.headerText}>
                       {h}
@@ -400,7 +224,6 @@ const PackageDetail = ({ route }) => {
                 </View>
               )}
 
-              {/* ROWS */}
               {data.map((row, index) => {
                 const isSelected = selectedItems.some(
                   i => i.id === index
@@ -413,18 +236,14 @@ const PackageDetail = ({ route }) => {
                       styles.rowCard,
                       isSelected && styles.selectedRow,
                     ]}
-                    onPress={() =>
-                      toggleSelection(row, index)
-                    }
+                    onPress={() => toggleSelection(row, index)}
                   >
-                    {/* CHECKBOX */}
                     <View style={styles.checkbox}>
                       <Text style={styles.checkText}>
                         {isSelected ? '✓' : ''}
                       </Text>
                     </View>
 
-                    {/* CELLS */}
                     <View style={{ flexDirection: 'row' }}>
                       {renderRowValues(row, headers)}
                     </View>
@@ -433,10 +252,60 @@ const PackageDetail = ({ route }) => {
               })}
             </View>
           </ScrollView>
+
+         
+
+          {/* TERMS */}
+          {parsed?.terms_and_conditions && (
+            <>
+              <SectionTitle title="Terms & Conditions" />
+              {renderTerms(parsed.terms_and_conditions)}
+   
+            </>
+          )}
+          
+      {/* DEPOSIT */}
+          {parsed?.deposit_policy && (
+            <>
+              <SectionTitle title="Deposit Policy" />
+              {renderList(parsed.deposit_policy)}
+            </>
+          )}
+
+          {/* REFUND */}
+          {parsed?.refund_policy && (
+            <>
+              <SectionTitle title="Refund Policy" />
+              {renderRefund(parsed.refund_policy)}
+            </>
+          )}
+
+          {/* ADDITIONAL */}
+          {parsed?.additional_conditions && (
+            <>
+              <SectionTitle title="Additional Conditions" />
+              {renderTerms(parsed.additional_conditions)}
+            </>
+          )}
+
+          {/* POLICIES */}
+          {parsed?.policies && (
+            <>
+              <SectionTitle title="Policies" />
+              {Object.entries(parsed.policies).map(([key, value], i) => (
+                <View key={i} style={{ marginBottom: 10 }}>
+                  <Text style={styles.termHeading}>
+                    {key.replace(/_/g, ' ').toUpperCase()}
+                  </Text>
+                  {renderList(value)}
+                </View>
+              ))}
+            </>
+          )}
         </View>
       </ScrollView>
 
-      {/* ADD TO BASKET BUTTON */}
+      {/* BUTTON */}
       {selectedItems.length > 0 && (
         <View style={styles.bottomBar}>
           <TouchableOpacity
@@ -459,10 +328,7 @@ export default PackageDetail
 const styles = StyleSheet.create({
   container: { flex: 1 },
 
-  image: {
-    width: '100%',
-    height: 220,
-  },
+  image: { width: '100%', height: 220 },
 
   content: {
     backgroundColor: '#fff',
@@ -476,7 +342,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#111827',
+    color: '#2563eb',
+    
   },
 
   tableHeader: {
@@ -486,6 +353,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 12,
     marginBottom: 10,
+   
   },
 
   headerText: {
@@ -493,6 +361,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#2563eb',
+    
   },
 
   rowCard: {
@@ -504,9 +373,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
   },
 
   selectedRow: {
@@ -537,6 +403,32 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
 
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 8,
+    color: '#2563eb',
+    
+  },
+
+  listItem: {
+    fontSize: 13,
+    color: '#374151',
+    marginBottom: 6,
+    lineHeight: 18,
+     backgroundColor: '#f1f5f9',
+     padding: 12,
+     borderRadius: 12
+  },
+
+  termHeading: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2563eb',
+    marginBottom: 4,
+  },
+
   bottomBar: {
     padding: 12,
     backgroundColor: '#fff',
@@ -556,4 +448,37 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+    priceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+
+  startingText: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+    price: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#2563eb',
+  },
+
+  per: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  scopeImage: {
+  width: '100%',
+  height: 180,
+},
+
+imageCard: {
+  marginTop: 12,
+  borderRadius: 14,
+  overflow: 'hidden',
+  elevation: 3,
+  backgroundColor: '#fff',
+},
 })
