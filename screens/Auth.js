@@ -11,7 +11,7 @@ import {
   Alert
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { apiBaseUrl } from '../components/variable'
+import { REACT_APP_HOST_API_URL} from '../components/variable'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
 const Auth = () => {
@@ -50,13 +50,14 @@ const Auth = () => {
 
     setLoading(true)
     try {
-      const res = await fetch(`${apiBaseUrl}/auth/create-user/`, {
+      const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/create-user/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, role: 'User' })
       })
 
       const data = await res.json()
+      console.log("data>>>>>>>>>>>>>>>>>>>>",data)
 
       if (res.ok) {
         Alert.alert('Success', 'OTP sent to email')
@@ -65,6 +66,7 @@ const Auth = () => {
         Alert.alert('Error', data.error)
       }
     } catch {
+       console.log('REGISTER ERROR:', error)
       Alert.alert('Error', 'Registration failed')
     }
     setLoading(false)
@@ -74,7 +76,7 @@ const Auth = () => {
   const handleLogin = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${apiBaseUrl}/auth/login/`, {
+      const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -101,7 +103,7 @@ const Auth = () => {
   const handleVerifyOtp = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${apiBaseUrl}/auth/verify-otp/`, {
+      const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/verify-otp/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -120,6 +122,7 @@ const Auth = () => {
       }
     } catch {
       Alert.alert('Error', 'OTP failed')
+      console.log('eror', error)
     }
     setLoading(false)
   }
@@ -132,7 +135,7 @@ const Auth = () => {
 
     setLoading(true)
     try {
-      const res = await fetch(`${apiBaseUrl}/auth/forgot-password/`, {
+      const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/forgot-password/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetData.email })
@@ -160,7 +163,7 @@ const Auth = () => {
 
     setLoading(true)
     try {
-      const res = await fetch(`${apiBaseUrl}/auth/reset-password/`, {
+      const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/reset-password/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
