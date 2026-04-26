@@ -1,30 +1,9 @@
-// import React from 'react'
-// import { View, Text, Button } from 'react-native'
-// import { useNavigation } from '@react-navigation/native'
-
-// export default function Profile() {
-//   const navigation = useNavigation()
-
-//   return (
-//     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-//       <Text>Profile Screen</Text>
-
-//       <Button 
-//         title="Open Menu"
-//         // onPress={() => navigation.navigate('Menu')}
-//       />
-//     </View>
-//   )
-// }
-
-
 import React from 'react'
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
-  StyleSheet,
   ScrollView
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -33,29 +12,38 @@ import { useNavigation } from '@react-navigation/native'
 export default function Profile() {
   const navigation = useNavigation()
 
-  const isLoggedIn = false // 🔁 replace later with real auth
+  const isLoggedIn = false // replace later
 
   const MenuItem = ({ icon, title, subtitle, onPress, danger }) => (
-    <TouchableOpacity onPress={onPress} style={styles.card}>
-      <Image source={icon} style={styles.icon} />
+    <TouchableOpacity
+      onPress={onPress}
+      className="flex-row items-center bg-gray-50 p-4 rounded-xl mb-3 shadow-sm"
+    >
+      <Image source={icon} className="w-10 h-10 mr-3" />
 
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.title, danger && { color: 'red' }]}>
+      <View className="flex-1">
+        <Text className={`text-base font-semibold ${danger ? 'text-red-500' : 'text-black'}`}>
           {title}
         </Text>
 
-        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        {subtitle && (
+          <Text className="text-xs text-gray-500 mt-1">
+            {subtitle}
+          </Text>
+        )}
       </View>
 
-      <Text style={styles.arrow}>›</Text>
+      <Text className="text-lg text-gray-400">›</Text>
     </TouchableOpacity>
   )
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView className="flex-1 bg-white px-4">
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        <Text style={styles.header}>My Account</Text>
+        <Text className="text-2xl font-bold my-5  text-primary">
+          Profile
+        </Text>
 
         {!isLoggedIn ? (
           <MenuItem
@@ -66,21 +54,21 @@ export default function Profile() {
           />
         ) : (
           <>
-            <TouchableOpacity style={{ padding: 15 }}>
-                           <Text>My Profile</Text>
-                         </TouchableOpacity>
-           
-                         <TouchableOpacity style={{ padding: 15 }}>
-                           <Text>My Orders</Text>
-                         </TouchableOpacity>
-           
-                         <TouchableOpacity style={{ padding: 15 }}>
-                           <Text>Settings</Text>
-                         </TouchableOpacity>
-           
-                        <TouchableOpacity style={{ padding: 15 }}>
-                           <Text style={{ color: 'red' }}>Logout</Text>
-                        </TouchableOpacity>
+            <TouchableOpacity className="p-4">
+              <Text>My Profile</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity className="p-4">
+              <Text>My Orders</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity className="p-4">
+              <Text>Settings</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity className="p-4">
+              <Text className="text-red-500">Logout</Text>
+            </TouchableOpacity>
           </>
         )}
 
@@ -88,44 +76,3 @@ export default function Profile() {
     </SafeAreaView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginVertical: 20
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    padding: 15,
-    borderRadius: 14,
-    marginBottom: 12,
-    elevation: 2
-  },
-  icon: {
-    width: 40,
-    height: 40,
-    marginRight: 12,
-    resizeMode: 'contain'
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600'
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2
-  },
-  arrow: {
-    fontSize: 20,
-    color: '#9CA3AF'
-  }
-})
