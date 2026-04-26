@@ -172,74 +172,69 @@ const Home = () => {
 
         {/* ================= PROMOS ================= */}
 
-        <View style={{ marginHorizontal: 16, marginTop: 20 }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
-            Promos
-          </Text>
+        <View className="mx-4 mt-5">
 
-          {promoLoading ? (
-            <ActivityIndicator size="large" color="blue" />
-          ) : normalPromos.length === 0 ? (
-            <Text style={{ padding: 10, color: '#777' }}>
-              No promotions available
-            </Text>
-          ) : (
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {normalPromos.map((promo) => (
-                <TouchableOpacity
-                  key={promo.id}
-                  style={{
-                    width: '100%',
-                    height: 160,
-                    marginBottom: 12,
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Image
-                    source={{ uri: promo.image_url }}
-                    style={{
-                      position: 'absolute',
-                      width: '100%',
-                      height: '100%',
-                    }}
-                    resizeMode="cover"
-                  />
+  <Text className="text-lg font-bold px-2 py-2">
+    Promos
+  </Text>
 
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: 'rgba(0,0,0,0.4)',
-                      padding: 16,
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <View>
-                      <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
-                        {promo.title}
-                      </Text>
+  {promoLoading ? (
+    <ActivityIndicator size="large" color="blue" />
+  ) : normalPromos.length === 0 ? (
+    <Text className="px-2 py-2 text-gray-500">
+      No promotions available
+    </Text>
+  ) : (
+    <ScrollView showsVerticalScrollIndicator={false}>
 
-                      <Text style={{ color: '#fff', fontSize: 13, marginTop: 6 }}>
-                        {promo.description}
-                      </Text>
+      {normalPromos.map((promo) => (
+        <TouchableOpacity
+          key={promo.id}
+          className="w-full h-40 mb-3 rounded-2xl overflow-hidden"
+        >
 
-                      <Text
-                        style={{
-                          color: '#fff',
-                          fontSize: 18,
-                          fontWeight: 'bold',
-                          marginTop: 10,
-                        }}
-                      >
-                        Use Code {promo.promo_code}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-        </View>
+          {/* Background Image */}
+          <Image
+            source={{ uri: promo.image_url }}
+            className="absolute w-full h-full"
+            resizeMode="cover"
+          />
+
+          {/* Dark Overlay */}
+          <View className="flex-1 bg-black/30 p-4 justify-between">
+
+            <View>
+
+              <Text className="text-white text-lg font-bold">
+                {promo.title}
+              </Text>
+
+              <Text className="text-white text-xs mt-1 opacity-90">
+                {promo.description}
+              </Text>
+
+              {/* 🔥 GLASS PROMO CODE */}
+              <BlurView
+                intensity={40}
+                tint="light"
+                className="mt-4 self-start px-4 py-2 rounded-xl border border-white/30 overflow-hidden"
+              >
+                <Text className="text-white font-bold tracking-widest text-sm">
+                  {promo.promo_code}
+                </Text>
+              </BlurView>
+
+            </View>
+
+          </View>
+
+        </TouchableOpacity>
+      ))}
+
+    </ScrollView>
+  )}
+
+</View>
 
 
         {/* ================= EXPLORE MORE ================= */}
@@ -364,106 +359,10 @@ const Home = () => {
         </View>
 
         {/* ================= Recent Booking ================= */}
-        <View style={{ marginHorizontal: 16, marginTop: 20 }}>
+        <View style={{ marginHorizontal: 10, marginTop: 20 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
             Recent Bookings
           </Text>
-
-          {/* {!products.length ? (
-            <Text style={{ paddingHorizontal: 10, color: '#777' }}>
-              No recent bookings yet
-            </Text>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={{ flexDirection: 'row', paddingHorizontal: 6 }}>
-
-                {products.slice(0, 5).map((item) => {
-                  const data = parseDescription(item)
-                  if (!data) return null
-
-                  return (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={{
-                        width: 220,
-                        height: 280,
-                        borderRadius: 10,
-                        overflow: 'hidden',
-                        marginRight: 12,
-                        backgroundColor: '#fff',
-                        elevation: 4,
-                      }}
-                      onPress={() =>
-                        navigation.navigate('PackageDetail', {
-                          item,
-                          parsed: data,
-                        })
-                      }
-                    >
-
-
-                      <View style={{ height: 170, overflow: 'hidden' }}>
-                        
-                        <Image
-                          source={{ uri: item.view_images_url }}
-                          style={{
-                            position: 'absolute',
-                            width: '100%',
-                            height: '100%',
-                          }}
-                          resizeMode="cover"
-                        />
-
-                        <LinearGradient
-                          colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.7)']}
-                          style={{
-                            flex: 1,
-                            justifyContent: 'flex-end',
-                            padding: 10,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: '#fff',
-                              fontWeight: 'bold',
-                              fontSize: 13,
-                            }}
-                            numberOfLines={2}
-                          >
-                            {data.package_name}
-                          </Text>
-                        </LinearGradient>
-                      </View>
-
-                     
-                      <View
-                        style={{
-                          flex: 1,
-                          padding: 10,
-                          justifyContent: 'space-between',
-                          
-                        }}
-                      >
-                        <Text className='text-sm ml-3 color-gray-600'>
-                          Tuesday 20th April
-                        </Text>
-                        <Text className='text-sm ml-3 color-gray-600'>
-                          Tuesday 20th April
-                        </Text>
-                         <Text className='text-sm ml-3 color-gray-600'>
-                          Tuesday 20th April
-                        </Text>
-
-
-                      </View>
-
-                    </TouchableOpacity>
-                  )
-                })}
-
-              </View>
-            </ScrollView>
-          )} */}
 
        <View
       style={{
@@ -472,51 +371,50 @@ const Home = () => {
         borderRadius: 16,
         overflow: 'hidden',
         elevation: 6,
-        marginHorizontal: 16,
+        marginHorizontal: 10,
         marginTop: 10,
       }}
     >
       {/* LEFT RED STRIP */}
-      <View
-        style={{
-          width: 6,
-          backgroundColor: 'indianred',
-        }}
-      />
+      <View className="flex-1 ">
 
-      {/* CONTENT */}
-      <View style={{ flex: 1, padding: 12 }}>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: 'indianred',
-          }}
-        >
-          
-        </Text>
 
-        
-        <Text
-        className='text-lg'
-        >
-         Oh! No!
-        </Text>
+  {/* CONTENT */}
+  <View className="flex-1 px-4 py-6 items-center justify-center">
 
-        <Text
-          style={{
-            color: '#666',
-            marginTop: 4,
-            fontSize: 13,
-          }}
-        >
-         You should login before booking.
-        </Text>
-      </View>
+    {/* Title */}
+    <Text className="text-2xl font-bold text-red-500 mb-2">
+      Oh! No!
+    </Text>
+
+    {/* Subtitle */}
+    <Text className="text-gray-500 text-sm text-center mb-6">
+      You should login before booking.
+    </Text>
+
+    {/* Button */}
+    <TouchableOpacity
+      className="bg-red-500 px-6 py-3 rounded-xl shadow-md"
+      onPress={() => navigation.navigate('Auth')}
+    >
+      <Text className="text-white font-semibold text-base">
+        Login Now
+      </Text>
+    </TouchableOpacity>
+
+  </View>
+
+</View>
 
      
     </View>
         </View>
+
+
+
+
+
+        
         {/* ================= REFER & EARN ================= */}
         {referPromo && (
           <View style={{ marginHorizontal: 16, marginTop: 20, marginBottom: 40 }}>
@@ -542,12 +440,7 @@ const Home = () => {
                 resizeMode="cover"
               />
 
-              <View style={{
-                flex: 1,
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                padding: 16,
-                justifyContent: 'space-between',
-              }}>
+              <View className="flex-1 p-4 justify-between shadow-sm">
                 <View>
                   <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>
                     {referPromo.title}
@@ -566,7 +459,7 @@ const Home = () => {
                   alignSelf: 'flex-start',
                 }}>
                   <Text style={{ color: '#6C63FF', fontWeight: 'bold' }}>
-                    Refer Now
+                    Refer Code: HRAHIDNO63
                   </Text>
                 </View>
               </View>
@@ -574,7 +467,7 @@ const Home = () => {
           </View>
         )}
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 90 }} />
       </ScrollView>
     </View>
   )
