@@ -9,10 +9,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 
+import { useContext } from 'react'
+import { AuthContext } from '../context/AuthContext'
+
+
 export default function Profile() {
   const navigation = useNavigation()
+  const { user, token, logout } = useContext(AuthContext)
 
-  const isLoggedIn = false // replace later
+  console.log(user)
+  console.log('token::', token)
+
 
   const MenuItem = ({ icon, title, subtitle, onPress, danger }) => (
     <TouchableOpacity
@@ -45,7 +52,7 @@ export default function Profile() {
           Profile
         </Text>
 
-        {!isLoggedIn ? (
+         {!token ? (
           <MenuItem
             icon={require('../assets/icons/signin.png')}
             title="Login / Register"
@@ -54,21 +61,36 @@ export default function Profile() {
           />
         ) : (
           <>
-            <TouchableOpacity className="p-4">
-              <Text>My Profile</Text>
-            </TouchableOpacity>
+            {/* USER HEADER */}
+            <View className="p-4 ">
+              <Text className="text-lg font-semibold text-gray-800">
+                {/* Welcome 👋 {user?.user?.full_name || 'User'} */}
+              </Text>
+              <Text className="text-sm text-gray-500">
+                Manage your account & orders
+              </Text>
+            </View>
 
-            <TouchableOpacity className="p-4">
-              <Text>My Orders</Text>
-            </TouchableOpacity>
+            <MenuItem
+              icon={require('../assets/icons/signin.png')}
+              title="Address"
+              subtitle="View and edit profile"
+              // onPress={() => navigation.navigate('Profile')}
+            />
 
-            <TouchableOpacity className="p-4">
-              <Text>Settings</Text>
-            </TouchableOpacity>
+            <MenuItem
+              icon={require('../assets/icons/signin.png')}
+              title="Payment History"
+              subtitle="Track your bookings"
+              // onPress={() => navigation.navigate('Orders')}
+            />
 
-            <TouchableOpacity className="p-4">
-              <Text className="text-red-500">Logout</Text>
-            </TouchableOpacity>
+            <MenuItem
+              icon={require('../assets/icons/signin.png')}
+              title="Logout"
+              danger
+              onPress={logout}
+            />
           </>
         )}
 

@@ -49,11 +49,12 @@ import PackageDetail from './screens/PackageDetail'
 import Auth from './screens/Auth'
 import AllPackages from './screens/AllPackages'
 import "./global.css"
-
+import { AuthProvider } from './context/AuthContext'
 const Stack = createNativeStackNavigator()
 
 export default function App() {
   return (
+        <AuthProvider>
     <SafeAreaProvider>
        <ProductProvider>
       <NavigationContainer>
@@ -90,5 +91,6 @@ export default function App() {
       </NavigationContainer>
       </ProductProvider>
     </SafeAreaProvider>
+    </AuthProvider>
   )
 }

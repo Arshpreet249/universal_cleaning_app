@@ -13,9 +13,14 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useContext } from 'react'
+import { AuthContext } from '../context/AuthContext'
 
 const Auth = () => {
   const navigation = useNavigation()
+
+  const { user, token,setUser,setToken, logout } = useContext(AuthContext)
 
   // login | register | otp | forgot | reset
   const [step, setStep] = useState('login')
@@ -133,10 +138,15 @@ const Auth = () => {
       })
 
       const data = await res.json()
+      console.log(res.ok)
 
       if (res.ok) {
-        Alert.alert('Success', 'Login successful')
+        // Alert.alert('Success', 'Login successful')
         // navigation.navigate('Home')
+        await AsyncStorage.setItem('user', JSON.stringify(data))
+        setUser(data)
+        setToken(data?.access_token)
+        console.log(data)
         navigation.replace('Main', {
           screen: 'Home'
         })
@@ -144,7 +154,8 @@ const Auth = () => {
       } else {
         Alert.alert('Error', data.error)
       }
-    } catch {
+    } catch (error) {
+  console.log('LOGIN ERROR 👉', error)   // 🔥 important
       Alert.alert('Error', 'Login failed')
     }
     setLoading(false)
