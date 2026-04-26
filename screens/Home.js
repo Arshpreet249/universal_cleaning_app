@@ -146,9 +146,9 @@ const Home = () => {
                     >
                       <Image
                         source={
-                          item.icon_url
-                            ? { uri: item.icon_url }
-                            : require('../assets/images/home_cleaning.webp')
+                          
+                            { uri: item.icon_url }
+                           
                         }
                         style={{ width: 40, height: 40 }}
                       />

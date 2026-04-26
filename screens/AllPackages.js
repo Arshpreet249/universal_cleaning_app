@@ -1,5 +1,3 @@
-
-
 import React, { useContext } from 'react'
 import {
   View,
@@ -11,6 +9,7 @@ import {
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { ProductContext } from '../context/ProductContext'
+import { LinearGradient } from 'expo-linear-gradient'
 
 const AllPackages = () => {
   const navigation = useNavigation()
@@ -45,7 +44,6 @@ const AllPackages = () => {
       .map((item) => {
         let price = item.price_sgd
 
-        // handle range like "590–650"
         if (typeof price === 'string') {
           return parseFloat(price.split(/[–-]/)[0])
         }
@@ -57,7 +55,7 @@ const AllPackages = () => {
     return prices.length ? Math.min(...prices) : null
   }
 
-  // ✅ CARD UI
+  // 💎 PREMIUM CARD
   const renderItem = ({ item }) => {
     const data = parseDescription(item)
     if (!data) return null
@@ -66,19 +64,16 @@ const AllPackages = () => {
 
     return (
       <TouchableOpacity
+        activeOpacity={0.9}
+        className="flex-1 m-2 h-64 rounded-3xl overflow-hidden"
         style={{
-          flex: 1,
-          margin: 8,
-          backgroundColor: '#fff',
-          borderRadius: 14,
-          padding: 10,
-          elevation: 3,
-          marginBottom: 20
+          shadowColor: '#000',
+          shadowOpacity: 0.25,
+          shadowRadius: 10,
+          elevation: 6,
         }}
         onPress={() =>
-          navigation.navigate('PackageDetail', {
-            item,
-          })
+          navigation.navigate('PackageDetail', { item })
         }
       >
         {/* IMAGE */}
@@ -88,84 +83,62 @@ const AllPackages = () => {
               item.view_images_url ||
               'https://via.placeholder.com/300',
           }}
-          style={{
-            width: '100%',
-            height: 120,
-            borderRadius: 10,
-          }}
-          resizeMode="cover"
+          className="absolute w-full h-full"
         />
 
-        {/* TITLE */}
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: 'bold',
-            marginTop: 8,
-            color: '#111827',
-          }}
-          numberOfLines={2}
+        {/* GRADIENT OVERLAY */}
+        <LinearGradient
+          colors={[
+            'transparent',
+            'rgba(0,0,0,0.4)',
+            'rgba(0,0,0,0.85)',
+          ]}
+          className="flex-1 justify-end p-3"
         >
-          {data.package_name || 'Package'}
-        </Text>
-
-        {/* 🔥 STARTING PRICE */}
-        {startingPrice ? (
-          <View style={{  marginTop: 6, flexDirection: 'row',alignItems: 'center',gap: '5' }}>
-            <Text style={{ fontSize: 11, color: '#6b7280' }}>
-              Starting from
-            </Text>
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: 'bold',
-                color: '#2563eb',
-              }}
-            >
-              ${startingPrice}
-            </Text>
-          </View>
-        ) : (
+          {/* TITLE */}
           <Text
-            style={{
-              fontSize: 12,
-              color: '#9ca3af',
-              marginTop: 6,
-            }}
+            numberOfLines={1}
+            className="text-white text-base font-bold"
           >
-            Price not available
+            {data.package_name || 'Package'}
           </Text>
-        )}
 
-        {/* BUTTON */}
-        <View
-          style={{
-            marginTop: 10,
-            backgroundColor: '#2563eb',
-            alignSelf: 'center',
-            paddingVertical: 6,
-            paddingHorizontal: 14,
-            borderRadius: 20,
-          }}
-        >
-          <Text style={{ color: '#fff', fontSize: 12 }}>
-            View Details
+          {/* DESCRIPTION */}
+          <Text
+            numberOfLines={2}
+            className="text-gray-300 text-[11px] mt-1"
+          >
+            {data?.description||
+              'Luxury experience with premium services'}
           </Text>
-        </View>
+
+  
+
+          {/* PRICE + BUTTON */}
+          <View className="flex-row justify-between items-center mt-3">
+            {startingPrice && (
+              <View className="bg-white px-3 py-1 rounded-full">
+                <Text className="text-black text-xs font-semibold">
+                  ${startingPrice}
+                </Text>
+              </View>
+            )}
+
+            <View className="bg-white px-4 py-1.5 rounded-full">
+              <Text className="text-black text-xs font-semibold">
+                See More
+              </Text>
+            </View>
+          </View>
+        </LinearGradient>
       </TouchableOpacity>
     )
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f4f4f4' }}>
+    <SafeAreaView className="flex-1 bg-neutral-100">
       {products.length === 0 ? (
-        <Text
-          style={{
-            textAlign: 'center',
-            marginTop: 40,
-            color: '#777',
-          }}
-        >
+        <Text className="text-center mt-10 text-gray-500">
           No packages available
         </Text>
       ) : (
