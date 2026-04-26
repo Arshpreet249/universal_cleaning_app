@@ -1,39 +1,33 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useContext } from 'react'
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
   Image,
 } from 'react-native'
 
-const Basket = ({ route }) => {
+import { ProductContext } from '../context/ProductContext'
+
+const Basket = () => {
+  const { products } = useContext(ProductContext)
   const [items, setItems] = useState([])
 
-  // ✅ LOAD & MERGE ITEMS
+  // ✅ LOAD FROM CONTEXT
   useEffect(() => {
-    if (route.params?.items) {
-      const newItems = route.params.items.map((item, index) => ({
+    if (products && products.length > 0) {
+      const mapped = products.map((item, index) => ({
         ...item,
         id: item.id ?? index,
         quantity: 1,
       }))
-
-      setItems(prev => {
-        const merged = [...prev]
-
-        newItems.forEach(newItem => {
-          const exists = merged.find(i => i.id === newItem.id)
-          if (!exists) merged.push(newItem)
-        })
-
-        return merged
-      })
+      setItems(mapped)
+    } else {
+      setItems([])
     }
-  }, [route.params])
+  }, [products])
 
-  // ✅ QTY FUNCTIONS
+  // ✅ INCREASE QTY
   const increaseQty = (id) => {
     setItems(prev =>
       prev.map(item =>
@@ -44,6 +38,7 @@ const Basket = ({ route }) => {
     )
   }
 
+  // ✅ DECREASE QTY
   const decreaseQty = (id) => {
     setItems(prev =>
       prev.map(item =>
@@ -54,11 +49,12 @@ const Basket = ({ route }) => {
     )
   }
 
+  // ✅ REMOVE ITEM
   const removeItem = (id) => {
     setItems(prev => prev.filter(item => item.id !== id))
   }
 
-  // ✅ TOTAL
+  // ✅ TOTAL PRICE
   const total = useMemo(() => {
     return items.reduce((sum, item) => {
       const price = Number(item.price_sgd || item.price || 0)
@@ -66,62 +62,65 @@ const Basket = ({ route }) => {
     }, 0)
   }, [items])
 
-  // ✅ RENDER ITEM
+  // ✅ CARD UI
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
+    
+    <View className="flex-row bg-white rounded-2xl p-3 mb-3 mx-4 items-center shadow-sm">
 
       {/* IMAGE */}
       <Image
         source={{
           uri:
-            item.package_image ||
-            item.image ||
-            'https://via.placeholder.com/100',
+            item.view_images_url
         }}
-        style={styles.image}
+        className="w-20 h-20 rounded-xl"
       />
 
-      {/* CONTENT */}
-      <View style={{ flex: 1 }}>
-        
+      {/* DETAILS */}
+      <View className="flex-1 ml-3">
+
         {/* PACKAGE NAME */}
-        <Text style={styles.title}>
-          {item.package_name || 'Package'}
+        <Text className="text-[15px] font-bold text-gray-900">
+          {item.package_name }
         </Text>
 
         {/* UNIT TYPE */}
         {item.unit_type && (
-          <Text style={styles.subText}>
+          <Text className="text-[12px] text-gray-500 mt-1">
             {item.unit_type}
           </Text>
         )}
 
         {/* PRICE */}
-        <Text style={styles.price}>
-          ${item.price_sgd || item.price}
+        <Text className="text-[13px] font-semibold text-green-600 mt-1">
+          ${item.price_sgd}
         </Text>
 
-        {/* QTY + REMOVE */}
-        <View style={styles.bottomRow}>
-          
-          {/* QTY */}
-          <View style={styles.qtyContainer}>
+        {/* ACTIONS */}
+        <View className="flex-row justify-between items-center mt-2">
+
+          {/* QTY CONTROLS */}
+          <View className="flex-row items-center bg-gray-100 rounded-full px-2 py-1">
+
             <TouchableOpacity onPress={() => decreaseQty(item.id)}>
-              <Text style={styles.qtyBtn}>−</Text>
+              <Text className="text-lg px-2">−</Text>
             </TouchableOpacity>
 
-            <Text style={styles.qtyText}>
+            <Text className="px-2 font-semibold">
               {item.quantity}
             </Text>
 
             <TouchableOpacity onPress={() => increaseQty(item.id)}>
-              <Text style={styles.qtyBtn}>＋</Text>
+              <Text className="text-lg px-2">＋</Text>
             </TouchableOpacity>
+
           </View>
 
           {/* REMOVE */}
           <TouchableOpacity onPress={() => removeItem(item.id)}>
-            <Text style={styles.remove}>Remove</Text>
+            <Text className="text-red-500 text-xs font-semibold">
+              Remove
+            </Text>
           </TouchableOpacity>
 
         </View>
@@ -130,154 +129,43 @@ const Basket = ({ route }) => {
   )
 
   return (
-    <View style={styles.container}>
-      
+    <View className="flex-1 bg-gray-50 pt-8 px-4">
+ <Text className="text-2xl font-bold text-gray-900 mb-4">
+        My Basket
+      </Text>
+
+      {/* LIST */}
       <FlatList
         data={items}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 120 }}
         ListEmptyComponent={
-          <Text style={styles.empty}>
-            Your cart is empty 🛒
+          <Text className="text-center mt-10 text-gray-400">
+            Your Basket is empty 🛒
           </Text>
         }
       />
 
       {/* FOOTER */}
-      <View style={styles.footer}>
+      <View className="absolute bottom-0 w-full bg-white px-5 py-4 flex-row justify-between items-center border-t border-gray-200">
+
         <View>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.total}>
+          <Text className="text-xs ">Total</Text>
+          <Text className="text-lg font-bold text-black">
             ${total.toFixed(2)}
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.checkoutBtn}>
-          <Text style={styles.checkoutText}>
+        <TouchableOpacity className="bg-black px-6 py-3 rounded-full">
+          <Text className="font-semibold">
             Checkout
           </Text>
         </TouchableOpacity>
+
       </View>
     </View>
   )
 }
 
 export default Basket
-
-// 🎨 STYLES
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f3f4f6',
-  },
-
-  card: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    marginHorizontal: 12,
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 16,
-    elevation: 3,
-  },
-
-  image: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    marginRight: 12,
-  },
-
-  title: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
-  subText: {
-    fontSize: 13,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-
-  price: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2563eb',
-    marginTop: 4,
-  },
-
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-
-  qtyContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-
-  qtyBtn: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    paddingHorizontal: 8,
-  },
-
-  qtyText: {
-    fontSize: 16,
-    marginHorizontal: 6,
-  },
-
-  remove: {
-    color: '#ef4444',
-    fontWeight: '500',
-  },
-
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderTopWidth: 1,
-    borderColor: '#e5e7eb',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  totalLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-
-  total: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-
-  checkoutBtn: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-  },
-
-  checkoutText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-
-  empty: {
-    textAlign: 'center',
-    marginTop: 80,
-    fontSize: 16,
-    color: '#6b7280',
-  },
-})  

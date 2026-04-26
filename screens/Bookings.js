@@ -1,162 +1,107 @@
 import React from 'react'
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity
-} from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 
 const bookingsData = [
   {
     id: 1,
-    title: 'Luxury Room',
+    title: 'One Time Cleaning',
     date: '25 April 2026',
     time: '02:00 PM',
-    price: '₹2500',
+    price: '$250',
     status: 'Confirmed',
   },
   {
     id: 2,
-    title: 'Deluxe Package',
+    title: 'Curtain Cleaning',
     date: '28 April 2026',
     time: '11:00 AM',
-    price: '₹1800',
+    price: '$80',
     status: 'Pending',
   },
   {
     id: 3,
-    title: 'Spa Session',
+    title: 'Head Massage',
     date: '30 April 2026',
     time: '05:00 PM',
-    price: '₹1200',
+    price: '$120',
     status: 'Cancelled',
   },
 ]
 
-const Bookings = () => {
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Confirmed':
-        return '#4CAF50'
-      case 'Pending':
-        return '#FF9800'
-      case 'Cancelled':
-        return '#F44336'
-      default:
-        return '#999'
-    }
+const getStatusStyle = (status) => {
+  switch (status) {
+    case 'Confirmed':
+      return 'bg-green-500'
+    case 'Pending':
+      return 'bg-orange-400'
+    case 'Cancelled':
+      return 'bg-red-500'
+    default:
+      return 'bg-gray-400'
   }
+}
 
+const Bookings = () => {
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <Text style={styles.header}>My Bookings</Text>
+    <View className="flex-1 bg-gray-100 pt-8 px-4">
+
+      {/* HEADER */}
+      <Text className="text-2xl font-bold text-gray-900 mb-4">
+        My Bookings
+      </Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+
         {bookingsData.map((item) => (
-          <View key={item.id} style={styles.card}>
-            
-            {/* Title + Status */}
-            <View style={styles.rowBetween}>
-              <Text style={styles.title}>{item.title}</Text>
+          <View
+            key={item.id}
+            className="bg-white mb-4 p-4 rounded-2xl shadow-md border border-gray-100"
+          >
+
+            {/* TITLE + STATUS */}
+            <View className="flex-row justify-between items-center">
+              <Text className="text-lg font-semibold text-gray-900">
+                {item.title}
+              </Text>
+
               <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: getStatusColor(item.status) },
-                ]}
+                className={`px-3 py-1 rounded-full ${getStatusStyle(
+                  item.status
+                )}`}
               >
-                <Text style={styles.statusText}>{item.status}</Text>
+                <Text className="text-white text-xs font-semibold">
+                  {item.status}
+                </Text>
               </View>
             </View>
 
-            {/* Details */}
-            <Text style={styles.detail}>📅 {item.date}</Text>
-            <Text style={styles.detail}>⏰ {item.time}</Text>
-            <Text style={styles.price}>{item.price}</Text>
+            {/* DETAILS */}
+            <Text className="text-gray-500 mt-2">
+              📅 {item.date}
+            </Text>
 
-            {/* Action Button */}
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>View Details</Text>
+            <Text className="text-gray-500 mt-1">
+              ⏰ {item.time}
+            </Text>
+
+            {/* PRICE */}
+            <Text className="text-black font-bold text-base mt-2">
+              {item.price}
+            </Text>
+
+            {/* BUTTON */}
+            <TouchableOpacity className="mt-4 bg-blue-500 py-3 rounded-xl">
+              <Text className="text-white text-center font-semibold">
+                View Details
+              </Text>
             </TouchableOpacity>
 
           </View>
         ))}
+
       </ScrollView>
     </View>
   )
 }
 
 export default Bookings
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f6fa',
-    padding: 16,
-  },
-
-  header: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-
-  card: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 15,
-    elevation: 3, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-  },
-
-  rowBetween: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-
-  statusText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  detail: {
-    marginTop: 6,
-    color: '#555',
-  },
-
-  price: {
-    marginTop: 8,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-
-  button: {
-    marginTop: 12,
-    backgroundColor: '#000',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-})

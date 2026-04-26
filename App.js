@@ -48,6 +48,7 @@ import { ProductProvider } from './context/ProductContext'
 import PackageDetail from './screens/PackageDetail'
 import Auth from './screens/Auth'
 import AllPackages from './screens/AllPackages'
+import "./global.css"
 
 const Stack = createNativeStackNavigator()
 

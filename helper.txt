@@ -1,0 +1,10 @@
+npm uninstall nativewind 
+npm uninstall tailwindcss
+
+delete node nodules and package.json
+
+npm i 
+
+follow instructions form below link :
+
+https://www.nativewind.dev/docs/getting-started/installation

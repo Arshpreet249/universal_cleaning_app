@@ -14,6 +14,9 @@ import { useNavigation } from '@react-navigation/native'
 import { useContext } from 'react'
 import { ProductContext } from '../context/ProductContext'
 import { LinearGradient } from 'expo-linear-gradient'
+import { Dimensions } from 'react-native'
+import { BlurView } from 'expo-blur'
+
 
 const Home = () => {
   const navigation = useNavigation()
@@ -22,6 +25,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true)
   const [promotions, setPromotions] = useState([])
   const [promoLoading, setPromoLoading] = useState(true)
+  const screenWidth = Dimensions.get('window').width
+
 
   useEffect(() => {
     fetchProducts()
@@ -41,12 +46,11 @@ const Home = () => {
       setLoading(false)
     }
   }
+
   const fetchPromotions = async () => {
     try {
       setPromoLoading(true)
       const res = await axios.get(`${apiBaseUrl}get-poromotios/`)
-
-      console.log('PROMOTIONS:', res.data)
       setPromotions(res.data || [])
     } catch (error) {
       console.log('PROMO API ERROR:', error.message)
@@ -55,36 +59,21 @@ const Home = () => {
     }
   }
 
-  const updatePromotion = async (promoId) => {
-    try {
-      const formData = new FormData()
-
-      formData.append('title', 'Updated Offer')
-      formData.append('description', 'Updated description')
-      formData.append('promo_code', 'NEWCODE123')
-      formData.append('per_user_count', '2')
-      formData.append('status', 'True')
-
-
-      const res = await axios.put(
-        `${apiBaseUrl}get-poromotios/${promoId}/`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      )
-
-      console.log('UPDATED PROMO:', res.data)
-
-      // 🔁 Refresh list after update
-      fetchPromotions()
-
-    } catch (error) {
-      console.log('UPDATE ERROR:', error.response?.data || error.message)
-    }
+  // ================= REFER LOGIC =================
+  const isRefer = (p) => {
+    const text = (p?.title || '').toLowerCase()
+    return (
+      text.includes('refer') ||
+      text.includes('invite') ||
+      text.includes('earn')
+    )
   }
+
+  const referPromo = promotions.find(isRefer)
+  const normalPromos = promotions.filter(p => !isRefer(p))
+
+
+
   const parseDescription = (item) => {
     try {
       return JSON.parse(item.description)
@@ -94,7 +83,7 @@ const Home = () => {
   }
 
   return (
-    <View style={{ flex: 1, paddingBottom: 40 }}>
+    <View style={{ flex: 1, }}>
 
       {/* BACKGROUND */}
       <Image
@@ -182,6 +171,7 @@ const Home = () => {
 
 
         {/* ================= PROMOS ================= */}
+
         <View style={{ marginHorizontal: 16, marginTop: 20 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
             Promos
@@ -189,68 +179,64 @@ const Home = () => {
 
           {promoLoading ? (
             <ActivityIndicator size="large" color="blue" />
-          ) : promotions.length === 0 ? (
+          ) : normalPromos.length === 0 ? (
             <Text style={{ padding: 10, color: '#777' }}>
               No promotions available
             </Text>
           ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={{ flexDirection: 'row', width: '100%' }} >
-
-                {promotions.map((promo) => (
-                  <TouchableOpacity
-                    key={promo.id}
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {normalPromos.map((promo) => (
+                <TouchableOpacity
+                  key={promo.id}
+                  style={{
+                    width: '100%',
+                    height: 160,
+                    marginBottom: 12,
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Image
+                    source={{ uri: promo.image_url }}
                     style={{
+                      position: 'absolute',
                       width: '100%',
-                      height: 150,
-                      borderRadius: 16,
-                      overflow: 'hidden',
-                      marginRight: 12,
+                      height: '100%',
+                    }}
+                    resizeMode="cover"
+                  />
+
+                  <View
+                    style={{
+                      flex: 1,
+                      backgroundColor: 'rgba(0,0,0,0.4)',
+                      padding: 16,
+                      justifyContent: 'space-between',
                     }}
                   >
-                    <Image
-                      source={{
-                        uri: promo.image_url || 'https://via.placeholder.com/300'
-                      }}
-                      style={{
-                        position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                      }}
-                      resizeMode="cover"
-                    />
+                    <View>
+                      <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
+                        {promo.title}
+                      </Text>
 
-                    <View
-                      style={{
-                        flex: 1,
-                        backgroundColor: 'rgba(0,0,0,0.4)',
-                        padding: 16,
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      {/* TEXT */}
-                      <View>
-                        <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
-                          {promo.title}
-                        </Text>
+                      <Text style={{ color: '#fff', fontSize: 13, marginTop: 6 }}>
+                        {promo.description}
+                      </Text>
 
-                        <Text style={{ color: '#fff', fontSize: 13, marginTop: 6 }}>
-                          {promo.description}
-
-                          
-                        </Text>
-                         <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginTop: 10 }}>
-                          {promo.promo_code}
-                        </Text>
-                      </View>
-
-
-
+                      <Text
+                        style={{
+                          color: '#fff',
+                          fontSize: 18,
+                          fontWeight: 'bold',
+                          marginTop: 10,
+                        }}
+                      >
+                        Use Code {promo.promo_code}
+                      </Text>
                     </View>
-                  </TouchableOpacity>
-                ))}
-
-              </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
             </ScrollView>
           )}
         </View>
@@ -303,11 +289,12 @@ const Home = () => {
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', paddingHorizontal: 16 }}>
 
-                {products.slice(0, 4).map((item) => {   // ✅ only 4 items
+                {products.slice(0, 4).map((item) => {
                   const data = parseDescription(item)
                   if (!data) return null
 
                   return (
+
                     <TouchableOpacity
                       key={item.id}
                       style={{
@@ -316,40 +303,57 @@ const Home = () => {
                         height: 150,
                         marginRight: 12,
                         borderRadius: 12,
-                        // padding: 12,
-                        flexDirection: "row",
+                        flexDirection: 'row',
                         alignItems: 'center',
+                        overflow: 'hidden',
                       }}
                       onPress={() =>
-                        navigation.navigate('PackageDetail', {   // ✅ FIXED
+                        navigation.navigate('PackageDetail', {
                           item,
                           parsed: data,
                         })
                       }
                     >
+                      {/* IMAGE */}
                       <Image
                         source={{ uri: item.view_images_url }}
                         style={{
                           width: '50%',
                           height: '100%',
-                          borderTopLeftRadius: 8,
-                          borderBottomLeftRadius: 8
-                          // backgroundColor: '#e9ecef'
+                          borderTopLeftRadius: 12,
+                          borderBottomLeftRadius: 12,
                         }}
                       />
 
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          marginLeft: 10,
-                          flex: 1,
-                          fontWeight: 'bold'
-                        }}
-                        numberOfLines={3}
-                      >
-                        {data.package_name}
-                      </Text>
+                      {/* TEXT SECTION */}
+                      <View style={{ flex: 1, paddingHorizontal: 10, justifyContent: 'center' }}>
 
+                        {/* TITLE */}
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 'bold',
+                            color: '#111',
+                          }}
+                          numberOfLines={2}
+                        >
+                          {data.package_name}
+                        </Text>
+
+                        {/* DESCRIPTION (NEW) */}
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            color: '#666',
+                            marginTop: 6,
+                            lineHeight: 15,
+                          }}
+                          numberOfLines={3}
+                        >
+                          {data.description}
+                        </Text>
+
+                      </View>
                     </TouchableOpacity>
                   )
                 })}
@@ -358,12 +362,14 @@ const Home = () => {
             </ScrollView>
           )}
         </View>
+
+        {/* ================= Recent Booking ================= */}
         <View style={{ marginHorizontal: 16, marginTop: 20 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
             Recent Bookings
           </Text>
 
-          {!products.length ? (
+          {/* {!products.length ? (
             <Text style={{ paddingHorizontal: 10, color: '#777' }}>
               No recent bookings yet
             </Text>
@@ -395,10 +401,9 @@ const Home = () => {
                       }
                     >
 
-                      {/* TOP DESIGN */}
 
                       <View style={{ height: 170, overflow: 'hidden' }}>
-                        {/* API IMAGE */}
+                        
                         <Image
                           source={{ uri: item.view_images_url }}
                           style={{
@@ -409,7 +414,6 @@ const Home = () => {
                           resizeMode="cover"
                         />
 
-                        {/* DARK OVERLAY */}
                         <LinearGradient
                           colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.7)']}
                           style={{
@@ -418,7 +422,6 @@ const Home = () => {
                             padding: 10,
                           }}
                         >
-                          {/* TITLE */}
                           <Text
                             style={{
                               color: '#fff',
@@ -432,21 +435,22 @@ const Home = () => {
                         </LinearGradient>
                       </View>
 
-                      {/* BOTTOM */}
+                     
                       <View
                         style={{
                           flex: 1,
                           padding: 10,
                           justifyContent: 'space-between',
+                          
                         }}
                       >
-                        <Text style={{ fontSize: 12, color: '#666', marginLeft: 10 }}>
+                        <Text className='text-sm ml-3 color-gray-600'>
                           Tuesday 20th April
                         </Text>
-                        <Text style={{ fontSize: 12, color: '#666', marginLeft: 10 }}>
+                        <Text className='text-sm ml-3 color-gray-600'>
                           Tuesday 20th April
                         </Text>
-                        <Text style={{ fontSize: 12, color: '#666', marginLeft: 10 }}>
+                         <Text className='text-sm ml-3 color-gray-600'>
                           Tuesday 20th April
                         </Text>
 
@@ -459,56 +463,116 @@ const Home = () => {
 
               </View>
             </ScrollView>
-          )}
+          )} */}
+
+       <View
+      style={{
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        overflow: 'hidden',
+        elevation: 6,
+        marginHorizontal: 16,
+        marginTop: 10,
+      }}
+    >
+      {/* LEFT RED STRIP */}
+      <View
+        style={{
+          width: 6,
+          backgroundColor: 'indianred',
+        }}
+      />
+
+      {/* CONTENT */}
+      <View style={{ flex: 1, padding: 12 }}>
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: 'indianred',
+          }}
+        >
+          
+        </Text>
+
+        
+        <Text
+        className='text-lg'
+        >
+         Oh! No!
+        </Text>
+
+        <Text
+          style={{
+            color: '#666',
+            marginTop: 4,
+            fontSize: 13,
+          }}
+        >
+         You should login before booking.
+        </Text>
+      </View>
+
+     
+    </View>
         </View>
         {/* ================= REFER & EARN ================= */}
-        <View style={{ marginHorizontal: 16, marginTop: 20 }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
-            Refer & Earn
-          </Text>
+        {referPromo && (
+          <View style={{ marginHorizontal: 16, marginTop: 20, marginBottom: 40 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
+              Refer & Earn
+            </Text>
 
-          <TouchableOpacity
-            style={{
-              height: 150,
-              borderRadius: 16,
-              overflow: 'hidden',
-              backgroundColor: '#6C63FF',
-              flexDirection: 'row',
-              alignItems: 'center',
-              padding: 16,
-            }}
-            onPress={() => navigation.navigate('Refer')}
-          >
-            {/* LEFT TEXT */}
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
-                Invite Friends 🎁
-              </Text>
-
-              <Text style={{ color: '#fff', fontSize: 13, marginTop: 6 }}>
-                Earn $50 for every referral
-              </Text>
-
-              <View
+            <TouchableOpacity
+              style={{
+                height: 160,
+                borderRadius: 16,
+                overflow: 'hidden',
+              }}
+              onPress={() => navigation.navigate('Refer')}
+            >
+              <Image
+                source={{ uri: referPromo.image_url }}
                 style={{
-                  marginTop: 10,
-                  backgroundColor: '#fff',
-                  alignSelf: 'flex-start',
-                  paddingVertical: 5,
-                  paddingHorizontal: 12,
-                  borderRadius: 20,
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
                 }}
-              >
-                <Text style={{ color: '#6C63FF', fontSize: 12 }}>
-                  Refer Now
-                </Text>
+                resizeMode="cover"
+              />
+
+              <View style={{
+                flex: 1,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                padding: 16,
+                justifyContent: 'space-between',
+              }}>
+                <View>
+                  <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>
+                    {referPromo.title}
+                  </Text>
+
+                  <Text style={{ color: '#fff', fontSize: 13, marginTop: 6 }}>
+                    {referPromo.description}
+                  </Text>
+                </View>
+
+                <View style={{
+                  backgroundColor: '#fff',
+                  paddingVertical: 6,
+                  paddingHorizontal: 14,
+                  borderRadius: 20,
+                  alignSelf: 'flex-start',
+                }}>
+                  <Text style={{ color: '#6C63FF', fontWeight: 'bold' }}>
+                    Refer Now
+                  </Text>
+                </View>
               </View>
-            </View>
-
-            {/* RIGHT IMAGE */}
-
-          </TouchableOpacity>
-        </View>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
