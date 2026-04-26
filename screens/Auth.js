@@ -11,7 +11,7 @@ import {
   Alert
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { REACT_APP_HOST_API_URL} from '../components/variable'
+import { REACT_APP_HOST_API_URL } from '../components/variable'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
 const Auth = () => {
@@ -37,6 +37,10 @@ const Auth = () => {
     new_password: '',
     confirm_password: ''
   })
+  const [referralCode, setReferralCode] = useState('')
+  const [referralValid, setReferralValid] = useState(null)
+  const [refLoading, setRefLoading] = useState(false)
+  const [refUser, setRefUser] = useState(null) // optional (referrer info)
 
   const handleChange = (key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }))
@@ -53,11 +57,13 @@ const Auth = () => {
       const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/create-user/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, role: 'User' })
+        body: JSON.stringify({ ...formData, role: 'User' ,
+                  referral_code_input: referralValid ? referralCode.trim() : null
+        })
       })
 
       const data = await res.json()
-      console.log("data>>>>>>>>>>>>>>>>>>>>",data)
+      console.log("data>>>>>>>>>>>>>>>>>>>>", data)
 
       if (res.ok) {
         Alert.alert('Success', 'OTP sent to email')
@@ -66,10 +72,51 @@ const Auth = () => {
         Alert.alert('Error', data.error)
       }
     } catch {
-       console.log('REGISTER ERROR:', error)
+      console.log('REGISTER ERROR:', error)
       Alert.alert('Error', 'Registration failed')
     }
     setLoading(false)
+  }
+
+
+  // ================= Verify Refeeral =================
+  const handleVerifyReferral = async () => {
+    if (!referralCode.trim()) {
+      return Alert.alert('Error', 'Enter referral code')
+    }
+
+    setRefLoading(true)
+
+    try {
+      const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/referral-code-verify/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referral_code: referralCode.trim()
+        })
+      })
+
+      const data = await res.json()
+      console.log("REF VERIFY:", data)
+
+      if (res.ok) {
+        setReferralValid(true)
+        setRefUser(data?.user || null) // if backend returns referrer info
+
+        Alert.alert('Success', data.message || 'Referral applied 🎉')
+      } else {
+        setReferralValid(false)
+        setRefUser(null)
+
+        Alert.alert('Error', data.error || 'Invalid referral code')
+      }
+
+    } catch (error) {
+      console.log('REF ERROR:', error)
+      Alert.alert('Error', error.message || 'Verification failed')
+    }
+
+    setRefLoading(false)
   }
 
   // ================= LOGIN =================
@@ -89,7 +136,11 @@ const Auth = () => {
 
       if (res.ok) {
         Alert.alert('Success', 'Login successful')
-        navigation.navigate('Home')
+        // navigation.navigate('Home')
+        navigation.replace('Main', {
+          screen: 'Home'
+        })
+
       } else {
         Alert.alert('Error', data.error)
       }
@@ -126,7 +177,36 @@ const Auth = () => {
     }
     setLoading(false)
   }
+  const handleResendOtp = async () => {
+    if (!formData.email) {
+      return Alert.alert('Error', 'Email is required')
+    }
 
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/resend-otp/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      })
+
+      const data = await res.json()
+      console.log("RESEND OTP:", data)
+
+      if (res.ok) {
+        Alert.alert('Success', data.message || "OTP resent successfully")
+      } else {
+        Alert.alert('Error', data.error || "Failed to resend OTP")
+      }
+
+    } catch (error) {
+      console.log("RESEND ERROR:", error)
+      Alert.alert('Error', error.message || "Error resending OTP")
+    }
+
+    setLoading(false)
+  }
   // ================= FORGOT PASSWORD =================
   const handleForgotPassword = async () => {
     if (!resetData.email) {
@@ -199,11 +279,11 @@ const Auth = () => {
         <View style={styles.card}>
 
           <Text style={styles.title}>
-            {step === 'login' ? 'Welcome Back' :
-             step === 'register' ? 'Sign Up' :
-             step === 'forgot' ? 'Forgot Password' :
-             step === 'reset' ? 'Reset Password' :
-             'Verify OTP'}
+            {step === 'login' ? 'Login' :
+              step === 'register' ? 'Sign Up' :
+                step === 'forgot' ? 'Forgot Password' :
+                  step === 'reset' ? 'Reset Password' :
+                    'Verify OTP'}
           </Text>
 
           {/* LOGIN */}
@@ -234,8 +314,7 @@ const Auth = () => {
               <View style={styles.footer}>
                 <Text>Don't have an account?</Text>
                 <TouchableOpacity onPress={() => setStep('register')}>
-                  <Text style={  {color: '#0096c7',
-    fontWeight: '600'}}> Sign Up</Text>
+                  <Text className='text-blue-500'> Sign Up</Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -253,6 +332,52 @@ const Auth = () => {
               <TextInput placeholder="Phone" style={styles.input}
                 onChangeText={(t) => handleChange('mobile', t)}
               />
+
+              <View style={{ marginBottom: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+
+                  <TextInput
+                    placeholder="Referral Code (optional)"
+                    style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                    value={referralCode}
+                    onChangeText={(text) => {
+                      setReferralCode(text)
+                      setReferralValid(null) // reset on change
+                    }}
+                  />
+
+                  <TouchableOpacity
+                    style={{
+                      marginLeft: 8,
+                      backgroundColor: '#0096c7',
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                      borderRadius: 10
+                    }}
+                    onPress={handleVerifyReferral}
+                  >
+                    {refLoading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={{ color: '#fff', fontSize: 12 }}>Verify</Text>
+                    )}
+                  </TouchableOpacity>
+
+                </View>
+
+                {/* STATUS */}
+                {referralValid === true && (
+                  <Text style={{ color: 'green', marginTop: 5 }}>
+                    ✓ Applied {refUser ? `(${refUser.username})` : ''}
+                  </Text>
+                )}
+
+                {referralValid === false && (
+                  <Text style={{ color: 'red', marginTop: 5 }}>
+                    ✗ Invalid referral code
+                  </Text>
+                )}
+              </View>
               <TextInput placeholder="Password" secureTextEntry style={styles.input}
                 onChangeText={(t) => handleChange('password', t)}
               />
@@ -265,9 +390,13 @@ const Auth = () => {
                   <Text style={styles.buttonText}>Create Account</Text>}
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => setStep('login')}>
-                <Text style={styles.link}>Back to Login</Text>
-              </TouchableOpacity>
+             <View style={styles.footer}>
+  <Text>Already have an account?</Text>
+
+  <TouchableOpacity onPress={() => setStep('login')}>
+    <Text className='text-blue-500'> Login</Text>
+  </TouchableOpacity>
+</View>
             </>
           )}
 
@@ -302,6 +431,11 @@ const Auth = () => {
               <TouchableOpacity style={styles.button} onPress={handleForgotPassword}>
                 {loading ? <ActivityIndicator color="#fff" /> :
                   <Text style={styles.buttonText}>Send OTP</Text>}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleResendOtp} disabled={loading}>
+                <Text style={{ color: '#2563EB', textAlign: 'center', marginTop: 10 }}>
+                  Resend OTP
+                </Text>
               </TouchableOpacity>
             </>
           )}
@@ -414,6 +548,6 @@ const styles = StyleSheet.create({
     color: '#0096c7',
     fontWeight: '600'
   },
-   
+
 })
 
