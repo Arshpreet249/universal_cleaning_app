@@ -1,22 +1,21 @@
-
-import React from 'react'
+import React, { useContext } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import Basket from '../screens/Basket'
+import { AuthContext } from '../context/AuthContext'
 
 const TabBar = ({ state, navigation }) => {
+  const { cartCount } = useContext(AuthContext)
 
   const iconMap = {
     Home: 'home',
     Booking: 'calendar',
-    Basket : 'basket',
+    Basket: 'basket', // ✅ FIXED
     Profile: 'person',
   }
 
   return (
     <View style={styles.wrapper}>
       <View style={styles.container}>
-
         {state.routes.map((route, index) => {
           const isActive = state.index === index
 
@@ -26,11 +25,22 @@ const TabBar = ({ state, navigation }) => {
               style={styles.tab}
               onPress={() => navigation.navigate(route.name)}
             >
-              <Ionicons
-                name={iconMap[route.name]}
-                size={22}
-                color={isActive ? '#0096c7' : '#999'}
-              />
+              <View style={{ position: 'relative' }}>
+                <Ionicons
+                  name={iconMap[route.name]}
+                  size={22}
+                  color={isActive ? '#0096c7' : '#999'}
+                />
+
+                {/* 🔥 BADGE */}
+                {route.name === 'Basket' && cartCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
               <Text style={[styles.label, isActive && styles.activeLabel]}>
                 {route.name}
@@ -38,7 +48,6 @@ const TabBar = ({ state, navigation }) => {
             </TouchableOpacity>
           )
         })}
-
       </View>
     </View>
   )
@@ -54,7 +63,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    flexDirection: 'row',   
+    flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: '#fff',
     width: '95%',
@@ -62,12 +71,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 50,
-
-    elevation: 5, // Android shadow
+    elevation: 5,
   },
   tab: {
     alignItems: 'center',
-    flex: 1, // ✅ evenly spaced
+    flex: 1,
   },
   label: {
     fontSize: 12,
@@ -77,5 +85,24 @@ const styles = StyleSheet.create({
   activeLabel: {
     color: '#000',
     fontWeight: '600',
+  },
+
+  // 🔥 BADGE STYLE
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -10,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 })

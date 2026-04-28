@@ -1,10 +1,10 @@
+
 import React, { useState } from 'react'
 import {
   View,
   Text,
   ScrollView,
   Image,
-  StyleSheet,
   TouchableOpacity,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
@@ -41,7 +41,7 @@ const PackageDetail = ({ route }) => {
 
   const data = getDataArray(parsed)
 
-   // ✅ GET STARTING PRICE
+  // ✅ GET STARTING PRICE
   const getStartingPrice = (data) => {
     if (!data || data.length === 0) return null
 
@@ -49,7 +49,6 @@ const PackageDetail = ({ route }) => {
       .map(item => {
         let price = item.price_sgd
 
-        // handle range like "590–650"
         if (typeof price === 'string') {
           const num = price.split(/[–-]/)[0]
           return parseFloat(num)
@@ -80,6 +79,7 @@ const PackageDetail = ({ route }) => {
   }
 
   const headers = getHeaders(data)
+  const isShortTable = headers.length <= 3
 
   // ✅ ROW VALUES
   const renderRowValues = (item, headers) => {
@@ -98,7 +98,7 @@ const PackageDetail = ({ route }) => {
         value = `${value} mins`
 
       return (
-        <Text key={index} style={styles.cell}>
+        <Text key={index} className="w-[110px] text-[13px] text-gray-900">
           {value ? `${key === 'price_sgd' ? '$' : ''}${value}` : '-'}
         </Text>
       )
@@ -131,14 +131,19 @@ const PackageDetail = ({ route }) => {
   // =========================
 
   const SectionTitle = ({ title }) => (
-    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text className="text-[20px] font-bold mt-5 mb-2 text-blue-600">
+      {title}
+    </Text>
   )
 
   const renderList = (data) => {
     if (!data) return null
 
     return data.map((item, index) => (
-      <Text key={index} style={styles.listItem}>
+      <Text
+        key={index}
+        className="text-[13px] text-gray-700 mb-2 leading-[18px] bg-gray-100 p-3 rounded-xl"
+      >
         • {typeof item === 'string' ? item : item.description || '-'}
       </Text>
     ))
@@ -148,17 +153,22 @@ const PackageDetail = ({ route }) => {
     if (!terms) return null
 
     return terms.map((item, index) => (
-      <View key={index} style={{ marginBottom: 10 }}>
-        <Text style={styles.termHeading}>{item.heading || item.condition}</Text>
+      <View key={index} className="mb-2">
+        <Text className="text-[14px] font-semibold text-blue-600 mb-1">
+          {item.heading || item.condition}
+        </Text>
 
         {Array.isArray(item.description)
           ? item.description.map((d, i) => (
-              <Text key={i} style={styles.listItem}>
-                • {d}
-              </Text>
-            ))
+            <Text
+              key={i}
+              className="text-[13px] text-gray-700 mb-2 leading-[18px] bg-gray-100 p-3 rounded-xl"
+            >
+              • {d}
+            </Text>
+          ))
           : (
-            <Text style={styles.listItem}>
+            <Text className="text-[13px] text-gray-700 mb-2 leading-[18px] bg-gray-100 p-3 rounded-xl">
               • {item.description}
             </Text>
           )}
@@ -170,54 +180,72 @@ const PackageDetail = ({ route }) => {
     if (!refund) return null
 
     return Object.entries(refund).map(([key, value], index) => (
-      <Text key={index} style={styles.listItem}>
+      <Text
+        key={index}
+        className="text-[13px] text-gray-700 mb-2 leading-[18px] bg-gray-100 p-3 rounded-xl"
+      >
         • {key.replace(/_/g, ' ').toUpperCase()} : {value}
       </Text>
     ))
   }
 
   return (
-    <View style={{ flex: 1, }}>
-      <ScrollView style={styles.container}>
+    <View className="flex-1">
+      <ScrollView className="flex-1">
         {/* IMAGE */}
-        <Image source={{ uri: item.view_images_url}} style={styles.image} />
+        <Image
+          source={{ uri: item.view_images_url }}
+          className="w-full h-[220px]"
+        />
 
-        <View style={styles.content}>
+        <View className="bg-white -mt-5 rounded-t-2xl p-4">
           {/* TITLE */}
-          <Text style={styles.title}>
+          <Text className="text-[22px] font-bold mb-4 text-blue-600">
             {parsed?.package_name || 'Package'}
           </Text>
 
-           {/* 🔥 STARTING PRICE UI */}
+          {/* STARTING PRICE */}
           {startingPrice && (
-            <View style={styles.priceContainer}>
+            <View className="flex-row justify-between items-center mb-5">
               <View>
-                <Text style={styles.startingText}>Starting from</Text>
-                <Text style={styles.price}>
+                <Text className="text-[12px] text-gray-500">
+                  Starting from
+                </Text>
+                <Text className="text-[26px] font-bold text-blue-600">
                   ${startingPrice}
-                  <Text style={styles.per}> /hr(s)</Text>
+                  <Text className="text-[14px] text-gray-500">
+                    {' '} /hr(s)
+                  </Text>
                 </Text>
               </View>
             </View>
           )}
-           {/* DESCRIPTION */}
+
+          {/* DESCRIPTION */}
           {parsed?.description && (
             <>
               <SectionTitle title="Description" />
               {Array.isArray(parsed.description)
                 ? renderList(parsed.description)
-                : <Text style={styles.listItem}>{parsed.description}</Text>}
+                : (
+                  <Text className="text-[13px] text-gray-700 mb-2 bg-gray-100 p-3 rounded-xl">
+                    {parsed.description}
+                  </Text>
+                )}
             </>
           )}
 
           {/* TABLE */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View>
+          {/* <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className=''>
               {headers.length > 0 && (
-                <View style={styles.tableHeader}>
-                  <Text style={{ width: 40 }} />
+                <View className="flex-row bg-gray-100 py-3 px-3 rounded-xl mb-2">
+                  <Text className="w-[40px] text-center" />
                   {headers.map((h, i) => (
-                    <Text key={i} style={styles.headerText}>
+                    <Text
+                      key={i}
+                      className="w-[110px] text-[12px] font-bold text-blue-600"
+                    >
                       {h}
                     </Text>
                   ))}
@@ -232,20 +260,95 @@ const PackageDetail = ({ route }) => {
                 return (
                   <TouchableOpacity
                     key={index}
-                    style={[
-                      styles.rowCard,
-                      isSelected && styles.selectedRow,
-                    ]}
+                    className={`flex-row items-center bg-white py-4 px-3 rounded-xl mb-2  ${
+                      isSelected
+                        ? 'bg-blue-50 border border-blue-600'
+                        : ''
+                    }`}
                     onPress={() => toggleSelection(row, index)}
                   >
-                    <View style={styles.checkbox}>
-                      <Text style={styles.checkText}>
+                    <View className="w-6 h-6 border-[1.5px] border-blue-600 mr-2 items-center justify-center rounded-md">
+                      <Text className="text-blue-600 font-bold">
                         {isSelected ? '✓' : ''}
                       </Text>
                     </View>
 
-                    <View style={{ flexDirection: 'row' }}>
+                    <View className="flex-row">
                       {renderRowValues(row, headers)}
+                    </View>
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+            
+          </ScrollView> */}
+
+
+          <ScrollView
+            horizontal={!isShortTable}
+            showsHorizontalScrollIndicator={false}
+          >
+            <View className={`${isShortTable ? 'w-full' : ''}`}>
+
+              {/* HEADER */}
+              {headers.length > 0 && (
+                <View className="flex-row bg-gray-100 py-3 px-3 rounded-xl mb-2">
+                  <Text className="w-10 text-center" />
+
+                  {headers.map((h, i) => (
+                    <Text
+                      key={i}
+                      className={`text-[12px] font-bold text-blue-600 ${isShortTable ? 'flex-1 text-center' : 'w-[110px]'
+                        }`}
+                    >
+                      {h}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              {/* ROWS */}
+              {data.map((row, index) => {
+                const isSelected = selectedItems.some(i => i.id === index)
+
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => toggleSelection(row, index)}
+                    className={`flex-row items-end py-4 px- rounded-xl mb-2 ${isSelected
+                        ? 'bg-blue-50 border border-blue-600'
+                        : 'bg-white'
+                      }`}
+                  >
+                    {/* CHECKBOX */}
+                    <View className="w-6 h-6 border-[1.5px] border-blue-600 mr-2 items-center justify-center rounded-md">
+                      <Text className="text-blue-600 font-bold">
+                        {isSelected ? '✓' : ''}
+                      </Text>
+                    </View>
+
+                    {/* VALUES */}
+                    <View className="flex-row flex-1">
+                      {headers.map((header, i) => {
+                        let key =
+                          header === 'PRICE'
+                            ? 'price_sgd'
+                            : header.toLowerCase().replace(/ /g, '_')
+
+                        let value = row[key]
+
+                        return (
+                          <Text
+                            key={i}
+                            className={`text-[13px] text-gray-900 ${isShortTable
+                                ? 'flex-1 text-center'
+                                : 'w-[110px]'
+                              }`}
+                          >
+                            {value ? `${key === 'price_sgd' ? '$' : ''}${value}` : '-'}
+                          </Text>
+                        )
+                      })}
                     </View>
                   </TouchableOpacity>
                 )
@@ -253,18 +356,16 @@ const PackageDetail = ({ route }) => {
             </View>
           </ScrollView>
 
-         
-
+          
           {/* TERMS */}
           {parsed?.terms_and_conditions && (
             <>
               <SectionTitle title="Terms & Conditions" />
               {renderTerms(parsed.terms_and_conditions)}
-   
             </>
           )}
-          
-      {/* DEPOSIT */}
+
+          {/* DEPOSIT */}
           {parsed?.deposit_policy && (
             <>
               <SectionTitle title="Deposit Policy" />
@@ -293,8 +394,8 @@ const PackageDetail = ({ route }) => {
             <>
               <SectionTitle title="Policies" />
               {Object.entries(parsed.policies).map(([key, value], i) => (
-                <View key={i} style={{ marginBottom: 10 }}>
-                  <Text style={styles.termHeading}>
+                <View key={i} className="mb-2">
+                  <Text className="text-[14px] font-semibold text-blue-600 mb-1">
                     {key.replace(/_/g, ' ').toUpperCase()}
                   </Text>
                   {renderList(value)}
@@ -307,12 +408,12 @@ const PackageDetail = ({ route }) => {
 
       {/* BUTTON */}
       {selectedItems.length > 0 && (
-        <View style={styles.bottomBar}>
+        <View className="p-3 bg-white border-t border-gray-200">
           <TouchableOpacity
-            style={styles.cartBtn}
+            className="bg-blue-600 p-4 rounded-xl items-center"
             onPress={addToBasket}
           >
-            <Text style={styles.cartText}>
+            <Text className="text-white font-bold text-[16px]">
               Add {selectedItems.length} items to Basket
             </Text>
           </TouchableOpacity>
@@ -324,161 +425,3 @@ const PackageDetail = ({ route }) => {
 
 export default PackageDetail
 
-// 🎨 STYLES
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-
-  image: { width: '100%', height: 220 },
-
-  content: {
-    backgroundColor: '#fff',
-    marginTop: -20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
-  },
-
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#2563eb',
-    
-  },
-
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    marginBottom: 10,
-   
-  },
-
-  headerText: {
-    width: 110,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#2563eb',
-    
-  },
-
-  rowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    marginBottom: 10,
-    elevation: 2,
-  },
-
-  selectedRow: {
-    backgroundColor: '#eff6ff',
-    borderWidth: 1,
-    borderColor: '#2563eb',
-  },
-
-  checkbox: {
-    width: 26,
-    height: 26,
-    borderWidth: 1.5,
-    borderColor: '#2563eb',
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 6,
-  },
-
-  checkText: {
-    color: '#2563eb',
-    fontWeight: 'bold',
-  },
-
-  cell: {
-    width: 110,
-    fontSize: 13,
-    color: '#111827',
-  },
-
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 8,
-    color: '#2563eb',
-    
-  },
-
-  listItem: {
-    fontSize: 13,
-    color: '#374151',
-    marginBottom: 6,
-    lineHeight: 18,
-     backgroundColor: '#f1f5f9',
-     padding: 12,
-     borderRadius: 12
-  },
-
-  termHeading: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2563eb',
-    marginBottom: 4,
-  },
-
-  bottomBar: {
-    padding: 12,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-
-  cartBtn: {
-    backgroundColor: '#2563eb',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-
-  cartText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-    priceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-
-  startingText: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-    price: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#2563eb',
-  },
-
-  per: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  scopeImage: {
-  width: '100%',
-  height: 180,
-},
-
-imageCard: {
-  marginTop: 12,
-  borderRadius: 14,
-  overflow: 'hidden',
-  elevation: 3,
-  backgroundColor: '#fff',
-},
-})

@@ -48,7 +48,7 @@ export default function Profile() {
     <SafeAreaView className="flex-1 bg-white px-4">
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        <Text className="text-2xl font-bold my-5  text-primary">
+        <Text className="text-2xl font-bold my-5  text-primary text-center">
           Profile
         </Text>
 
@@ -75,7 +75,7 @@ export default function Profile() {
               icon={require('../assets/icons/address.png')}
               title="Address"
               subtitle="View and edit profile"
-              // onPress={() => navigation.navigate('Profile')}
+              onPress={() => navigation.navigate('Address')}
             />
 
             <MenuItem

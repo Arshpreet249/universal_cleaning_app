@@ -7,6 +7,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
   const [loading, setLoading] = useState(true)
+const [cartCount, setCartCount] = useState(0)
+const [basketItems, setBasketItems] = useState([])
 
   // Load user from storage
   useEffect(() => {
@@ -31,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, setUser, setToken, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, setUser, setToken, logout, loading ,setCartCount,cartCount, basketItems, setBasketItems    }}>
       {children}
     </AuthContext.Provider>
   )

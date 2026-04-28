@@ -1,40 +1,3 @@
-// import React from 'react'
-// import { NavigationContainer } from '@react-navigation/native'
-// import { createNativeStackNavigator } from '@react-navigation/native-stack'
-// import { StatusBar } from 'expo-status-bar'
-// import { SafeAreaProvider } from 'react-native-safe-area-context'
-// import Home from './screens/Home'
-// import AllPackages from './screens/AllPackages'
-// import SignIn from './screens/SignIn'
-// import SignUp from './screens/SignUp'
-// import Menu from './screens/Menu'
-// import BackButton from './components/BackButton'
-// const Stack = createNativeStackNavigator()
-
-// export default function App() {
-//   return (
-//        <SafeAreaProvider>
-//     <NavigationContainer>
-//       <Stack.Navigator 
-//       screenOptions={{ headerShown: false }}>
-        
-
-//         <Stack.Screen name="Home" component={Home} />
-//         <Stack.Screen name="Menu" component={Menu} />
-//         <Stack.Screen name="AllPackages" component={AllPackages} />
-//         <Stack.Screen name="SignIn" component={SignIn} />
-//         <Stack.Screen name="SignUp" component={SignUp} />
-
-//       </Stack.Navigator>
-
-//       <StatusBar style="auto" />
-//     </NavigationContainer>
-//     </SafeAreaProvider>
-//   )
-// }
-
-
-
 import React from 'react'
 import { Platform } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
@@ -50,6 +13,9 @@ import Auth from './screens/Auth'
 import AllPackages from './screens/AllPackages'
 import "./global.css"
 import { AuthProvider } from './context/AuthContext'
+import Address from './screens/Address'
+import Toast from 'react-native-toast-message';
+
 const Stack = createNativeStackNavigator()
 
 export default function App() {
@@ -84,13 +50,15 @@ export default function App() {
           <Stack.Screen name="PackageDetail" component={PackageDetail} options={{ title: 'Packages' }} />
           <Stack.Screen name="Auth" component={Auth} options={{ title: 'Authentication' }} />
           <Stack.Screen name='AllPackages' component={AllPackages} options={{title: 'Allpackages'}}/>
+          <Stack.Screen name='Address' component={Address} options={{title: 'Address'}}/>
 
         </Stack.Navigator>
-
+            <Toast />
         <StatusBar style="auto" />
       </NavigationContainer>
       </ProductProvider>
     </SafeAreaProvider>
+   
     </AuthProvider>
   )
 }

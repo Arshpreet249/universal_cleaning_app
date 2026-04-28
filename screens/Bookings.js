@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
-
+import { SafeAreaView } from 'react-native-safe-area-context'
 const bookingsData = [
   {
     id: 1,
@@ -43,10 +43,11 @@ const getStatusStyle = (status) => {
 
 const Bookings = () => {
   return (
-    <View className="flex-1 bg-gray-100 pt-8 px-4">
+     <SafeAreaView className="flex-1  bg-gray-100 ">
+    <View className="flex-1 px-4">
 
       {/* HEADER */}
-      <Text className="text-2xl font-bold text-gray-900 mb-4">
+      <Text className="text-2xl font-bold text-primary mb-4 text-center">
         My Bookings
       </Text>
 
@@ -101,6 +102,7 @@ const Bookings = () => {
 
       </ScrollView>
     </View>
+    </SafeAreaView>
   )
 }
 

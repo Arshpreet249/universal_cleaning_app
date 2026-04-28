@@ -20,7 +20,7 @@ import { AuthContext } from '../context/AuthContext'
 const Auth = () => {
   const navigation = useNavigation()
 
-  const { user, token,setUser,setToken, logout } = useContext(AuthContext)
+  const { user, token,setUser,setToken, logout , setCartCount} = useContext(AuthContext)
 
   // login | register | otp | forgot | reset
   const [step, setStep] = useState('login')
@@ -146,6 +146,7 @@ const Auth = () => {
         await AsyncStorage.setItem('user', JSON.stringify(data))
         setUser(data)
         setToken(data?.access_token)
+         setCartCount(data.user.cart_count)
         console.log(data)
         navigation.replace('Main', {
           screen: 'Home'

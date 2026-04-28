@@ -1,170 +1,290 @@
-import React, { useState, useMemo, useEffect, useContext } from 'react'
+
+import React, { useState, useEffect, useContext } from 'react'
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
+  Modal,
+  Alert,
 } from 'react-native'
 
-import { ProductContext } from '../context/ProductContext'
+import { AuthContext } from '../context/AuthContext'
+import { REACT_APP_HOST_API_URL } from '../components/variable'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 const Basket = () => {
-  const { products } = useContext(ProductContext)
-  const [items, setItems] = useState([])
+  const { token, setCartCount } = useContext(AuthContext)
 
-  // ✅ LOAD FROM CONTEXT
-  useEffect(() => {
-    if (products && products.length > 0) {
-      const mapped = products.map((item, index) => ({
-        ...item,
-        id: item.id ?? index,
-        quantity: 1,
-      }))
-      setItems(mapped)
-    } else {
-      setItems([])
+  const [cartData, setCartData] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  // ✅ modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [selectedId, setSelectedId] = useState(null)
+
+  // ---------------- FETCH CART ----------------
+  const fetchCart = async () => {
+    if (!token) return
+
+    setLoading(true)
+
+    try {
+      const res = await fetch(
+        `${REACT_APP_HOST_API_URL}/api/booking/list/`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
+      const text = await res.text()
+      const data = JSON.parse(text)
+
+      if (data.status === 200) {
+        const cleanedData = data.data.map(item => {
+          let details = {}
+
+          try {
+            details = item.note ? JSON.parse(item.note) : {}
+          } catch (e) {}
+
+          const metaEntries = Object.entries(details).filter(
+            ([key]) =>
+              !['service', 'price', 'quantity', 'totalPrice', 'total'].includes(key)
+          )
+
+          return {
+            ...item,
+            details,
+
+            displayName: details.service || 'Service',
+
+            displayMeta: metaEntries.map(([key, value]) => ({
+              key,
+              value,
+            })),
+
+            displayPrice: details.price || item.price || 0,
+
+            displayTotal:
+              details.totalPrice ||
+              details.total ||
+              (details.price || item.price || 0) *
+                (details.quantity || 1),
+          }
+        })
+
+        setCartData(cleanedData)
+        setCartCount(data.cart_count || cleanedData.length)
+      }
+    } catch (err) {
+      console.log(err)
+      Alert.alert('Error', 'Something went wrong')
+    } finally {
+      setLoading(false)
     }
-  }, [products])
+  }
 
-  // ✅ INCREASE QTY
-  const increaseQty = (id) => {
-    setItems(prev =>
-      prev.map(item =>
-        item.id === id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
+  useEffect(() => {
+    fetchCart()
+  }, [token])
+
+  // ---------------- DELETE API ----------------
+  const confirmDelete = async () => {
+    if (!selectedId || !token) return
+
+    try {
+      const res = await fetch(
+        `${REACT_APP_HOST_API_URL}/api/booking/${selectedId}/delete/`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       )
-    )
+
+      const data = await res.json()
+
+      if (data.status === 200) {
+        const updatedCart = cartData.filter(item => item.id !== selectedId)
+        setCartData(updatedCart)
+        setCartCount(updatedCart.length)
+
+        setShowDeleteModal(false)
+        setSelectedId(null)
+      } else {
+        Alert.alert('Error', 'Failed to delete item')
+      }
+    } catch (err) {
+      console.log(err)
+      Alert.alert('Error', 'Something went wrong')
+    }
   }
 
-  // ✅ DECREASE QTY
-  const decreaseQty = (id) => {
-    setItems(prev =>
-      prev.map(item =>
-        item.id === id && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-    )
-  }
+  // ---------------- TOTAL ----------------
+  const total = cartData.reduce((sum, item) => {
+    return sum + (item.displayTotal || 0)
+  }, 0)
 
-  // ✅ REMOVE ITEM
-  const removeItem = (id) => {
-    setItems(prev => prev.filter(item => item.id !== id))
-  }
-
-  // ✅ TOTAL PRICE
-  const total = useMemo(() => {
-    return items.reduce((sum, item) => {
-      const price = Number(item.price_sgd || item.price || 0)
-      return sum + price * item.quantity
-    }, 0)
-  }, [items])
-
-  // ✅ CARD UI
+  // ---------------- RENDER ITEM ----------------
   const renderItem = ({ item }) => (
-    
-    <View className="flex-row bg-white rounded-2xl p-3 mb-3 mx-4 items-center shadow-sm">
+    <View className="border border-gray-200 p-4 rounded-xl flex-row mb-3 bg-white">
 
-      {/* IMAGE */}
-      <Image
-        source={{
-          uri:
-            item.view_images_url
-        }}
+      {/* <Image
+        source={require('../assets/images/signin.webp')}
         className="w-20 h-20 rounded-xl"
-      />
+      /> */}
 
-      {/* DETAILS */}
-      <View className="flex-1 ml-3">
+      <View className="flex-1 px-3">
 
-        {/* PACKAGE NAME */}
-        <Text className="text-[15px] font-bold text-gray-900">
-          {item.package_name }
+        {/* Service Name */}
+        <Text className="text-md font-semibold text-primary">
+        {item.displayName}
         </Text>
 
-        {/* UNIT TYPE */}
-        {item.unit_type && (
-          <Text className="text-[12px] text-gray-500 mt-1">
-            {item.unit_type}
-          </Text>
+        {/* Dynamic Details */}
+        {item.displayMeta?.length > 0 && (
+          <View className="mt-1">
+            {item.displayMeta.map((meta, index) => (
+              <View key={index} className="flex-row">
+                <Text className=" font-semibold capitalize">
+                {meta.key}:
+                </Text>
+                <Text className="text-gray-600 ml-2">
+                  {meta.value}
+                </Text>
+              </View>
+            ))}
+          </View>
         )}
 
-        {/* PRICE */}
-        <Text className="text-[13px] font-semibold text-green-600 mt-1">
-          ${item.price_sgd}
+        {/* Price */}
+        <Text className="text-primary text-lg font-bold mt-2">
+        Price: ${item.displayPrice}
         </Text>
-
-        {/* ACTIONS */}
-        <View className="flex-row justify-between items-center mt-2">
-
-          {/* QTY CONTROLS */}
-          <View className="flex-row items-center bg-gray-100 rounded-full px-2 py-1">
-
-            <TouchableOpacity onPress={() => decreaseQty(item.id)}>
-              <Text className="text-lg px-2">−</Text>
-            </TouchableOpacity>
-
-            <Text className="px-2 font-semibold">
-              {item.quantity}
-            </Text>
-
-            <TouchableOpacity onPress={() => increaseQty(item.id)}>
-              <Text className="text-lg px-2">＋</Text>
-            </TouchableOpacity>
-
-          </View>
-
-          {/* REMOVE */}
-          <TouchableOpacity onPress={() => removeItem(item.id)}>
-            <Text className="text-red-500 text-xs font-semibold">
-              Remove
-            </Text>
-          </TouchableOpacity>
-
-        </View>
       </View>
+
+      {/* REMOVE BUTTON */}
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedId(item.id)
+          setShowDeleteModal(true)
+        }}
+        className="bg-red-100 px-3 py-2 rounded-lg self-start"
+      >
+        <Text className="text-red-600 font-semibold">
+          Remove
+        </Text>
+      </TouchableOpacity>
     </View>
   )
 
+  // ---------------- LOADING ----------------
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" />
+      </View>
+    )
+  }
+
   return (
-    <View className="flex-1 bg-gray-50 pt-8 px-4">
- <Text className="text-2xl font-bold text-gray-900 mb-4">
+     <SafeAreaView className="flex-1 bg-gray-50">
+    <View className="flex-1 px-4 pb-24">
+
+      {/* HEADER */}
+      <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
         My Basket
       </Text>
 
       {/* LIST */}
       <FlatList
-        data={items}
+        data={cartData}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Text className="text-center mt-10 text-gray-400">
-            Your Basket is empty 🛒
+          <Text className="text-center mt-10 text-gray-500">
+            No items in basket
           </Text>
         }
       />
 
       {/* FOOTER */}
-      <View className="absolute bottom-0 w-full bg-white px-5 py-4 flex-row justify-between items-center border-t border-gray-200">
-
+      <View className="bg-white px-5 py-4 flex-row justify-between items-center ">
         <View>
-          <Text className="text-xs ">Total</Text>
-          <Text className="text-lg font-bold text-black">
-            ${total.toFixed(2)}
-          </Text>
+          <Text>Total </Text>
+          <Text className="text-lg font-bold">${total}</Text>
         </View>
 
-        <TouchableOpacity className="bg-black px-6 py-3 rounded-full">
-          <Text className="font-semibold">
+        <TouchableOpacity className="bg-primary px-6 py-3 rounded-full">
+          <Text className="text-white font-semibold">
             Checkout
           </Text>
         </TouchableOpacity>
-
       </View>
+
+      {/* ---------------- PREMIUM DELETE MODAL ---------------- */}
+      <Modal transparent visible={showDeleteModal} animationType="fade">
+        <View className="flex-1 bg-black/40 justify-center items-center px-6">
+
+          <View className="w-full bg-white rounded-3xl p-6 shadow-xl">
+
+            <View className="items-center mb-3">
+              <View className="bg-red-100 p-4 rounded-full">
+                <Text className="text-2xl">🗑️</Text>
+              </View>
+            </View>
+
+            <Text className="text-lg font-bold text-center mb-2">
+              Remove Item?
+            </Text>
+
+            <Text className="text-gray-500 text-center mb-5">
+              This item will be removed from your basket.
+            </Text>
+
+            <View className="flex-row gap-3">
+
+              {/* CANCEL */}
+              <TouchableOpacity
+                onPress={() => {
+                  setShowDeleteModal(false)
+                  setSelectedId(null)
+                }}
+                className="flex-1 border border-gray-300 py-3 rounded-xl"
+              >
+                <Text className="text-center font-semibold text-gray-600">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              {/* DELETE */}
+              <TouchableOpacity
+                onPress={confirmDelete}
+                className="flex-1 bg-red-500 py-3 rounded-xl"
+              >
+                <Text className="text-center font-semibold text-white">
+                  Delete
+                </Text>
+              </TouchableOpacity>
+
+            </View>
+
+          </View>
+
+        </View>
+      </Modal>
+
     </View>
+    </SafeAreaView>
   )
 }
 
