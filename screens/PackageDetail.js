@@ -1,17 +1,22 @@
 
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 import {
   View,
   Text,
   ScrollView,
   Image,
   TouchableOpacity,
+  Alert
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import { AuthContext } from '../context/AuthContext'
+import { REACT_APP_HOST_API_URL } from '../components/variable'
+
 
 const PackageDetail = ({ route }) => {
   const { item } = route.params
   const navigation = useNavigation()
+  const { token, basketItems, setBasketItems } = useContext(AuthContext)
 
   const [selectedItems, setSelectedItems] = useState([])
 
@@ -116,15 +121,77 @@ const PackageDetail = ({ route }) => {
     }
   }
 
-  // ✅ NAVIGATE
-  const addToBasket = () => {
-    navigation.navigate('Main', {
-      screen: 'Basket',
-      params: {
-        items: selectedItems,
-      },
-    })
+  // ✅ API ADD TO CART
+  const handleAddToCart = async () => {
+    if (selectedItems.length === 0) return
+
+    try {
+      if (!token) {
+        Alert.alert('Login Required', 'Please login first!')
+        return
+      }
+
+      let newItems = []
+
+      for (let row of selectedItems) {
+        let price = row.price_sgd
+
+        if (!price || isNaN(Number(price))) {
+          Alert.alert(
+            'Invalid Plan',
+            'This plan requires a custom quote.'
+          )
+          return
+        }
+
+        price = Number(price)
+        const { id,price_sgd, ...cleanRow } = row
+        const itemToAdd = {
+          service: parsed?.package_name || 'Package',
+          ...cleanRow,
+          price,
+          quantity: 1,
+          totalPrice: price,
+        }
+
+        const res = await fetch(`${REACT_APP_HOST_API_URL}/api/booking/add/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            note: JSON.stringify(itemToAdd),
+            price: itemToAdd.totalPrice,
+          }),
+        })
+
+        const data = await res.json()
+
+        if (data.status !== 200) {
+          Alert.alert('Error', data.message || 'Booking failed')
+          return
+        }
+
+        newItems.push(itemToAdd)
+      }
+
+      // ✅ Update Context
+      setBasketItems([...basketItems, ...newItems])
+
+      // Alert.alert('Success', 'Added to cart')
+
+      navigation.navigate('Main', {
+        screen: 'Basket',
+      })
+
+    } catch (err) {
+      console.error(err)
+      Alert.alert('Error', 'Something went wrong!')
+    }
   }
+
+
 
   // =========================
   // 🔥 EXTRA UI FUNCTIONS
@@ -315,9 +382,9 @@ const PackageDetail = ({ route }) => {
                   <TouchableOpacity
                     key={index}
                     onPress={() => toggleSelection(row, index)}
-                    className={`flex-row items-end py-4 px- rounded-xl mb-2 ${isSelected
-                        ? 'bg-blue-50 border border-blue-600'
-                        : 'bg-white'
+                    className={`flex-row items-center py-4 px-2 rounded-xl mb-2 ${isSelected
+                      ? 'bg-blue-50 border border-blue-600  '
+                      : 'bg-white'
                       }`}
                   >
                     {/* CHECKBOX */}
@@ -341,8 +408,8 @@ const PackageDetail = ({ route }) => {
                           <Text
                             key={i}
                             className={`text-[13px] text-gray-900 ${isShortTable
-                                ? 'flex-1 text-center'
-                                : 'w-[110px]'
+                              ? 'flex-1 text-center'
+                              : 'w-[110px]'
                               }`}
                           >
                             {value ? `${key === 'price_sgd' ? '$' : ''}${value}` : '-'}
@@ -356,7 +423,7 @@ const PackageDetail = ({ route }) => {
             </View>
           </ScrollView>
 
-          
+
           {/* TERMS */}
           {parsed?.terms_and_conditions && (
             <>
@@ -407,7 +474,7 @@ const PackageDetail = ({ route }) => {
       </ScrollView>
 
       {/* BUTTON */}
-      {selectedItems.length > 0 && (
+      {/* {selectedItems.length > 0 && (
         <View className="p-3 bg-white border-t border-gray-200">
           <TouchableOpacity
             className="bg-blue-600 p-4 rounded-xl items-center"
@@ -415,6 +482,19 @@ const PackageDetail = ({ route }) => {
           >
             <Text className="text-white font-bold text-[16px]">
               Add {selectedItems.length} items to Basket
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )} */}
+
+      {selectedItems.length > 0 && (
+        <View className="p-3 bg-white">
+          <TouchableOpacity
+            className="bg-blue-600 p-4 rounded-xl items-center"
+            onPress={handleAddToCart}
+          >
+            <Text className="text-white font-bold">
+              Add {selectedItems.length} items
             </Text>
           </TouchableOpacity>
         </View>
