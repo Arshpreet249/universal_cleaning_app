@@ -17,26 +17,29 @@ import { REACT_APP_HOST_API_URL } from '../components/variable'
 const BookAppointment = () => {
   const { token } = useContext(AuthContext)
 
+  const [fromDate, setFromDate] = useState(new Date())
+  const [showFromDatePicker, setShowFromDatePicker] = useState(false)
+
   const [date, setDate] = useState(new Date())
   const [showDatePicker, setShowDatePicker] = useState(false)
 
-    const [startTime, setStartTime] = useState(null)
+  const [startTime, setStartTime] = useState(null)
   const [endTime, setEndTime] = useState(null)
   const [showTimePicker, setShowTimePicker] = useState(false)
-//   const [selectedTime, setSelectedTime] = useState(null)
 
-const [timeMode, setTimeMode] = useState('start') // start | end
+  const [timeMode, setTimeMode] = useState('start') // start | end
 
   const [timelineData, setTimelineData] = useState(null)
   const [timelineLoading, setTimelineLoading] = useState(false)
-  const [selectedEmployees, setSelectedEmployees] = useState([])
+const [selectedEmployee, setSelectedEmployee] = useState(null)
 
-  // ---------------- FORMAT TIME (UI) ----------------
+  // ---------------- FORMAT TIME (UI FIXED) ----------------
   const formatTime = (time) => {
     if (!time) return ''
     const [h, m] = time.split(':')
-    const hour = h % 12 || 12
-    const ampm = h >= 12 ? 'PM' : 'AM'
+    const hourNum = parseInt(h, 10)
+    const hour = hourNum % 12 || 12
+    const ampm = hourNum >= 12 ? 'PM' : 'AM'
     return `${hour}:${m} ${ampm}`
   }
 
@@ -47,12 +50,18 @@ const [timeMode, setTimeMode] = useState('start') // start | end
     return `${h}:${m}:00`
   }
 
+   // ---------------- TIME COMPARISON ----------------
+  const isSlotValid = (slotStart, slotEnd, selectedStart, selectedEnd) => {
+    return slotStart <= selectedStart && slotEnd >= selectedEnd
+  }
+
   // ---------------- API ----------------
-  const fetchTimeline = async (start,end) => {
+  const fetchTimeline = async (start, end) => {
     try {
       setTimelineLoading(true)
 
       const payload = {
+        fromDate: fromDate.toISOString().split('T')[0],
         date: date.toISOString().split('T')[0],
         startTime: start,
         endTime: end,
@@ -86,33 +95,28 @@ const [timeMode, setTimeMode] = useState('start') // start | end
     }
   }
 
+  // ---------------- FROM DATE ----------------
+  const onFromDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || fromDate
+    setShowFromDatePicker(Platform.OS === 'ios')
+    setFromDate(currentDate)
+
+    setTimelineData(null)
+    setSelectedEmployee(null)
+  }
+
   // ---------------- DATE ----------------
   const onDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || date
     setShowDatePicker(Platform.OS === 'ios')
     setDate(currentDate)
 
-    setSelectedTime(null)
     setTimelineData(null)
-    setSelectedEmployees([]) // ✅ reset
+    setSelectedEmployee(null)
   }
 
   // ---------------- TIME ----------------
-//   const onTimeChange = (event, time) => {
-//     setShowTimePicker(false)
-
-//     if (time) {
-//       const formatted = formatToAPI(time)
-
-//       setSelectedTime(formatted)
-//       setTimelineData(null)
-//       setSelectedEmployees([]) // ✅ reset
-
-//       fetchTimeline(formatted)
-//     }
-//   }
-
- const onTimeChange = (event, time) => {
+  const onTimeChange = (event, time) => {
     setShowTimePicker(false)
 
     if (!time) return
@@ -120,62 +124,72 @@ const [timeMode, setTimeMode] = useState('start') // start | end
     const formatted = formatToAPI(time)
 
     setTimelineData(null)
-    setSelectedEmployees([])
+    setSelectedEmployee(null)
 
     // START TIME
     if (timeMode === 'start') {
       setStartTime(formatted)
+      setEndTime(null)
     }
 
     // END TIME
     if (timeMode === 'end') {
       setEndTime(formatted)
 
-      // only call API when start exists
+      // SAFE CHECK
       if (startTime) {
         fetchTimeline(startTime, formatted)
       }
     }
   }
 
-
   // ---------------- FILTER EMPLOYEES ----------------
-  const getEmployees = () => {
+//   const getEmployees = () => {
+//     if (!timelineData?.employees) return []
+
+//     return timelineData.employees
+//       .filter((e) => parseFloat(e.total_free_time_hours) > 0)
+//       .sort((a, b) => b.is_available - a.is_available)
+//   }
+
+const getEmployees = () => {
     if (!timelineData?.employees) return []
+    if (!startTime || !endTime) return []
 
     return timelineData.employees
-      .filter((e) => parseFloat(e.total_free_time_hours) > 0)
+      .filter((emp) => {
+        if (!emp.free_slots || emp.free_slots.length === 0) return false
+
+        // employee must fully cover selected time range
+        return emp.free_slots.some((slot) =>
+          isSlotValid(
+            slot.start_time,
+            slot.end_time,
+            startTime,
+            endTime
+          )
+        )
+      })
       .sort((a, b) => b.is_available - a.is_available)
   }
 
   // ---------------- SELECT EMPLOYEE ----------------
-  const toggleEmployee = (emp) => {
-    const exists = selectedEmployees.find(
-      (e) => e.employee_id === emp.employee_id
-    )
-
-    if (exists) {
-      setSelectedEmployees((prev) =>
-        prev.filter((e) => e.employee_id !== emp.employee_id)
-      )
-    } else {
-      setSelectedEmployees((prev) => [...prev, emp])
-    }
+ const toggleEmployee = (emp) => {
+  if (selectedEmployee?.employee_id === emp.employee_id) {
+    setSelectedEmployee(null)
+  } else {
+    setSelectedEmployee(emp)
   }
-
+}
   // ---------------- CONTINUE ----------------
-  const handleContinue = () => {
-    if (selectedEmployees.length === 0) return
+ const handleContinue = () => {
+  if (!selectedEmployee) return
 
-    Alert.alert(
-      'Booking',
-      `Selected Employees:\n${selectedEmployees
-        .map(e => e.employee_name)
-        .join(', ')}`
-    )
-
-    // 👉 next step: navigation or API
-  }
+  Alert.alert(
+    'Booking',
+    `Selected Employee:\n${selectedEmployee.employee_name}`
+  )
+}
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50 px-4">
@@ -186,72 +200,81 @@ const [timeMode, setTimeMode] = useState('start') // start | end
           Book Appointment
         </Text>
 
-        {/* DATE */}
-        <TouchableOpacity
-          onPress={() => setShowDatePicker(true)}
-          className="bg-white p-4 rounded-xl border border-gray-200 mb-4"
-        >
-          <Text className="text-gray-500">Date</Text>
-          <Text className="text-lg font-semibold">
-            {date.toDateString()}
-          </Text>
-        </TouchableOpacity>
+     {/* ================= DATE ROW ================= */}
+          <View className="flex-row mb-4">
+
+          <TouchableOpacity
+            onPress={() => setShowFromDatePicker(true)}
+            className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1"
+          >
+            <Text className="text-gray-500 text-xs">From Date</Text>
+            <Text className="text-sm font-semibold mt-1">
+              {fromDate.toDateString()}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1"
+          >
+            <Text className="text-gray-500 text-xs">To Date</Text>
+            <Text className="text-sm font-semibold mt-1">
+              {date.toDateString()}
+            </Text>
+          </TouchableOpacity>
+
+        </View>
+
+       
+          {/* ================= TIME ROW ================= */}
+        <View className="flex-row mb-4">
+
+          <TouchableOpacity
+            onPress={() => {
+              setTimeMode('start')
+              setShowTimePicker(true)
+            }}
+            className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1"
+          >
+            <Text className="text-gray-500 text-xs">Start Time</Text>
+            <Text className="text-sm font-semibold mt-1">
+              {startTime ? formatTime(startTime) : 'Select'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setTimeMode('end')
+              setShowTimePicker(true)
+            }}
+            className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1"
+          >
+            <Text className="text-gray-500 text-xs">End Time</Text>
+            <Text className="text-sm font-semibold mt-1">
+              {endTime ? formatTime(endTime) : 'Select'}
+            </Text>
+          </TouchableOpacity>
+
+        </View>
+
+        {/* DATE PICKERS */}
+        {showFromDatePicker && (
+          <DateTimePicker
+            value={fromDate}
+            mode="date"
+            onChange={onFromDateChange}
+          />
+        )}
 
         {showDatePicker && (
           <DateTimePicker
             value={date}
             mode="date"
-            minimumDate={new Date()}
             onChange={onDateChange}
           />
         )}
 
-        {/* TIME */}
-        {/* <TouchableOpacity
-          onPress={() => setShowTimePicker(true)}
-          className="bg-white p-4 rounded-xl border border-gray-200 mb-4"
-        >
-          <Text className="text-gray-500">Time</Text>
-          <Text className="text-lg font-semibold">
-            {selectedTime ? formatTime(selectedTime) : 'Select Time'}
-          </Text>
-        </TouchableOpacity>
-
-        {showTimePicker && (
-          <DateTimePicker
-            value={new Date()}
-            mode="time"
-            onChange={onTimeChange}
-          />
-        )} */}
-
-         <TouchableOpacity
-          onPress={() => {
-            setTimeMode('start')
-            setShowTimePicker(true)
-          }}
-          className="bg-white p-4 rounded-xl border border-gray-200 mb-4"
-        >
-          <Text className="text-gray-500">Start Time</Text>
-          <Text className="text-lg font-semibold">
-            {startTime ? formatTime(startTime) : 'Select Start Time'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* END TIME */}
-        <TouchableOpacity
-          onPress={() => {
-            setTimeMode('end')
-            setShowTimePicker(true)
-          }}
-          className="bg-white p-4 rounded-xl border border-gray-200 mb-4"
-        >
-          <Text className="text-gray-500">End Time</Text>
-          <Text className="text-lg font-semibold">
-            {endTime ? formatTime(endTime) : 'Select End Time'}
-          </Text>
-        </TouchableOpacity>
-
+        {/* TIME PICKER */}
         {showTimePicker && (
           <DateTimePicker
             value={new Date()}
@@ -259,14 +282,13 @@ const [timeMode, setTimeMode] = useState('start') // start | end
             onChange={onTimeChange}
           />
         )}
-
 
         {/* LOADING */}
         {timelineLoading && (
           <ActivityIndicator size="large" className="mt-4" />
         )}
 
-        {/* EMPTY BEFORE SELECT */}
+        {/* EMPTY STATE */}
         {!timelineData && !timelineLoading && (
           <View className="items-center mt-10">
             <Text className="text-gray-400 text-center px-6">
@@ -275,11 +297,10 @@ const [timeMode, setTimeMode] = useState('start') // start | end
           </View>
         )}
 
-        {/* TIMELINE */}
+        {/* EMPLOYEES */}
         {timelineData && (
           <View className="mt-4">
 
-            {/* NO AVAILABLE */}
             {getEmployees().length === 0 && (
               <View className="items-center mt-10">
                 <Text className="text-gray-400">
@@ -288,7 +309,6 @@ const [timeMode, setTimeMode] = useState('start') // start | end
               </View>
             )}
 
-            {/* EMPLOYEES */}
             {getEmployees().map((emp, i) => {
               const total = Math.max(
                 emp.timeline_summary?.total_timeline_hours || 0,
@@ -308,13 +328,13 @@ const [timeMode, setTimeMode] = useState('start') // start | end
                   key={i}
                   onPress={() => toggleEmployee(emp)}
                   className={`p-4 rounded-xl mb-3 border ${
-                    selectedEmployees.find(e => e.employee_id === emp.employee_id)
+                    // selectedEmployees.find(e => e.employee_id === emp.employee_id)
+                    selectedEmployee?.employee_id === emp.employee_id
                       ? 'border-primary bg-blue-50'
                       : 'border-gray-200 bg-white'
                   }`}
                 >
 
-                  {/* HEADER */}
                   <View className="flex-row justify-between items-center">
                     <View>
                       <Text className="font-bold">
@@ -325,64 +345,31 @@ const [timeMode, setTimeMode] = useState('start') // start | end
                       </Text>
                     </View>
 
-                    <Text
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        emp.is_available
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}
-                    >
-                      {emp.is_available
-                        ? 'Available Now'
-                        : 'Available Later'}
+                    <Text className={`px-2 py-1 rounded-full text-xs ${
+                      emp.is_available
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {emp.is_available ? 'Available' : 'Not Available'}
                     </Text>
                   </View>
 
-                  {/* NEXT SLOT */}
                   {nextFree && (
                     <Text className="text-green-600 text-xs mt-1">
                       Next Available: {formatTime(nextFree.start_time)}
                     </Text>
                   )}
 
-                  {/* PROGRESS */}
                   <View className="mt-3">
                     <View className="flex-row h-2 rounded overflow-hidden">
-                      <View
-                        style={{ width: `${free}%` }}
-                        className="bg-green-500"
-                      />
-                      <View
-                        style={{ width: `${busy}%` }}
-                        className="bg-yellow-500"
-                      />
+                      <View style={{ width: `${free}%` }} className="bg-green-500" />
+                      <View style={{ width: `${busy}%` }} className="bg-yellow-500" />
                     </View>
 
                     <Text className="text-xs text-gray-500 mt-1">
-                      {emp.total_free_time_hours}h free /{' '}
-                      {emp.total_assigned_time_hours}h busy
+                      {emp.total_free_time_hours}h free / {emp.total_assigned_time_hours}h busy
                     </Text>
                   </View>
-
-                  {/* FREE SLOTS */}
-                  {emp.free_slots?.length > 0 && (
-                    <View className="mt-2">
-                      <Text className="text-green-600 text-xs font-bold">
-                        Free Slots
-                      </Text>
-
-                      {emp.free_slots.map((s, idx) => (
-                        <TouchableOpacity
-                          key={idx}
-                          className="bg-green-100 px-2 py-1 rounded mt-1"
-                        >
-                          <Text className="text-xs text-green-800">
-                            {formatTime(s.start_time)} - {formatTime(s.end_time)}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
 
                 </TouchableOpacity>
               )
@@ -390,19 +377,19 @@ const [timeMode, setTimeMode] = useState('start') // start | end
           </View>
         )}
 
-        {/* ✅ CONTINUE BUTTON (ADDED ONLY) */}
+        {/* CONTINUE */}
         <View className="mt-6 mb-10">
           <TouchableOpacity
-            disabled={selectedEmployees.length === 0}
+            // disabled={selectedEmployees.length === 0}
+            disabled={!selectedEmployee}
             onPress={handleContinue}
             className={`py-3 rounded-xl ${
-              selectedEmployees.length === 0
-                ? 'bg-gray-300'
-                : 'bg-primary'
-            }`}
+      !selectedEmployee ? 'bg-gray-300' : 'bg-primary'
+    }`}
           >
             <Text className="text-white text-center font-bold">
-              Book ({selectedEmployees.length})
+              {/* Book ({selectedEmployees.length}) */}
+              Book ({selectedEmployee })
             </Text>
           </TouchableOpacity>
         </View>
