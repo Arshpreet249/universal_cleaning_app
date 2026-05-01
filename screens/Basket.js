@@ -14,6 +14,7 @@ import {
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 
 const Basket = () => {
   const { token, setCartCount } = useContext(AuthContext)
@@ -24,7 +25,7 @@ const Basket = () => {
   // ✅ modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
-
+  const navigation = useNavigation()
   // ---------------- FETCH CART ----------------
   const fetchCart = async () => {
     if (!token) return
@@ -133,6 +134,8 @@ const Basket = () => {
     return sum + (item.displayTotal || 0)
   }, 0)
 
+
+
   // ---------------- RENDER ITEM ----------------
   const renderItem = ({ item }) => (
     <View className="border border-gray-200 p-4 rounded-xl flex-row mb-3 bg-white">
@@ -224,7 +227,9 @@ const Basket = () => {
           <Text className="text-lg font-bold">${total}</Text>
         </View>
 
-        <TouchableOpacity className="bg-primary px-6 py-3 rounded-full">
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('BookAppointment')}
+        className="bg-primary px-6 py-3 rounded-full">
           <Text className="text-white font-semibold">
             Checkout
           </Text>

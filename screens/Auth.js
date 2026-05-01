@@ -20,7 +20,7 @@ import { AuthContext } from '../context/AuthContext'
 const Auth = () => {
   const navigation = useNavigation()
 
-  const { user, token,setUser,setToken, logout , setCartCount} = useContext(AuthContext)
+  const { user, token, setUser, setToken, logout, setCartCount } = useContext(AuthContext)
 
   // login | register | otp | forgot | reset
   const [step, setStep] = useState('login')
@@ -62,8 +62,9 @@ const Auth = () => {
       const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/create-user/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, role: 'User' ,
-                  referral_code_input: referralValid ? referralCode.trim() : null
+        body: JSON.stringify({
+          ...formData, role: 'User',
+          referral_code_input: referralValid ? referralCode.trim() : null
         })
       })
 
@@ -146,7 +147,7 @@ const Auth = () => {
         await AsyncStorage.setItem('user', JSON.stringify(data))
         setUser(data)
         setToken(data?.access_token)
-         setCartCount(data.user.cart_count)
+        setCartCount(data.user.cart_count)
         console.log(data)
         navigation.replace('Main', {
           screen: 'Home'
@@ -156,7 +157,7 @@ const Auth = () => {
         Alert.alert('Error', data.error)
       }
     } catch (error) {
-  console.log('LOGIN ERROR 👉', error)   // 🔥 important
+      console.log('LOGIN ERROR 👉', error)   // 🔥 important
       Alert.alert('Error', 'Login failed')
     }
     setLoading(false)
@@ -402,13 +403,13 @@ const Auth = () => {
                   <Text style={styles.buttonText}>Create Account</Text>}
               </TouchableOpacity>
 
-             <View style={styles.footer}>
-  <Text>Already have an account?</Text>
+              <View style={styles.footer}>
+                <Text>Already have an account?</Text>
 
-  <TouchableOpacity onPress={() => setStep('login')}>
-    <Text className='text-blue-500'> Login</Text>
-  </TouchableOpacity>
-</View>
+                <TouchableOpacity onPress={() => setStep('login')}>
+                  <Text className='text-blue-500'> Login</Text>
+                </TouchableOpacity>
+              </View>
             </>
           )}
 

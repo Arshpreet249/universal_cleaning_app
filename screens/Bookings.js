@@ -47,7 +47,7 @@ const Bookings = () => {
     <View className="flex-1 px-4">
 
       {/* HEADER */}
-      <Text className="text-2xl font-bold text-primary mb-4 text-center">
+      <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
         My Bookings
       </Text>
 

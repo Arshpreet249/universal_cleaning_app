@@ -15,6 +15,7 @@ import "./global.css"
 import { AuthProvider } from './context/AuthContext'
 import Address from './screens/Address'
 import Toast from 'react-native-toast-message';
+import BookAppointment from './screens/BookAppointment'
 
 const Stack = createNativeStackNavigator()
 
@@ -29,6 +30,7 @@ export default function App() {
             headerTitleAlign: Platform.OS === 'ios' ? 'center' : 'left',
             headerTintColor: Platform.OS === 'ios' ? '#007AFF' : '#000',
             headerBackTitleVisible: false,
+            headerShown: false,
 
             ...(Platform.OS === 'android' && {
               headerShadowVisible: false,
@@ -51,7 +53,7 @@ export default function App() {
           <Stack.Screen name="Auth" component={Auth} options={{ title: 'Authentication' }} />
           <Stack.Screen name='AllPackages' component={AllPackages} options={{title: 'Allpackages'}}/>
           <Stack.Screen name='Address' component={Address} options={{title: 'Address'}}/>
-
+          <Stack.Screen name='BookAppointment' component={BookAppointment} options={{title: 'BookAppointment'}}/>
         </Stack.Navigator>
             <Toast />
         <StatusBar style="auto" />

@@ -11,7 +11,6 @@ import {
 import * as Location from 'expo-location'
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
-import Toast from 'react-native-toast-message'
 
 const Address = () => {
   const { token, loading } = useContext(AuthContext)
@@ -37,71 +36,31 @@ const Address = () => {
   })
 
   // ================= FETCH =================
-//   const fetchAddresses = async () => {
-//     if (!token) return
-//     console.log("token>>>>>>>>>>",token)
+  const fetchAddresses = async () => {
+    if (!token) return
 
-//     try {
-//       const res = await fetch(`${REACT_APP_HOST_API_URL}/api/address/list/`, {
-//         headers: { Authorization: `Bearer ${token}` },
-//       })
+    try {
+      const res = await fetch(
+        `${REACT_APP_HOST_API_URL}/api/address/list/`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
 
-//       const data = await res.json()
-//       console.log("data>>>>>>>>>", data)
+      const data = await res.json()
 
-//       if (data.status === 200) {
-//         setAddresses(data.data)
-//         if (data.data.length > 0) {
-//           setSelectedAddress(data.data[0])
-//         }
-//       } else {
-//        console.log("failed to fetch address, ")
-//       }
-//     } catch (err) {
-//       console.log("error", error)
-//     }
-//   }
-
-const fetchAddresses = async () => {
-  if (!token) {
-    console.log(" No token");
-    return;
-  }
-
-  try {
-    console.log(" Calling API...");
-
-    const res = await fetch(
-      `${REACT_APP_HOST_API_URL}/api/address/list/`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+      if (res.status === 200) {
+        setAddresses(data.data || [])
+        if (data.data?.length > 0) {
+          setSelectedAddress(data.data[0])
+        }
       }
-    );
-
-    console.log(" Status:", res.status);
-
-    const data = await res.json();
-    console.log(" Response:", data);
-
-    // ✅ Use HTTP status (more reliable)
-    if (res.status === 200) {
-      setAddresses(data.data || []);
-
-      if (data.data && data.data.length > 0) {
-        setSelectedAddress(data.data[0]);
-      }
-    } else {
-      console.log(" API Error:", data);
-    }
-
-  } catch (err) {
-    console.log(" Fetch Error:", err);
+    } catch (err) {}
   }
-};
 
   useEffect(() => {
     if (!loading && token) {
@@ -115,11 +74,6 @@ const fetchAddresses = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync()
 
       if (status !== 'granted') {
-        Toast.show({
-          type: 'error',
-          text1: 'Permission Denied',
-          text2: 'Location permission is required',
-        })
         return
       }
 
@@ -130,23 +84,12 @@ const fetchAddresses = async () => {
         lat: location.coords.latitude.toString(),
         lon: location.coords.longitude.toString(),
       }))
-    } catch (err) {
-      Toast.show({
-        type: 'error',
-        text1: 'Location Error',
-        text2: 'Unable to fetch location',
-      })
-    }
+    } catch (err) {}
   }
 
   // ================= SAVE =================
   const handleSave = async () => {
     if (!form.name || !form.mobile || !form.street) {
-      Toast.show({
-        type: 'info',
-        text1: 'Missing Fields ⚠️',
-        text2: 'Please fill required fields',
-      })
       return
     }
 
@@ -180,12 +123,6 @@ const fetchAddresses = async () => {
       const data = await res.json()
 
       if (data.status === 200) {
-        Toast.show({
-          type: 'success',
-          text1: editingId ? 'Updated ✅' : 'Added ✅',
-          text2: data.message || 'Address saved successfully',
-        })
-
         setShowForm(false)
         setEditingId(null)
 
@@ -200,19 +137,8 @@ const fetchAddresses = async () => {
         })
 
         fetchAddresses()
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Error ❌',
-          text2: data.message || 'Failed to save address',
-        })
       }
     } catch (err) {
-      Toast.show({
-        type: 'error',
-        text1: 'Network Error 🌐',
-        text2: 'Something went wrong',
-      })
     } finally {
       setSaving(false)
     }
@@ -257,26 +183,9 @@ const fetchAddresses = async () => {
       const data = await res.json()
 
       if (data.status === 200) {
-        Toast.show({
-          type: 'success',
-          text1: 'Deleted 🗑️',
-          text2: data.message || 'Address removed successfully',
-        })
-
         fetchAddresses()
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Error ❌',
-          text2: data.message || 'Failed to delete',
-        })
       }
     } catch (err) {
-      Toast.show({
-        type: 'error',
-        text1: 'Network Error 🌐',
-        text2: 'Something went wrong',
-      })
     } finally {
       setShowDeleteModal(false)
       setDeleteId(null)
@@ -295,6 +204,7 @@ const fetchAddresses = async () => {
   // ================= UI =================
   return (
     <ScrollView className="flex-1 bg-gray-100 p-4">
+
       <Text className="text-2xl font-bold text-blue-600 mb-4 text-center">
         Your Address
       </Text>
@@ -409,48 +319,49 @@ const fetchAddresses = async () => {
         )}
       </View>
 
-      {/* PREMIUM DELETE MODAL */}
-      <Modal transparent visible={showDeleteModal} animationType="fade">
-        <View className="flex-1 bg-black/40 justify-center items-center px-6">
-          <View className="w-full bg-white rounded-3xl p-6 shadow-xl">
+      {/* DELETE MODAL */}
+       <Modal transparent visible={showDeleteModal} animationType="fade">
+         <View className="flex-1 bg-black/40 justify-center items-center px-6">
+           <View className="w-full bg-white rounded-3xl p-6 shadow-xl">
 
-            <View className="items-center mb-3">
-              <View className="bg-red-100 p-4 rounded-full">
-                <Text className="text-2xl">🗑️</Text>
-              </View>
-            </View>
+             <View className="items-center mb-3">
+               <View className="bg-red-100 p-4 rounded-full">
+                 <Text className="text-2xl">🗑️</Text>
+               </View>
+             </View>
 
-            <Text className="text-lg font-bold text-center mb-2">
-              Delete Address?
-            </Text>
+             <Text className="text-lg font-bold text-center mb-2">
+               Delete Address?
+             </Text>
 
-            <Text className="text-gray-500 text-center mb-5">
-              This action cannot be undone.
-            </Text>
+             <Text className="text-gray-500 text-center mb-5">
+               This action cannot be undone.
+             </Text>
 
-            <View className="flex-row gap-3">
-              <TouchableOpacity
-                onPress={() => setShowDeleteModal(false)}
-                className="flex-1 border border-gray-300 py-3 rounded-xl"
-              >
-                <Text className="text-center font-semibold text-gray-600">
-                  Cancel
-                </Text>
-              </TouchableOpacity>
+             <View className="flex-row gap-3">
+               <TouchableOpacity
+                 onPress={() => setShowDeleteModal(false)}
+                 className="flex-1 border border-gray-300 py-3 rounded-xl"
+               >
+                 <Text className="text-center font-semibold text-gray-600">
+                   Cancel
+                 </Text>
+               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={confirmDelete}
-                className="flex-1 bg-red-500 py-3 rounded-xl"
-              >
-                <Text className="text-center font-semibold text-white">
-                  Delete
-                </Text>
-              </TouchableOpacity>
-            </View>
+               <TouchableOpacity
+                 onPress={confirmDelete}
+                 className="flex-1 bg-red-500 py-3 rounded-xl"
+               >
+                 <Text className="text-center font-semibold text-white">
+                   Delete
+                 </Text>
+               </TouchableOpacity>
+             </View>
 
-          </View>
-        </View>
+           </View>
+         </View>
       </Modal>
+
     </ScrollView>
   )
 }
