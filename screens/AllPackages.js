@@ -5,13 +5,11 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
-  Dimensions,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { ProductContext } from '../context/ProductContext'
 import { LinearGradient } from 'expo-linear-gradient'
 import { SafeAreaView } from 'react-native-safe-area-context'
-const { width } = Dimensions.get('window')
 
 const AllPackages = () => {
   const navigation = useNavigation()
@@ -65,105 +63,113 @@ const AllPackages = () => {
     const startingPrice = getStartingPrice(data)
 
     return (
-           <SafeAreaView className="flex-1  bg-gray-100 ">
-      <TouchableOpacity
-        activeOpacity={0.9}
+      <View
         className="mb-4 rounded-3xl overflow-hidden"
         style={{
-          width: width * 0.45,
+          width: '48%',
           height: 220,
           shadowColor: '#000',
           shadowOpacity: 0.25,
           shadowRadius: 10,
           elevation: 6,
         }}
-        onPress={() =>
-          navigation.navigate('PackageDetail', { item })
-        }
       >
-        {/* IMAGE */}
-        <Image
-          source={{
-            uri:
-              item.view_images_url ||
-              'https://via.placeholder.com/300',
-          }}
-          className="absolute w-full h-full"
-        />
-
-        {/* ✅ FIXED GRADIENT (BOTTOM ALWAYS) */}
-        <LinearGradient
-          colors={[
-            'transparent',
-            'rgba(0,0,0,0.4)',
-            'rgba(0,0,0,0.85)',
-          ]}
-          className="absolute bottom-0 left-0 right-0 p-3"
-          style={{
-            height: '40%',
-            justifyContent: 'flex-end',
-          }}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          className="flex-1"
+          onPress={() =>
+            navigation.navigate('PackageDetail', { item })
+          }
         >
-          {/* TITLE */}
-          <Text
-            numberOfLines={1}
-            className="text-white text-sm font-bold"
-          >
-            {data.package_name || 'Package'}
-          </Text>
+          {/* IMAGE */}
+          <Image
+            source={{
+              uri:
+                item.view_images_url ||
+                'https://via.placeholder.com/300',
+            }}
+            className="absolute w-full h-full"
+          />
 
-          {/* DESCRIPTION */}
-          <Text
-            numberOfLines={2}
-            className="text-gray-300 text-[11px] mt-1"
+          {/* GRADIENT */}
+          <LinearGradient
+            colors={[
+              'transparent',
+              'rgba(0,0,0,0.4)',
+              'rgba(0,0,0,0.85)',
+            ]}
+            className="absolute bottom-0 left-0 right-0 p-3"
+            style={{
+              height: '40%',
+              justifyContent: 'flex-end',
+            }}
           >
-            {data?.description}
-          </Text>
+            {/* TITLE */}
+            <Text
+              numberOfLines={1}
+              className="text-white text-sm font-bold"
+            >
+              {data.package_name || 'Package'}
+            </Text>
 
-          {/* PRICE + BUTTON */}
-          <View className="flex-row justify-between items-center mt-3">
-            {startingPrice && (
-              <View className="bg-white px-3 py-1 rounded-full">
+            {/* DESCRIPTION */}
+            <Text
+              numberOfLines={2}
+              className="text-gray-300 text-[11px] mt-1"
+            >
+              {data?.description}
+            </Text>
+
+            {/* PRICE + BUTTON */}
+            <View className="flex-row justify-between items-center mt-3">
+              {startingPrice && (
+                <View className="bg-white px-3 py-1 rounded-full">
+                  <Text className="text-black text-xs font-semibold">
+                    ${startingPrice}
+                  </Text>
+                </View>
+              )}
+
+              <View className="bg-white px-4 py-1.5 rounded-full">
                 <Text className="text-black text-xs font-semibold">
-                  ${startingPrice}
+                  See More
                 </Text>
               </View>
-            )}
-
-            <View className="bg-white px-4 py-1.5 rounded-full">
-              <Text className="text-black text-xs font-semibold">
-                See More
-              </Text>
             </View>
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-      </SafeAreaView>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
     )
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-100">
-         <Text className="text-2xl font-bold my-5 text-primary text-center">
-      All Packages
-    </Text>
-      {products.length === 0 ? (
-        <Text className="text-center text-gray-500">
-          No packages available
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="flex-1 px-4 ">
+
+        {/* HEADER */}
+        <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
+          All Packages
         </Text>
-      ) : (
-        <FlatList
-          data={products}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 10 }}
-          columnWrapperStyle={{
-            justifyContent: 'space-between',
-          }}
-        />
-      )}
+
+        {products.length === 0 ? (
+          <Text className="text-center text-gray-500 mt-10">
+            No packages available
+          </Text>
+        ) : (
+          <FlatList
+            data={products}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+            numColumns={2}
+            showsVerticalScrollIndicator={false}
+            columnWrapperStyle={{
+              justifyContent: 'space-between',
+            }}
+            contentContainerStyle={{ paddingBottom: 10 }}
+          />
+        )}
+
+      </View>
     </SafeAreaView>
   )
 }

@@ -16,51 +16,54 @@ import { AuthProvider } from './context/AuthContext'
 import Address from './screens/Address'
 import Toast from 'react-native-toast-message';
 import BookAppointment from './screens/BookAppointment'
-
+import Welcome from './screens/Welcome'
 const Stack = createNativeStackNavigator()
 
 export default function App() {
   return (
-        <AuthProvider>
-    <SafeAreaProvider>
-       <ProductProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerTitleAlign: Platform.OS === 'ios' ? 'center' : 'left',
-            headerTintColor: Platform.OS === 'ios' ? '#007AFF' : '#000',
-            headerBackTitleVisible: false,
-            headerShown: false,
+    <AuthProvider>
+      <SafeAreaProvider>
+        <ProductProvider>
+          <NavigationContainer>
+            <Stack.Navigator
+              screenOptions={{
+                headerTitleAlign: Platform.OS === 'ios' ? 'center' : 'left',
+                headerTintColor: Platform.OS === 'ios' ? '#007AFF' : '#000',
+                headerBackTitleVisible: false,
+                headerShown: false,
 
-            ...(Platform.OS === 'android' && {
-              headerShadowVisible: false,
-              headerStyle: { elevation: 0, height: 70 }
-            }),
+                ...(Platform.OS === 'android' && {
+                  headerShadowVisible: false,
+                  headerStyle: { elevation: 0, height: 70 }
+                }),
 
-            animation: 'slide_from_right'
-          }}
-        >
+                animation: 'slide_from_right'
+              }}
+            >
+              <Stack.Screen
+                name="Welcome"
+                component={Welcome}
+              />
+              {/* MAIN APP (TABS) */}
+              <Stack.Screen
+                name="Main"
+                component={MainTabs}
+                options={{ headerShown: false }}
+              />
 
-          {/* MAIN APP (TABS) */}
-          <Stack.Screen 
-            name="Main" 
-            component={MainTabs} 
-            options={{ headerShown: false }} 
-          />
-
-          {/* OTHER SCREENS */}
-          <Stack.Screen name="PackageDetail" component={PackageDetail} options={{ title: 'Packages' }} />
-          <Stack.Screen name="Auth" component={Auth} options={{ title: 'Authentication' }} />
-          <Stack.Screen name='AllPackages' component={AllPackages} options={{title: 'Allpackages'}}/>
-          <Stack.Screen name='Address' component={Address} options={{title: 'Address'}}/>
-          <Stack.Screen name='BookAppointment' component={BookAppointment} options={{title: 'BookAppointment'}}/>
-        </Stack.Navigator>
+              {/* OTHER SCREENS */}
+              <Stack.Screen name="PackageDetail" component={PackageDetail} options={{ title: 'Packages' }} />
+              <Stack.Screen name="Auth" component={Auth} options={{ title: 'Authentication' }} />
+              <Stack.Screen name='AllPackages' component={AllPackages} options={{ title: 'Allpackages' }} />
+              <Stack.Screen name='Address' component={Address} options={{ title: 'Address' }} />
+              <Stack.Screen name='BookAppointment' component={BookAppointment} options={{ title: 'BookAppointment' }} />
+            </Stack.Navigator>
             <Toast />
-        <StatusBar style="auto" />
-      </NavigationContainer>
-      </ProductProvider>
-    </SafeAreaProvider>
-   
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </ProductProvider>
+      </SafeAreaProvider>
+
     </AuthProvider>
   )
 }

@@ -109,7 +109,7 @@ const Auth = () => {
         setReferralValid(true)
         setRefUser(data?.user || null) // if backend returns referrer info
 
-        Alert.alert('Success', data.message || 'Referral applied 🎉')
+        Alert.alert('Success', data.message || 'Referral applied ')
       } else {
         setReferralValid(false)
         setRefUser(null)
@@ -143,7 +143,7 @@ const Auth = () => {
 
       if (res.ok) {
         // Alert.alert('Success', 'Login successful')
-        // navigation.navigate('Home')
+        
         await AsyncStorage.setItem('user', JSON.stringify(data))
         setUser(data)
         setToken(data?.access_token)
@@ -157,7 +157,7 @@ const Auth = () => {
         Alert.alert('Error', data.error)
       }
     } catch (error) {
-      console.log('LOGIN ERROR 👉', error)   // 🔥 important
+      console.log('LOGIN ERROR 👉', error)   // 
       Alert.alert('Error', 'Login failed')
     }
     setLoading(false)
@@ -315,13 +315,15 @@ const Auth = () => {
                 onChangeText={(t) => handleChange('password', t)}
               />
 
-              <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <TouchableOpacity className='bg-primary px-1 py-3 rounded-2xl mt-3 items-center ' onPress={handleLogin}> 
                 {loading ? <ActivityIndicator color="#fff" /> :
                   <Text style={styles.buttonText}>Login</Text>}
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => setStep('forgot')}>
-                <Text style={{ color: '#2563EB', textAlign: 'center', marginTop: 10 }}>Forgot Password?</Text>
+                <Text className=' text-blue-500 text-center mt-3'
+                //  style={{ color: '#2563EB', textAlign: 'center', marginTop: 10 }}
+                 >Forgot Password?</Text>
               </TouchableOpacity>
 
               <View style={styles.footer}>
@@ -360,13 +362,8 @@ const Auth = () => {
                   />
 
                   <TouchableOpacity
-                    style={{
-                      marginLeft: 8,
-                      backgroundColor: '#0096c7',
-                      paddingHorizontal: 14,
-                      paddingVertical: 12,
-                      borderRadius: 10
-                    }}
+                  
+                    className='bg-primary ml-2 py-3.5 px-3 rounded-xl'
                     onPress={handleVerifyReferral}
                   >
                     {refLoading ? (
@@ -398,7 +395,7 @@ const Auth = () => {
                 onChangeText={(t) => handleChange('confirm_password', t)}
               />
 
-              <TouchableOpacity style={styles.button} onPress={handleRegister}>
+              <TouchableOpacity  className='bg-primary px-1 py-3 rounded-2xl mt-3 items-center ' onPress={handleRegister}>
                 {loading ? <ActivityIndicator color="#fff" /> :
                   <Text style={styles.buttonText}>Create Account</Text>}
               </TouchableOpacity>
@@ -538,13 +535,7 @@ const styles = StyleSheet.create({
     fontSize: 15
   },
 
-  button: {
-    backgroundColor: '#0096c7',
-    paddingVertical: 14,
-    borderRadius: 25,
-    marginTop: 10,
-    alignItems: 'center'
-  },
+ 
 
   buttonText: {
     color: 'white',

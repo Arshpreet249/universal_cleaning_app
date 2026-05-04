@@ -7,10 +7,9 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
-  Platform,
 } from 'react-native'
-import DateTimePicker from '@react-native-community/datetimepicker'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import DateTimePickerModal from 'react-native-modal-datetime-picker'
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
 
@@ -18,22 +17,19 @@ const BookAppointment = () => {
   const { token } = useContext(AuthContext)
 
   const [fromDate, setFromDate] = useState(new Date())
-  const [showFromDatePicker, setShowFromDatePicker] = useState(false)
-
   const [date, setDate] = useState(new Date())
-  const [showDatePicker, setShowDatePicker] = useState(false)
 
   const [startTime, setStartTime] = useState(null)
   const [endTime, setEndTime] = useState(null)
-  const [showTimePicker, setShowTimePicker] = useState(false)
 
-  const [timeMode, setTimeMode] = useState('start') // start | end
+  const [pickerMode, setPickerMode] = useState(null) // fromDate | toDate | start | end
+  const [isPickerVisible, setPickerVisible] = useState(false)
 
   const [timelineData, setTimelineData] = useState(null)
   const [timelineLoading, setTimelineLoading] = useState(false)
-const [selectedEmployee, setSelectedEmployee] = useState(null)
+  const [selectedEmployee, setSelectedEmployee] = useState(null)
 
-  // ---------------- FORMAT TIME (UI FIXED) ----------------
+  // ---------------- FORMAT TIME ----------------
   const formatTime = (time) => {
     if (!time) return ''
     const [h, m] = time.split(':')
@@ -43,14 +39,12 @@ const [selectedEmployee, setSelectedEmployee] = useState(null)
     return `${hour}:${m} ${ampm}`
   }
 
-  // ---------------- FORMAT TIME (API SAFE) ----------------
   const formatToAPI = (dateObj) => {
     const h = String(dateObj.getHours()).padStart(2, '0')
     const m = String(dateObj.getMinutes()).padStart(2, '0')
     return `${h}:${m}:00`
   }
 
-   // ---------------- TIME COMPARISON ----------------
   const isSlotValid = (slotStart, slotEnd, selectedStart, selectedEnd) => {
     return slotStart <= selectedStart && slotEnd >= selectedEnd
   }
@@ -95,48 +89,36 @@ const [selectedEmployee, setSelectedEmployee] = useState(null)
     }
   }
 
-  // ---------------- FROM DATE ----------------
-  const onFromDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || fromDate
-    setShowFromDatePicker(Platform.OS === 'ios')
-    setFromDate(currentDate)
-
-    setTimelineData(null)
-    setSelectedEmployee(null)
+  // ---------------- PICKER CONTROL ----------------
+  const openPicker = (mode) => {
+    setPickerMode(mode)
+    setPickerVisible(true)
   }
 
-  // ---------------- DATE ----------------
-  const onDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date
-    setShowDatePicker(Platform.OS === 'ios')
-    setDate(currentDate)
-
-    setTimelineData(null)
-    setSelectedEmployee(null)
-  }
-
-  // ---------------- TIME ----------------
-  const onTimeChange = (event, time) => {
-    setShowTimePicker(false)
-
-    if (!time) return
-
-    const formatted = formatToAPI(time)
+  const handleConfirm = (selected) => {
+    setPickerVisible(false)
 
     setTimelineData(null)
     setSelectedEmployee(null)
 
-    // START TIME
-    if (timeMode === 'start') {
+    if (pickerMode === 'fromDate') {
+      setFromDate(selected)
+    }
+
+    if (pickerMode === 'toDate') {
+      setDate(selected)
+    }
+
+    if (pickerMode === 'start') {
+      const formatted = formatToAPI(selected)
       setStartTime(formatted)
       setEndTime(null)
     }
 
-    // END TIME
-    if (timeMode === 'end') {
+    if (pickerMode === 'end') {
+      const formatted = formatToAPI(selected)
       setEndTime(formatted)
 
-      // SAFE CHECK
       if (startTime) {
         fetchTimeline(startTime, formatted)
       }
@@ -144,52 +126,37 @@ const [selectedEmployee, setSelectedEmployee] = useState(null)
   }
 
   // ---------------- FILTER EMPLOYEES ----------------
-//   const getEmployees = () => {
-//     if (!timelineData?.employees) return []
-
-//     return timelineData.employees
-//       .filter((e) => parseFloat(e.total_free_time_hours) > 0)
-//       .sort((a, b) => b.is_available - a.is_available)
-//   }
-
-const getEmployees = () => {
+  const getEmployees = () => {
     if (!timelineData?.employees) return []
     if (!startTime || !endTime) return []
 
     return timelineData.employees
-      .filter((emp) => {
-        if (!emp.free_slots || emp.free_slots.length === 0) return false
-
-        // employee must fully cover selected time range
-        return emp.free_slots.some((slot) =>
-          isSlotValid(
-            slot.start_time,
-            slot.end_time,
-            startTime,
-            endTime
-          )
+      .filter((emp) =>
+        emp.free_slots?.some((slot) =>
+          isSlotValid(slot.start_time, slot.end_time, startTime, endTime)
         )
-      })
+      )
       .sort((a, b) => b.is_available - a.is_available)
   }
 
   // ---------------- SELECT EMPLOYEE ----------------
- const toggleEmployee = (emp) => {
-  if (selectedEmployee?.employee_id === emp.employee_id) {
-    setSelectedEmployee(null)
-  } else {
-    setSelectedEmployee(emp)
+  const toggleEmployee = (emp) => {
+    if (selectedEmployee?.employee_id === emp.employee_id) {
+      setSelectedEmployee(null)
+    } else {
+      setSelectedEmployee(emp)
+    }
   }
-}
-  // ---------------- CONTINUE ----------------
- const handleContinue = () => {
-  if (!selectedEmployee) return
 
-  Alert.alert(
-    'Booking',
-    `Selected Employee:\n${selectedEmployee.employee_name}`
-  )
-}
+  // ---------------- CONTINUE ----------------
+  const handleContinue = () => {
+    if (!selectedEmployee) return
+
+    Alert.alert(
+      'Booking',
+      `Selected Employee:\n${selectedEmployee.employee_name}`
+    )
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50 px-4">
@@ -200,11 +167,11 @@ const getEmployees = () => {
           Book Appointment
         </Text>
 
-     {/* ================= DATE ROW ================= */}
-          <View className="flex-row mb-4">
+        {/* DATE ROW */}
+        <View className="flex-row mb-4">
 
           <TouchableOpacity
-            onPress={() => setShowFromDatePicker(true)}
+            onPress={() => openPicker('fromDate')}
             className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1"
           >
             <Text className="text-gray-500 text-xs">From Date</Text>
@@ -214,7 +181,7 @@ const getEmployees = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => openPicker('toDate')}
             className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1"
           >
             <Text className="text-gray-500 text-xs">To Date</Text>
@@ -225,15 +192,11 @@ const getEmployees = () => {
 
         </View>
 
-       
-          {/* ================= TIME ROW ================= */}
+        {/* TIME ROW */}
         <View className="flex-row mb-4">
 
           <TouchableOpacity
-            onPress={() => {
-              setTimeMode('start')
-              setShowTimePicker(true)
-            }}
+            onPress={() => openPicker('start')}
             className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1"
           >
             <Text className="text-gray-500 text-xs">Start Time</Text>
@@ -243,10 +206,7 @@ const getEmployees = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => {
-              setTimeMode('end')
-              setShowTimePicker(true)
-            }}
+            onPress={() => openPicker('end')}
             className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1"
           >
             <Text className="text-gray-500 text-xs">End Time</Text>
@@ -257,31 +217,19 @@ const getEmployees = () => {
 
         </View>
 
-        {/* DATE PICKERS */}
-        {showFromDatePicker && (
-          <DateTimePicker
-            value={fromDate}
-            mode="date"
-            onChange={onFromDateChange}
-          />
-        )}
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            onChange={onDateChange}
-          />
-        )}
-
-        {/* TIME PICKER */}
-        {showTimePicker && (
-          <DateTimePicker
-            value={new Date()}
-            mode="time"
-            onChange={onTimeChange}
-          />
-        )}
+        {/* MODAL PICKER */}
+        <DateTimePickerModal
+          isVisible={isPickerVisible}
+          mode={
+            pickerMode === 'start' || pickerMode === 'end'
+              ? 'time'
+              : 'date'
+          }
+          date={new Date()}
+          onConfirm={handleConfirm}
+           isDarkModeEnabled={false} 
+          onCancel={() => setPickerVisible(false)}
+        />
 
         {/* LOADING */}
         {timelineLoading && (
@@ -328,7 +276,6 @@ const getEmployees = () => {
                   key={i}
                   onPress={() => toggleEmployee(emp)}
                   className={`p-4 rounded-xl mb-3 border ${
-                    // selectedEmployees.find(e => e.employee_id === emp.employee_id)
                     selectedEmployee?.employee_id === emp.employee_id
                       ? 'border-primary bg-blue-50'
                       : 'border-gray-200 bg-white'
@@ -356,7 +303,7 @@ const getEmployees = () => {
 
                   {nextFree && (
                     <Text className="text-green-600 text-xs mt-1">
-                      Next Available: {formatTime(nextFree.start_time)}
+                      Available: {formatTime(nextFree.start_time)}
                     </Text>
                   )}
 
@@ -380,16 +327,14 @@ const getEmployees = () => {
         {/* CONTINUE */}
         <View className="mt-6 mb-10">
           <TouchableOpacity
-            // disabled={selectedEmployees.length === 0}
             disabled={!selectedEmployee}
             onPress={handleContinue}
             className={`py-3 rounded-xl ${
-      !selectedEmployee ? 'bg-gray-300' : 'bg-primary'
-    }`}
+              !selectedEmployee ? 'bg-gray-300' : 'bg-primary'
+            }`}
           >
             <Text className="text-white text-center font-bold">
-              {/* Book ({selectedEmployees.length}) */}
-              Book ({selectedEmployee })
+              Book Appointment
             </Text>
           </TouchableOpacity>
         </View>

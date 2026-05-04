@@ -52,6 +52,7 @@ const Home = () => {
       setPromoLoading(true)
       const res = await axios.get(`${apiBaseUrl}get-poromotios/`)
       setPromotions(res.data || [])
+      // console.log("res>>>>>>>>>>",res)
     } catch (error) {
       console.log('PROMO API ERROR:', error.message)
     } finally {
@@ -174,7 +175,7 @@ const Home = () => {
 
         <View className="mx-4 mt-5">
 
-  <Text className="text-lg font-bold px-2 py-2">
+  <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
     Promos
   </Text>
 
@@ -409,11 +410,6 @@ const Home = () => {
      
     </View>
         </View>
-
-
-
-
-
         
         {/* ================= REFER & EARN ================= */}
         {referPromo && (
@@ -460,6 +456,11 @@ const Home = () => {
                 }}>
                   <Text style={{ color: '#6C63FF', fontWeight: 'bold' }}>
                     Refer Code: HRAHIDNO63
+                  </Text>
+
+                   <Text style={{ color: '#6C63FF', fontWeight: 'bold' }}>
+            
+                     HRAHIDNO63
                   </Text>
                 </View>
               </View>

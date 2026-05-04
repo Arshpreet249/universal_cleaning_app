@@ -11,6 +11,7 @@ import {
 import * as Location from 'expo-location'
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 const Address = () => {
   const { token, loading } = useContext(AuthContext)
@@ -59,7 +60,7 @@ const Address = () => {
           setSelectedAddress(data.data[0])
         }
       }
-    } catch (err) {}
+    } catch (err) { }
   }
 
   useEffect(() => {
@@ -84,7 +85,7 @@ const Address = () => {
         lat: location.coords.latitude.toString(),
         lon: location.coords.longitude.toString(),
       }))
-    } catch (err) {}
+    } catch (err) { }
   }
 
   // ================= SAVE =================
@@ -203,166 +204,168 @@ const Address = () => {
 
   // ================= UI =================
   return (
-    <ScrollView className="flex-1 bg-gray-100 p-4">
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="flex-1 px-4 pb-24">
 
-      <Text className="text-2xl font-bold text-blue-600 mb-4 text-center">
+      <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
         Your Address
       </Text>
 
-      <View className="bg-white rounded-2xl p-4 shadow">
-        <Text className="text-lg font-semibold mb-3">Service Address</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View className="bg-white rounded-2xl p-4 shadow">
+          <Text className="text-lg font-semibold mb-3">Service Address</Text>
 
-        {addresses.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            onPress={() => setSelectedAddress(item)}
-            className={`border rounded-xl p-4 mb-3 ${
-              selectedAddress?.id === item.id
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200'
-            }`}
-          >
-            <View className="flex-row justify-between items-center">
-              <View className="flex-row items-center gap-2">
-                <View
-                  className={`w-4 h-4 rounded-full border-2 ${
-                    selectedAddress?.id === item.id
-                      ? 'border-blue-500 bg-blue-500'
-                      : 'border-gray-400'
-                  }`}
-                />
-                <Text className="font-bold text-base">{item.name}</Text>
+          {addresses.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => setSelectedAddress(item)}
+              className={`border rounded-xl p-4 mb-3 ${selectedAddress?.id === item.id
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200'
+                }`}
+            >
+              <View className="flex-row justify-between items-center">
+                <View className="flex-row items-center gap-2">
+                  <View
+                    className={`w-4 h-4 rounded-full border-2 ${selectedAddress?.id === item.id
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-gray-400'
+                      }`}
+                  />
+                  <Text className="font-bold text-base">{item.name}</Text>
+                </View>
+
+                <View className="flex-row gap-3">
+                  <TouchableOpacity onPress={() => handleEdit(item)}>
+                    <Text className="text-blue-500 font-medium">Edit</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                    <Text className="text-red-500 font-medium">Delete</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              <View className="flex-row gap-3">
-                <TouchableOpacity onPress={() => handleEdit(item)}>
-                  <Text className="text-blue-500 font-medium">Edit</Text>
-                </TouchableOpacity>
+              <Text className="text-gray-600 mt-2">{item.address}</Text>
+              <Text className="text-gray-700 mt-2">📞 {item.mobile}</Text>
+            </TouchableOpacity>
+          ))}
 
-                <TouchableOpacity onPress={() => handleDelete(item.id)}>
-                  <Text className="text-red-500 font-medium">Delete</Text>
-                </TouchableOpacity>
+          {!showForm && (
+            <TouchableOpacity
+              onPress={() => setShowForm(true)}
+              className="border border-blue-500 py-3 rounded-lg mt-2"
+            >
+              <Text className="text-blue-500 text-center font-semibold">
+                + Add New Address
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {showForm && (
+            <View className="mt-4">
+              {[
+                { key: 'name', placeholder: 'Full Name' },
+                { key: 'mobile', placeholder: 'Mobile Number' },
+                { key: 'street', placeholder: 'Street' },
+                { key: 'city', placeholder: 'Town/Area' },
+                { key: 'zip_code', placeholder: 'Zip Code' },
+              ].map((field) => (
+                <TextInput
+                  key={field.key}
+                  placeholder={field.placeholder}
+                  value={form[field.key]}
+                  onChangeText={(text) =>
+                    setForm({ ...form, [field.key]: text })
+                  }
+                  className="border border-gray-300 p-3 rounded-lg mb-3 bg-gray-50"
+                />
+              ))}
+
+              <TouchableOpacity
+                onPress={getLocation}
+                className="border border-blue-500 py-3 rounded-lg mb-3"
+              >
+                <Text className="text-blue-500 text-center font-semibold">
+                  Use Current Location
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleSave}
+                disabled={saving}
+                className="bg-blue-500 py-3 rounded-lg mb-3"
+              >
+                <Text className="text-white text-center font-semibold">
+                  {saving
+                    ? 'Saving...'
+                    : editingId
+                      ? 'Update Address'
+                      : 'Save Address'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setShowForm(false)
+                  setEditingId(null)
+                }}
+                className="border border-gray-400 py-3 rounded-lg"
+              >
+                <Text className="text-gray-600 text-center font-semibold">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* DELETE MODAL */}
+      <Modal transparent visible={showDeleteModal} animationType="fade">
+        <View className="flex-1 bg-black/40 justify-center items-center px-6">
+          <View className="w-full bg-white rounded-3xl p-6 shadow-xl">
+
+            <View className="items-center mb-3">
+              <View className="bg-red-100 p-4 rounded-full">
+                <Text className="text-2xl">🗑️</Text>
               </View>
             </View>
 
-            <Text className="text-gray-600 mt-2">{item.address}</Text>
-            <Text className="text-gray-700 mt-2">📞 {item.mobile}</Text>
-          </TouchableOpacity>
-        ))}
-
-        {!showForm && (
-          <TouchableOpacity
-            onPress={() => setShowForm(true)}
-            className="border border-blue-500 py-3 rounded-lg mt-2"
-          >
-            <Text className="text-blue-500 text-center font-semibold">
-              + Add New Address
+            <Text className="text-lg font-bold text-center mb-2">
+              Delete Address?
             </Text>
-          </TouchableOpacity>
-        )}
 
-        {showForm && (
-          <View className="mt-4">
-            {[
-              { key: 'name', placeholder: 'Full Name' },
-              { key: 'mobile', placeholder: 'Mobile Number' },
-              { key: 'street', placeholder: 'Street' },
-              { key: 'city', placeholder: 'Town/Area' },
-              { key: 'zip_code', placeholder: 'Zip Code' },
-            ].map((field) => (
-              <TextInput
-                key={field.key}
-                placeholder={field.placeholder}
-                value={form[field.key]}
-                onChangeText={(text) =>
-                  setForm({ ...form, [field.key]: text })
-                }
-                className="border border-gray-300 p-3 rounded-lg mb-3 bg-gray-50"
-              />
-            ))}
+            <Text className="text-gray-500 text-center mb-5">
+              This action cannot be undone.
+            </Text>
 
-            <TouchableOpacity
-              onPress={getLocation}
-              className="border border-blue-500 py-3 rounded-lg mb-3"
-            >
-              <Text className="text-blue-500 text-center font-semibold">
-                Use Current Location
-              </Text>
-            </TouchableOpacity>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setShowDeleteModal(false)}
+                className="flex-1 border border-gray-300 py-3 rounded-xl"
+              >
+                <Text className="text-center font-semibold text-gray-600">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={handleSave}
-              disabled={saving}
-              className="bg-blue-500 py-3 rounded-lg mb-3"
-            >
-              <Text className="text-white text-center font-semibold">
-                {saving
-                  ? 'Saving...'
-                  : editingId
-                  ? 'Update Address'
-                  : 'Save Address'}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={confirmDelete}
+                className="flex-1 bg-red-500 py-3 rounded-xl"
+              >
+                <Text className="text-center font-semibold text-white">
+                  Delete
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              onPress={() => {
-                setShowForm(false)
-                setEditingId(null)
-              }}
-              className="border border-gray-400 py-3 rounded-lg"
-            >
-              <Text className="text-gray-600 text-center font-semibold">
-                Cancel
-              </Text>
-            </TouchableOpacity>
           </View>
-        )}
-      </View>
-
-      {/* DELETE MODAL */}
-       <Modal transparent visible={showDeleteModal} animationType="fade">
-         <View className="flex-1 bg-black/40 justify-center items-center px-6">
-           <View className="w-full bg-white rounded-3xl p-6 shadow-xl">
-
-             <View className="items-center mb-3">
-               <View className="bg-red-100 p-4 rounded-full">
-                 <Text className="text-2xl">🗑️</Text>
-               </View>
-             </View>
-
-             <Text className="text-lg font-bold text-center mb-2">
-               Delete Address?
-             </Text>
-
-             <Text className="text-gray-500 text-center mb-5">
-               This action cannot be undone.
-             </Text>
-
-             <View className="flex-row gap-3">
-               <TouchableOpacity
-                 onPress={() => setShowDeleteModal(false)}
-                 className="flex-1 border border-gray-300 py-3 rounded-xl"
-               >
-                 <Text className="text-center font-semibold text-gray-600">
-                   Cancel
-                 </Text>
-               </TouchableOpacity>
-
-               <TouchableOpacity
-                 onPress={confirmDelete}
-                 className="flex-1 bg-red-500 py-3 rounded-xl"
-               >
-                 <Text className="text-center font-semibold text-white">
-                   Delete
-                 </Text>
-               </TouchableOpacity>
-             </View>
-
-           </View>
-         </View>
+        </View>
       </Modal>
 
-    </ScrollView>
+    </View>
+</SafeAreaView>
   )
 }
 
