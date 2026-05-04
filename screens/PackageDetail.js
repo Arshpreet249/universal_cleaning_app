@@ -307,53 +307,6 @@ const PackageDetail = ({ route }) => {
           )}
 
           {/* TABLE */}
-          {/* <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className=''>
-              {headers.length > 0 && (
-                <View className="flex-row bg-gray-100 py-3 px-3 rounded-xl mb-2">
-                  <Text className="w-[40px] text-center" />
-                  {headers.map((h, i) => (
-                    <Text
-                      key={i}
-                      className="w-[110px] text-[12px] font-bold text-blue-600"
-                    >
-                      {h}
-                    </Text>
-                  ))}
-                </View>
-              )}
-
-              {data.map((row, index) => {
-                const isSelected = selectedItems.some(
-                  i => i.id === index
-                )
-
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    className={`flex-row items-center bg-white py-4 px-3 rounded-xl mb-2  ${
-                      isSelected
-                        ? 'bg-blue-50 border border-blue-600'
-                        : ''
-                    }`}
-                    onPress={() => toggleSelection(row, index)}
-                  >
-                    <View className="w-6 h-6 border-[1.5px] border-blue-600 mr-2 items-center justify-center rounded-md">
-                      <Text className="text-blue-600 font-bold">
-                        {isSelected ? '✓' : ''}
-                      </Text>
-                    </View>
-
-                    <View className="flex-row">
-                      {renderRowValues(row, headers)}
-                    </View>
-                  </TouchableOpacity>
-                )
-              })}
-            </View>
-            
-          </ScrollView> */}
-
 
           <ScrollView
             horizontal={!isShortTable}

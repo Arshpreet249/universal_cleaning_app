@@ -147,9 +147,9 @@ const Home = () => {
                     >
                       <Image
                         source={
-                          
-                            { uri: item.icon_url }
-                           
+
+                          { uri: item.icon_url }
+
                         }
                         style={{ width: 40, height: 40 }}
                       />
@@ -175,67 +175,67 @@ const Home = () => {
 
         <View className="mx-4 mt-5">
 
-  <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
-    Promos
-  </Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
+            Promos
+          </Text>
 
-  {promoLoading ? (
-    <ActivityIndicator size="large" color="blue" />
-  ) : normalPromos.length === 0 ? (
-    <Text className="px-2 py-2 text-gray-500">
-      No promotions available
-    </Text>
-  ) : (
-    <ScrollView showsVerticalScrollIndicator={false}>
+          {promoLoading ? (
+            <ActivityIndicator size="large" color="blue" />
+          ) : normalPromos.length === 0 ? (
+            <Text className="px-2 py-2 text-gray-500">
+              No promotions available
+            </Text>
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false}>
 
-      {normalPromos.map((promo) => (
-        <TouchableOpacity
-          key={promo.id}
-          className="w-full h-40 mb-3 rounded-2xl overflow-hidden"
-        >
+              {normalPromos.map((promo) => (
+                <TouchableOpacity
+                  key={promo.id}
+                  className="w-full h-40 mb-3 rounded-2xl overflow-hidden"
+                >
 
-          {/* Background Image */}
-          <Image
-            source={{ uri: promo.image_url }}
-            className="absolute w-full h-full"
-            resizeMode="cover"
-          />
+                  {/* Background Image */}
+                  <Image
+                    source={{ uri: promo.image_url }}
+                    className="absolute w-full h-full"
+                    resizeMode="cover"
+                  />
 
-          {/* Dark Overlay */}
-          <View className="flex-1 bg-black/30 p-4 justify-between">
+                  {/* Dark Overlay */}
+                  <View className="flex-1 bg-black/30 p-4 justify-between">
 
-            <View>
+                    <View>
 
-              <Text className="text-white text-lg font-bold">
-                {promo.title}
-              </Text>
+                      <Text className="text-white text-lg font-bold">
+                        {promo.title}
+                      </Text>
 
-              <Text className="text-white text-xs mt-1 opacity-90">
-                {promo.description}
-              </Text>
+                      <Text className="text-white text-xs mt-1 opacity-90">
+                        {promo.description}
+                      </Text>
 
-              {/* 🔥 GLASS PROMO CODE */}
-              <BlurView
-                intensity={40}
-                tint="light"
-                className="mt-4 self-start px-4 py-2 rounded-xl border border-white/30 overflow-hidden"
-              >
-                <Text className="text-white font-bold tracking-widest text-sm">
-                  {promo.promo_code}
-                </Text>
-              </BlurView>
+                      {/* 🔥 GLASS PROMO CODE */}
+                      <BlurView
+                        intensity={40}
+                        tint="light"
+                        className="mt-4 self-start px-4 py-2 rounded-xl border border-white/30 overflow-hidden"
+                      >
+                        <Text className="text-white font-bold tracking-widest text-sm">
+                          {promo.promo_code}
+                        </Text>
+                      </BlurView>
 
-            </View>
+                    </View>
 
-          </View>
+                  </View>
 
-        </TouchableOpacity>
-      ))}
+                </TouchableOpacity>
+              ))}
 
-    </ScrollView>
-  )}
+            </ScrollView>
+          )}
 
-</View>
+        </View>
 
 
         {/* ================= EXPLORE MORE ================= */}
@@ -365,67 +365,73 @@ const Home = () => {
             Recent Bookings
           </Text>
 
-       <View
-      style={{
-        flexDirection: 'row',
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        overflow: 'hidden',
-        elevation: 6,
-        marginHorizontal: 10,
-        marginTop: 10,
-      }}
-    >
-      {/* LEFT RED STRIP */}
-      <View className="flex-1 ">
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: '#fff',
+              borderRadius: 16,
+              overflow: 'hidden',
+              elevation: 6,
+              marginHorizontal: 10,
+              marginTop: 10,
+            }}
+          >
+            {/* LEFT RED STRIP */}
+            <View className="flex-1 ">
 
 
-  {/* CONTENT */}
-  <View className="flex-1 px-4 py-6 items-center justify-center">
+              {/* CONTENT */}
+              <View className="flex-1 px-4 py-6 items-center justify-center">
 
-    {/* Title */}
-    <Text className="text-2xl font-bold text-red-500 mb-2">
-      Oh! No!
-    </Text>
+                {/* Title */}
+                <Text className="text-2xl font-bold text-red-500 mb-2">
+                  Oh! No!
+                </Text>
 
-    {/* Subtitle */}
-    <Text className="text-gray-500 text-sm text-center mb-6">
-      You should login before booking.
-    </Text>
+                {/* Subtitle */}
+                <Text className="text-gray-500 text-sm text-center mb-6">
+                  You should login before booking.
+                </Text>
 
-    {/* Button */}
-    <TouchableOpacity
-      className="bg-red-500 px-6 py-3 rounded-xl shadow-md"
-      onPress={() => navigation.navigate('Auth')}
-    >
-      <Text className="text-white font-semibold text-base">
-        Login Now
-      </Text>
-    </TouchableOpacity>
+                {/* Button */}
+                <TouchableOpacity
+                  className="bg-red-500 px-6 py-3 rounded-xl shadow-md"
+                  onPress={() => navigation.navigate('Auth')}
+                >
+                  <Text className="text-white font-semibold text-base">
+                    Login Now
+                  </Text>
+                </TouchableOpacity>
 
-  </View>
+              </View>
 
-</View>
+            </View>
 
-     
-    </View>
+
+          </View>
         </View>
-        
+
         {/* ================= REFER & EARN ================= */}
+
         {referPromo && (
           <View style={{ marginHorizontal: 16, marginTop: 20, marginBottom: 40 }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
+
+            {/* Title */}
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
               Refer & Earn
             </Text>
 
             <TouchableOpacity
-              style={{
-                height: 160,
-                borderRadius: 16,
-                overflow: 'hidden',
-              }}
+              activeOpacity={0.9}
               onPress={() => navigation.navigate('Refer')}
+              style={{
+                height: 170,
+                borderRadius: 18,
+                overflow: 'hidden',
+                elevation: 4,
+              }}
             >
+              {/* Background Image */}
               <Image
                 source={{ uri: referPromo.image_url }}
                 style={{
@@ -436,32 +442,53 @@ const Home = () => {
                 resizeMode="cover"
               />
 
-              <View className="flex-1 p-4 justify-between shadow-sm">
+              {/* Overlay */}
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: 'rgba(0,0,0,0.35)',
+                  padding: 16,
+                  justifyContent: 'space-between',
+                }}
+              >
+                {/* Top Content */}
                 <View>
-                  <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>
+                  <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
                     {referPromo.title}
                   </Text>
 
-                  <Text style={{ color: '#fff', fontSize: 13, marginTop: 6 }}>
+                  <Text
+                    style={{
+                      color: '#ddd',
+                      fontSize: 13,
+                      marginTop: 6,
+                      lineHeight: 18,
+                    }}
+                  >
                     {referPromo.description}
                   </Text>
                 </View>
 
-                <View style={{
-                  backgroundColor: '#fff',
-                  paddingVertical: 6,
-                  paddingHorizontal: 14,
-                  borderRadius: 20,
-                  alignSelf: 'flex-start',
-                }}>
-                  <Text style={{ color: '#6C63FF', fontWeight: 'bold' }}>
-                    Refer Code: HRAHIDNO63
-                  </Text>
+                {/* Bottom Section */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
 
-                   <Text style={{ color: '#6C63FF', fontWeight: 'bold' }}>
-            
-                     HRAHIDNO63
-                  </Text>
+                  {/* Referral Code */}
+                  <View
+                    style={{
+                      backgroundColor: '#fff',
+                      paddingVertical: 6,
+                      paddingHorizontal: 12,
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Text style={{ fontSize: 10, color: '#888' }}>
+                      YOUR CODE
+                    </Text>
+                    <Text style={{ color: '#0564BF', fontWeight: 'bold', fontSize: 14 }}>
+                      HRAHIDNO63
+                    </Text>
+                  </View>
+
                 </View>
               </View>
             </TouchableOpacity>

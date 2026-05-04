@@ -4,7 +4,7 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  Image,
+  ImageBackground,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { ProductContext } from '../context/ProductContext'
@@ -64,15 +64,13 @@ const AllPackages = () => {
 
     return (
       <View
-        className="mb-4 rounded-3xl overflow-hidden"
-        style={{
-          width: '48%',
-          height: 220,
-          shadowColor: '#000',
-          shadowOpacity: 0.25,
-          shadowRadius: 10,
-          elevation: 6,
-        }}
+        className="w-[48%] h-[240px] mb-4 rounded-3xl"
+        // style={{
+        //   shadowColor: '#000',
+        //   shadowOpacity: 0.25,
+        //   shadowRadius: 10,
+        //   // elevation: 6,
+        // }}
       >
         <TouchableOpacity
           activeOpacity={0.9}
@@ -81,70 +79,66 @@ const AllPackages = () => {
             navigation.navigate('PackageDetail', { item })
           }
         >
-          {/* IMAGE */}
-          <Image
+          <ImageBackground
             source={{
               uri:
                 item.view_images_url ||
                 'https://via.placeholder.com/300',
             }}
-            className="absolute w-full h-full"
-          />
-
-          {/* GRADIENT */}
-          <LinearGradient
-            colors={[
-              'transparent',
-              'rgba(0,0,0,0.4)',
-              'rgba(0,0,0,0.85)',
-            ]}
-            className="absolute bottom-0 left-0 right-0 p-3"
-            style={{
-              height: '40%',
-              justifyContent: 'flex-end',
-            }}
+            className="flex-1 justify-end"
+            imageStyle={{ borderRadius: 24 }}
           >
-            {/* TITLE */}
-            <Text
-              numberOfLines={1}
-              className="text-white text-sm font-bold"
+            {/* ✅ GRADIENT */}
+            <LinearGradient
+              colors={[
+                'transparent',
+                'rgba(0,0,0,0.4)',
+                'rgba(0,0,0,0.9)',
+              ]}
+              className="absolute left-0 right-0 bottom-0 "
+              style={{
+                height: 100, // important for iOS
+                borderBottomLeftRadius: 24,
+                borderBottomRightRadius: 24,
+                paddingHorizontal:8
+              }}
             >
-              {data.package_name || 'Package'}
-            </Text>
+              {/* TITLE */}
+              <Text className="text-white text-sm font-bold" numberOfLines={1}>
+                {data.package_name || 'Package'}
+              </Text>
 
-            {/* DESCRIPTION */}
-            <Text
-              numberOfLines={2}
-              className="text-gray-300 text-[11px] mt-1"
-            >
-              {data?.description}
-            </Text>
+              {/* DESCRIPTION */}
+              <Text className="text-gray-300 text-[11px] mt-1" numberOfLines={2}>
+                {data?.description}
+              </Text>
 
-            {/* PRICE + BUTTON */}
-            <View className="flex-row justify-between items-center mt-3">
-              {startingPrice && (
-                <View className="bg-white px-3 py-1 rounded-full">
+              {/* PRICE + BUTTON */}
+              <View className="flex-row justify-between items-center mt-3">
+                {startingPrice && (
+                  <View className="bg-white px-3 py-1 rounded-full">
+                    <Text className="text-black text-xs font-semibold">
+                      ${startingPrice}
+                    </Text>
+                  </View>
+                )}
+
+                <View className="bg-white px-4 py-1.5 rounded-full">
                   <Text className="text-black text-xs font-semibold">
-                    ${startingPrice}
+                    See More
                   </Text>
                 </View>
-              )}
-
-              <View className="bg-white px-4 py-1.5 rounded-full">
-                <Text className="text-black text-xs font-semibold">
-                  See More
-                </Text>
               </View>
-            </View>
-          </LinearGradient>
+            </LinearGradient>
+          </ImageBackground>
         </TouchableOpacity>
       </View>
     )
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1 px-4 ">
+    <SafeAreaView className="flex-1 ">
+      <View className="flex-1 px-4">
 
         {/* HEADER */}
         <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
@@ -165,7 +159,7 @@ const AllPackages = () => {
             columnWrapperStyle={{
               justifyContent: 'space-between',
             }}
-            contentContainerStyle={{ paddingBottom: 10 }}
+            contentContainerStyle={{ paddingBottom: 20 }}
           />
         )}
 
