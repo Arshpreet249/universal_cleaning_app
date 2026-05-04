@@ -16,7 +16,7 @@ import { ProductContext } from '../context/ProductContext'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Dimensions } from 'react-native'
 import { BlurView } from 'expo-blur'
-
+import SkeletonContent from 'react-native-skeleton-content';
 
 const Home = () => {
   const navigation = useNavigation()
@@ -169,6 +169,18 @@ const Home = () => {
             </View>
           )}
         </View>
+
+         <SkeletonContent
+      containerStyle={{ flex: 1, width: 300 }}
+      isLoading={false}
+      layout={[
+        { key: 'someId', width: 220, height: 20, marginBottom: 6 },
+        { key: 'someOtherId', width: 180, height: 20, marginBottom: 6 }
+      ]}
+    >
+      <Text style={styles.normalText}>Your content</Text>
+      <Text style={styles.bigText}>Other content</Text>
+    </SkeletonContent>
 
 
         {/* ================= PROMOS ================= */}
