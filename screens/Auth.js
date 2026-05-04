@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useContext } from 'react'
 import {
   View,
   Text,
@@ -14,9 +14,9 @@ import { useNavigation } from '@react-navigation/native'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useContext } from 'react'
 import { AuthContext } from '../context/AuthContext'
 
+const OTP_LENGTH = 6
 const Auth = () => {
   const navigation = useNavigation()
 
@@ -34,7 +34,14 @@ const Auth = () => {
     confirm_password: ''
   })
 
-  const [otp, setOtp] = useState('')
+  // const [otp, setOtp] = useState('')
+  // 🔐 REGISTER OTP
+  const [otpArray, setOtpArray] = useState(Array(OTP_LENGTH).fill(''))
+  const otpInputs = useRef([])
+
+  // 🔐 RESET OTP
+  const [resetOtpArray, setResetOtpArray] = useState(Array(OTP_LENGTH).fill(''))
+  const resetInputs = useRef([])
 
   const [resetData, setResetData] = useState({
     email: '',
@@ -45,11 +52,41 @@ const Auth = () => {
   const [referralCode, setReferralCode] = useState('')
   const [referralValid, setReferralValid] = useState(null)
   const [refLoading, setRefLoading] = useState(false)
-  const [refUser, setRefUser] = useState(null) // optional (referrer info)
+  const [refUser, setRefUser] = useState(null)
 
   const handleChange = (key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }))
   }
+
+
+  // ================= OTP HANDLERS =================
+  const handleOtpChange = (value, index, type = 'register') => {
+    if (!/^[0-9]?$/.test(value)) return
+
+    const array = type === 'register' ? otpArray : resetOtpArray
+    const setArray = type === 'register' ? setOtpArray : setResetOtpArray
+    const refs = type === 'register' ? otpInputs : resetInputs
+
+    const newOtp = [...array]
+    newOtp[index] = value
+    setArray(newOtp)
+
+    if (value && index < OTP_LENGTH - 1) {
+      refs.current[index + 1].focus()
+    }
+  }
+  const handleKeyPress = (e, index, type = 'register') => {
+    const array = type === 'register' ? otpArray : resetOtpArray
+    const refs = type === 'register' ? otpInputs : resetInputs
+
+    if (e.nativeEvent.key === 'Backspace' && !array[index] && index > 0) {
+      refs.current[index - 1].focus()
+    }
+  }
+
+  const getOtpValue = () => otpArray.join('')
+  const getResetOtpValue = () => resetOtpArray.join('')
+
 
   // ================= REGISTER =================
   const handleRegister = async () => {
@@ -143,7 +180,7 @@ const Auth = () => {
 
       if (res.ok) {
         // Alert.alert('Success', 'Login successful')
-        
+
         await AsyncStorage.setItem('user', JSON.stringify(data))
         setUser(data)
         setToken(data?.access_token)
@@ -165,6 +202,12 @@ const Auth = () => {
 
   // ================= VERIFY OTP =================
   const handleVerifyOtp = async () => {
+    const otpValue = getOtpValue()
+
+    if (otpValue.length !== 6) {
+      return Alert.alert('Error', 'Enter complete OTP')
+    }
+
     setLoading(true)
     try {
       const res = await fetch(`${REACT_APP_HOST_API_URL}/auth/verify-otp/`, {
@@ -172,11 +215,12 @@ const Auth = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: formData.email,
-          otp_code: Number(otp)
+          otp_code: Number(otpValue)
         })
       })
 
       const data = await res.json()
+      console.log("data otp", data)
 
       if (res.ok) {
         Alert.alert('Success', 'Account verified')
@@ -190,6 +234,8 @@ const Auth = () => {
     }
     setLoading(false)
   }
+
+
   const handleResendOtp = async () => {
     if (!formData.email) {
       return Alert.alert('Error', 'Email is required')
@@ -250,6 +296,12 @@ const Auth = () => {
 
   // ================= RESET PASSWORD =================
   const handleResetPassword = async () => {
+    const otpValue = getResetOtpValue()
+
+    if (otpValue.length !== 6) {
+      return Alert.alert('Error', 'Enter complete OTP')
+    }
+
     if (resetData.new_password !== resetData.confirm_password) {
       return Alert.alert('Error', 'Passwords do not match')
     }
@@ -261,21 +313,25 @@ const Auth = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: resetData.email,
-          otp_code: Number(resetData.otp_code),
-          new_password: resetData.new_password
+          otp_code: Number(otpValue),
+          new_password: resetData.new_password,
+           confirm_password: resetData.confirm_password
         })
       })
 
       const data = await res.json()
+      console.log("reset password", data)
 
       if (res.ok) {
         Alert.alert('Success', 'Password reset successful')
         setStep('login')
       } else {
         Alert.alert('Error', data.error)
+        console.log(data.error)
       }
     } catch {
       Alert.alert('Error', 'Reset failed')
+      console.log(error)
     }
     setLoading(false)
   }
@@ -315,7 +371,7 @@ const Auth = () => {
                 onChangeText={(t) => handleChange('password', t)}
               />
 
-              <TouchableOpacity className='bg-primary px-1 py-3 rounded-2xl mt-3 items-center ' onPress={handleLogin}> 
+              <TouchableOpacity className='bg-primary px-1 py-3 rounded-2xl mt-3 items-center ' onPress={handleLogin}>
                 {loading ? <ActivityIndicator color="#fff" /> :
                   <Text style={styles.buttonText}>Login</Text>}
               </TouchableOpacity>
@@ -323,7 +379,7 @@ const Auth = () => {
               <TouchableOpacity onPress={() => setStep('forgot')}>
                 <Text className=' text-blue-500 text-center mt-3'
                 //  style={{ color: '#2563EB', textAlign: 'center', marginTop: 10 }}
-                 >Forgot Password?</Text>
+                >Forgot Password?</Text>
               </TouchableOpacity>
 
               <View style={styles.footer}>
@@ -362,7 +418,7 @@ const Auth = () => {
                   />
 
                   <TouchableOpacity
-                  
+
                     className='bg-primary ml-2 py-3.5 px-3 rounded-xl'
                     onPress={handleVerifyReferral}
                   >
@@ -395,7 +451,7 @@ const Auth = () => {
                 onChangeText={(t) => handleChange('confirm_password', t)}
               />
 
-              <TouchableOpacity  className='bg-primary px-1 py-3 rounded-2xl mt-3 items-center ' onPress={handleRegister}>
+              <TouchableOpacity className='bg-primary px-1 py-3 rounded-2xl mt-3 items-center ' onPress={handleRegister}>
                 {loading ? <ActivityIndicator color="#fff" /> :
                   <Text style={styles.buttonText}>Create Account</Text>}
               </TouchableOpacity>
@@ -413,17 +469,56 @@ const Auth = () => {
           {/* OTP VERIFY */}
           {step === 'otp' && (
             <>
-              <TextInput
+              {/* <TextInput
                 placeholder="Enter OTP"
                 style={styles.input}
                 keyboardType="numeric"
                 onChangeText={setOtp}
-              />
+              /> */}
 
-              <TouchableOpacity style={styles.button} onPress={handleVerifyOtp}>
+              <View style={styles.otpContainer}>
+                {otpArray.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    style={styles.otpBox}
+                    keyboardType="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChangeText={(v) => handleOtpChange(v, index, 'register')}
+                    onKeyPress={(e) => handleKeyPress(e, index, 'register')}
+                    ref={(ref) => otpInputs.current[index] = ref}
+                  />
+                ))}
+              </View>
+
+              {/* ✅ Spam hint */}
+              <Text style={styles.infoText}>
+                If you did not receive OTP, please check your spam folder.
+              </Text>
+
+              <TouchableOpacity
+                className='bg-primary px-1 py-3 rounded-2xl mt-3 items-center'
+                onPress={handleVerifyOtp}
+              >
                 {loading ? <ActivityIndicator color="#fff" /> :
                   <Text style={styles.buttonText}>Verify OTP</Text>}
               </TouchableOpacity>
+
+              {/* RESEND OTP */}
+              <TouchableOpacity
+                onPress={handleResendOtp}
+                disabled={loading}
+                style={{ marginTop: 15 }}
+              >
+                <Text style={{
+                  color: '#0096c7',
+                  textAlign: 'center',
+                  fontWeight: '600'
+                }}>
+                  Didn't receive OTP? RESEND
+                </Text>
+              </TouchableOpacity>
+
             </>
           )}
 
@@ -438,7 +533,7 @@ const Auth = () => {
                 }
               />
 
-              <TouchableOpacity style={styles.button} onPress={handleForgotPassword}>
+              <TouchableOpacity className='bg-primary px-1 py-3 rounded-2xl mt-3 items-center ' onPress={handleForgotPassword}>
                 {loading ? <ActivityIndicator color="#fff" /> :
                   <Text style={styles.buttonText}>Send OTP</Text>}
               </TouchableOpacity>
@@ -453,14 +548,49 @@ const Auth = () => {
           {/* RESET */}
           {step === 'reset' && (
             <>
-              <TextInput
+              {/* <TextInput
                 placeholder="OTP"
                 style={styles.input}
                 keyboardType="numeric"
                 onChangeText={(t) =>
                   setResetData(prev => ({ ...prev, otp_code: t }))
                 }
-              />
+              /> */}
+              <View style={styles.otpContainer}>
+                {resetOtpArray.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    style={styles.otpBox}
+                    keyboardType="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChangeText={(v) => handleOtpChange(v, index, 'reset')}
+                    onKeyPress={(e) => handleKeyPress(e, index, 'reset')}
+                    ref={(ref) => resetInputs.current[index] = ref}
+                  />
+                ))}
+              </View>
+
+              {/* ✅ SAME MESSAGE HERE */}
+              <Text style={styles.infoText}>
+                If you did not receive OTP, please check your spam folder.
+              </Text>
+
+              {/* ✅ RESEND BUTTON */}
+              <TouchableOpacity
+                onPress={handleResendOtp}
+                disabled={loading}
+                style={{ marginBottom: 10 }}
+              >
+                <Text style={{
+                  color: '#0096c7',
+                  textAlign: 'center',
+                  fontWeight: '600'
+                }}>
+                  Didn't receive OTP? RESEND
+                </Text>
+              </TouchableOpacity>
+
 
               <TextInput
                 placeholder="New Password"
@@ -480,7 +610,7 @@ const Auth = () => {
                 }
               />
 
-              <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
+              <TouchableOpacity className='bg-primary px-1 py-3 rounded-2xl mt-3 items-center ' onPress={handleResetPassword}>
                 {loading ? <ActivityIndicator color="#fff" /> :
                   <Text style={styles.buttonText}>Reset Password</Text>}
               </TouchableOpacity>
@@ -535,7 +665,7 @@ const styles = StyleSheet.create({
     fontSize: 15
   },
 
- 
+
 
   buttonText: {
     color: 'white',
@@ -552,6 +682,28 @@ const styles = StyleSheet.create({
     color: '#0096c7',
     fontWeight: '600'
   },
+
+  otpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20
+  },
+
+  otpBox: {
+    width: 45,
+    height: 55,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: 'bold'
+  },
+  infoText: {
+    textAlign: 'center',
+    color: '#6B7280',
+    fontSize: 12,
+    marginBottom: 10
+  }
 
 })
 
