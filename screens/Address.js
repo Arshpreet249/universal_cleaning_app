@@ -212,7 +212,7 @@ const Address = () => {
       </Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="bg-white rounded-2xl p-4 shadow">
+        <View className="bg-white rounded-2xl p-4 shadow-sm">
           <Text className="text-lg font-semibold mb-3">Service Address</Text>
 
           {addresses.map((item) => (

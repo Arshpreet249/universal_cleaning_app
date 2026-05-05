@@ -36,6 +36,8 @@ const BookAppointment = () => {
   const [modalDate, setModalDate] = useState(null)
   const [modalData, setModalData] = useState(null)
 
+  const [isAutoAssigned, setIsAutoAssigned] = useState(false)
+
   const isSingleDate =
     fromDate.toDateString() === date.toDateString()
 
@@ -161,6 +163,25 @@ const BookAppointment = () => {
     }
   }
 
+  const fetchTimelineForCurrentSelection = (start, end, from, to) => {
+  if (!start || !end) return
+
+  const dates = getDatesInRange(from, to)
+
+  if (dates.length === 1) {
+    fetchTimeline(start, end)
+  } else {
+    setTimelineLoading(true)
+
+    Promise.all(
+      dates.map((d) => {
+        const dateStr = d.toISOString().split('T')[0]
+        return fetchTimelineForDate(dateStr, start, end)
+      })
+    ).finally(() => setTimelineLoading(false))
+  }
+}
+
   // ---------------- PICKER ----------------
 
   const openPicker = (mode) => {
@@ -169,44 +190,92 @@ const BookAppointment = () => {
   }
 
   const handleConfirm = (selected) => {
-    setPickerVisible(false)
+  setPickerVisible(false)
 
-    setTimelineData(null)
-    setTimelineByDate({})
-    setSelectedEmployeesByDate({})
-    setShowModal(false)
+  let newFromDate = fromDate
+  let newToDate = date
+  let newStartTime = startTime
+  let newEndTime = endTime
 
-    if (pickerMode === 'fromDate') setFromDate(selected)
-    if (pickerMode === 'toDate') setDate(selected)
+  // reset UI
+  setTimelineData(null)
+  setTimelineByDate({})
+  setSelectedEmployeesByDate({})
+  setShowModal(false)
+  setIsAutoAssigned(false)
 
-    if (pickerMode === 'start') {
-      const formatted = formatToAPI(selected)
-      setStartTime(formatted)
-      setEndTime(null)
-    }
-
-    if (pickerMode === 'end') {
-      const formatted = formatToAPI(selected)
-      setEndTime(formatted)
-
-      if (startTime) {
-        const dates = getDatesInRange(fromDate, date)
-
-        if (dates.length === 1) {
-          fetchTimeline(startTime, formatted)
-        } else {
-          setTimelineLoading(true)
-
-          Promise.all(
-            dates.map((d) => {
-              const dateStr = d.toISOString().split('T')[0]
-              return fetchTimelineForDate(dateStr, startTime, formatted)
-            })
-          ).finally(() => setTimelineLoading(false))
-        }
-      }
-    }
+  if (pickerMode === 'fromDate') {
+    newFromDate = selected
+    setFromDate(selected)
   }
+
+  if (pickerMode === 'toDate') {
+    newToDate = selected
+    setDate(selected)
+  }
+
+  if (pickerMode === 'start') {
+    const formatted = formatToAPI(selected)
+    newStartTime = formatted
+    setStartTime(formatted)
+    setEndTime(null)
+    newEndTime = null
+  }
+
+  if (pickerMode === 'end') {
+    const formatted = formatToAPI(selected)
+    newEndTime = formatted
+    setEndTime(formatted)
+  }
+
+  // ✅ KEY FIX: refetch if we have both times
+  if (newStartTime && newEndTime) {
+    fetchTimelineForCurrentSelection(
+      newStartTime,
+      newEndTime,
+      newFromDate,
+      newToDate
+    )
+  }
+}
+  // ---------------- AUTO ASSIGN ----------------
+
+  const handleAutoAssign = () => {
+    if (!startTime || !endTime) {
+      Alert.alert('Select Time First')
+      return
+    }
+
+    const dates = getDatesInRange(fromDate, date)
+    let autoAssigned = {}
+
+    dates.forEach((d) => {
+      const dateStr = d.toISOString().split('T')[0]
+
+      const sourceData = isSingleDate
+        ? timelineData
+        : timelineByDate[dateStr]
+
+      if (!sourceData?.employees) return
+
+      const validEmployees = sourceData.employees.filter((emp) =>
+        emp.free_slots?.some((slot) =>
+          isSlotValid(slot.start_time, slot.end_time, startTime, endTime)
+        )
+      )
+
+      if (validEmployees.length > 0) {
+        const randomIndex = Math.floor(Math.random() * validEmployees.length)
+        autoAssigned[dateStr] = validEmployees[randomIndex]
+      }
+    })
+
+    setSelectedEmployeesByDate(autoAssigned)
+    setIsAutoAssigned(true)
+
+    // Alert.alert('Auto Assign', ' employees assigned')
+  }
+
 
   // ---------------- PROCEED ----------------
 
@@ -233,11 +302,14 @@ const BookAppointment = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50 px-4">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 100 }}>
 
         <Text className="text-2xl font-bold text-center mt-4 mb-6 text-primary">
           Book Appointment
         </Text>
+
+
 
         {/* DATE */}
         <View className="flex-row mb-4">
@@ -277,6 +349,18 @@ const BookAppointment = () => {
         />
 
         {timelineLoading && <ActivityIndicator size="large" className="mt-4" />}
+
+        {/* AUTO BUTTON */}
+        <TouchableOpacity
+          onPress={handleAutoAssign}
+          className="py-3 rounded-xl mt-4 bg-primary "
+        >
+          <Text className="text-white text-center font-bold">
+            Auto Assign
+          </Text>
+        </TouchableOpacity>
+
+
 
 
         {/* ✅ SINGLE DATE TIMELINE */}
@@ -377,21 +461,49 @@ const BookAppointment = () => {
         )}
 
         {/* MULTI DATE */}
+
         {!isSingleDate && (
           <View className="mt-4">
             {getDatesInRange(fromDate, date).map((d, i) => {
               const dateStr = d.toISOString().split('T')[0]
 
               return (
-                <View key={i} className="bg-white p-4 rounded-xl mb-4 border border-gray-200">
-                  <Text>{d.toDateString()}</Text>
+                <View
+                  key={i}
+                  className="bg-white p-4 rounded-xl mb-4 border border-gray-200"
+                >
 
+                  {/* DATE */}
+                  <Text className="font-bold text-base">
+                    {d.toDateString()}
+                  </Text>
+
+                  {/* 🧾 PACKAGE NAME (NEW ADDITION) */}
+                  {basketItems?.length > 0 && (
+                    <View className="mt-2">
+                      <Text className="text-xs text-gray-500">
+                        Packages:
+                      </Text>
+
+                      {basketItems.map((item, index) => (
+                        <Text
+                          key={index}
+                          className="text-primary font-semibold"
+                        >
+                          • {item.displayName}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* SELECTED EMPLOYEE */}
                   {selectedEmployeesByDate[dateStr] && (
-                    <Text className="text-green-600">
+                    <Text className="text-secondary mt-2">
                       Assigned: {selectedEmployeesByDate[dateStr].employee_name}
                     </Text>
                   )}
 
+                  {/* BUTTON */}
                   <TouchableOpacity
                     className="mt-3 bg-primary py-2 rounded"
                     onPress={() => {
@@ -404,24 +516,26 @@ const BookAppointment = () => {
                       Assign Employee
                     </Text>
                   </TouchableOpacity>
+
                 </View>
               )
             })}
           </View>
         )}
 
-        {/* PROCEED */}
+      </ScrollView>
+      <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
         <TouchableOpacity
           onPress={handleProceed}
-          className={`py-3 rounded-xl mt-6 ${allDatesSelected() ? 'bg-primary' : 'bg-gray-300'
+          disabled={!allDatesSelected()}
+          className={`py-4 rounded-xl ${allDatesSelected() ? 'bg-primary' : 'bg-gray-300'
             }`}
         >
-          <Text className="text-white text-center font-bold">
+          <Text className="text-white text-center font-bold text-base">
             Proceed
           </Text>
         </TouchableOpacity>
-
-      </ScrollView>
+      </View>
 
       {/* MODAL */}
       {showModal && (
@@ -471,8 +585,8 @@ const BookAppointment = () => {
                         }))
                       }
                       className={`p-4 mb-3 rounded-xl border ${selectedEmployeesByDate[modalDate]?.employee_id === emp.employee_id
-                          ? 'border-primary bg-blue-50'
-                          : 'border-gray-200 bg-white'
+                        ? 'border-primary bg-blue-50'
+                        : 'border-gray-200 bg-white'
                         }`}
                     >
 
@@ -546,3 +660,5 @@ const BookAppointment = () => {
 }
 
 export default BookAppointment
+
+

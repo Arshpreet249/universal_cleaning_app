@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 
 const Basket = () => {
-  const { token, setCartCount } = useContext(AuthContext)
+  const { token, setCartCount,setBasketItems } = useContext(AuthContext)
 
   const [cartData, setCartData] = useState([])
   const [loading, setLoading] = useState(false)
@@ -77,6 +77,7 @@ const Basket = () => {
         })
 
         setCartData(cleanedData)
+         setBasketItems(cleanedData)
         setCartCount(data.cart_count || cleanedData.length)
       }
     } catch (err) {
@@ -114,6 +115,7 @@ const Basket = () => {
       if (data.status === 200) {
         const updatedCart = cartData.filter(item => item.id !== selectedId)
         setCartData(updatedCart)
+         setBasketItems(updatedCart) 
         setCartCount(updatedCart.length)
 
         setShowDeleteModal(false)
@@ -156,7 +158,7 @@ const Basket = () => {
           </View>
         )}
 
-        <Text className="text-primary text-lg font-bold mt-2">
+        <Text className="text-primary text-base font-semibold mt-2">
           Price: ${item.displayPrice}
         </Text>
       </View>
@@ -166,9 +168,9 @@ const Basket = () => {
           setSelectedId(item.id)
           setShowDeleteModal(true)
         }}
-        className="bg-red-100 px-3 py-2 rounded-lg self-start"
+        className="bg-red-500 px-3 py-2 rounded-lg self-start"
       >
-        <Text className="text-red-600 font-semibold">
+        <Text className="text-white font-semibold">
           Remove
         </Text>
       </TouchableOpacity>
@@ -227,7 +229,7 @@ const Basket = () => {
 
               <TouchableOpacity 
                 onPress={() => navigation.navigate('BookAppointment')}
-                className="bg-primary px-6 py-3 rounded-full"
+                className="bg-primary px-6 py-3 rounded-lg"
               >
                 <Text className="text-white font-semibold">
                   Book Now

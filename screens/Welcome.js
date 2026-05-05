@@ -26,7 +26,7 @@ const Welcome = () => {
     // ⏱ Redirect to Home after 2 sec
     const timer = setTimeout(() => {
       navigation.replace('Main') 
-    }, 5000)
+    }, 4000)
 
     return () => clearTimeout(timer)
   }, [])

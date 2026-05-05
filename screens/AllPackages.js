@@ -64,7 +64,7 @@ const AllPackages = () => {
 
     return (
       <View
-        className="w-[48%] h-[240px] mb-4 rounded-3xl"
+        className="w-[48%] h-[240px] mb-4 rounded-xl"
         // style={{
         //   shadowColor: '#000',
         //   shadowOpacity: 0.25,
