@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 
 const Basket = () => {
-  const { token, setCartCount,setBasketItems } = useContext(AuthContext)
+  const { token, setCartCount, setBasketItems } = useContext(AuthContext)
 
   const [cartData, setCartData] = useState([])
   const [loading, setLoading] = useState(false)
@@ -52,11 +52,20 @@ const Basket = () => {
 
           try {
             details = item.note ? JSON.parse(item.note) : {}
-          } catch (e) {}
+          } catch (e) { }
+
 
           const metaEntries = Object.entries(details).filter(
             ([key]) =>
-              !['service', 'price', 'quantity', 'totalPrice', 'total'].includes(key)
+              ![
+                'service',
+                'price',
+                'quantity',
+                'totalPrice',
+                'total',
+                'package_id',   // hide
+                'rowIndex',     // hide
+              ].includes(key)
           )
 
           return {
@@ -72,12 +81,12 @@ const Basket = () => {
               details.totalPrice ||
               details.total ||
               (details.price || item.price || 0) *
-                (details.quantity || 1),
+              (details.quantity || 1),
           }
         })
 
         setCartData(cleanedData)
-         setBasketItems(cleanedData)
+        setBasketItems(cleanedData)
         setCartCount(data.cart_count || cleanedData.length)
       }
     } catch (err) {
@@ -115,7 +124,7 @@ const Basket = () => {
       if (data.status === 200) {
         const updatedCart = cartData.filter(item => item.id !== selectedId)
         setCartData(updatedCart)
-         setBasketItems(updatedCart) 
+        setBasketItems(updatedCart)
         setCartCount(updatedCart.length)
 
         setShowDeleteModal(false)
@@ -186,9 +195,11 @@ const Basket = () => {
     )
   }
 
+  const isCartEmpty = cartData.length === 0
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1 px-4 pb-24">
+      <View className="flex-1 px-4 pb-20">
 
         {/* HEADER */}
         <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
@@ -203,7 +214,7 @@ const Basket = () => {
               Please login to view your basket
             </Text>
 
-            
+
           </View>
         ) : (
           <>
@@ -227,9 +238,16 @@ const Basket = () => {
                 <Text className="text-lg font-bold">${total}</Text>
               </View>
 
-              <TouchableOpacity 
-                onPress={() => navigation.navigate('BookAppointment')}
-                className="bg-primary px-6 py-3 rounded-lg"
+          
+              <TouchableOpacity
+                onPress={() => {
+                  if (!isCartEmpty) {
+                    navigation.navigate('BookAppointment')
+                  }
+                }}
+                disabled={isCartEmpty}
+                className={`px-6 py-3 rounded-lg ${isCartEmpty ? 'bg-gray-300' : 'bg-primary'
+                  }`}
               >
                 <Text className="text-white font-semibold">
                   Book Now

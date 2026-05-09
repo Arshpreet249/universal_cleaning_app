@@ -17,6 +17,8 @@ import Address from './screens/Address'
 import Toast from 'react-native-toast-message';
 import BookAppointment from './screens/BookAppointment'
 import Welcome from './screens/Welcome'
+import Notes from './screens/Notes'
+import Payment from './screens/Payment'
 const Stack = createNativeStackNavigator()
 
 export default function App() {
@@ -57,6 +59,8 @@ export default function App() {
               <Stack.Screen name='AllPackages' component={AllPackages} options={{ title: 'Allpackages' }} />
               <Stack.Screen name='Address' component={Address} options={{ title: 'Address' }} />
               <Stack.Screen name='BookAppointment' component={BookAppointment} options={{ title: 'BookAppointment' }} />
+              <Stack.Screen name='Notes' component={Notes} options={{title:'Notes'}}/>
+              <Stack.Screen name='Payment' component={Payment} options={{title: 'payment'}}/>
             </Stack.Navigator>
             <Toast />
             <StatusBar style="auto" />

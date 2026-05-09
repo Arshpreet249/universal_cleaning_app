@@ -113,12 +113,12 @@ const PackageDetail = ({ route }) => {
 
   // ✅ SELECT
   const toggleSelection = (row, index) => {
-    const exists = selectedItems.find(i => i.id === index)
-
+    const exists = selectedItems.find(i => i.rowIndex === index)
     if (exists) {
-      setSelectedItems(selectedItems.filter(i => i.id !== index))
+
+      setSelectedItems(selectedItems.filter(i => i.rowIndex !== index))
     } else {
-      setSelectedItems([...selectedItems, { ...row, id: index }])
+      setSelectedItems([...selectedItems, { ...row, rowIndex: index }])
     }
   }
 
@@ -146,13 +146,16 @@ const PackageDetail = ({ route }) => {
         }
 
         price = Number(price)
-        const { id,price_sgd, ...cleanRow } = row
+        // const { id,price_sgd, ...cleanRow } = row
+         const { price_sgd, ...cleanRow } = row
         const itemToAdd = {
+          package_id: item.id, 
           service: parsed?.package_name || 'Package',
           ...cleanRow,
           price,
           quantity: 1,
           totalPrice: price,
+          
         }
 
         const res = await fetch(`${REACT_APP_HOST_API_URL}/api/booking/add/`, {
@@ -168,6 +171,7 @@ const PackageDetail = ({ route }) => {
         })
 
         const data = await res.json()
+        console .log("product" ,data)
 
         if (data.status !== 200) {
           Alert.alert('Error', data.message || 'Booking failed')
@@ -333,7 +337,8 @@ const PackageDetail = ({ route }) => {
 
               {/* ROWS */}
               {data.map((row, index) => {
-                const isSelected = selectedItems.some(i => i.id === index)
+                // const isSelected = selectedItems.some(i => i.id === index)
+                const isSelected = selectedItems.some(i => i.rowIndex === index)
 
                 return (
                   <TouchableOpacity

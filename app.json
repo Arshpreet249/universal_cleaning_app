@@ -12,8 +12,13 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+  
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to autofill your address.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location to improve service experience."
+      }
     },
     "android": {
       "adaptiveIcon": {

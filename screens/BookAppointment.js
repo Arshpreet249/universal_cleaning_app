@@ -13,9 +13,13 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import DateTimePickerModal from 'react-native-modal-datetime-picker'
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
+import { useNavigation } from '@react-navigation/native'
 
 const BookAppointment = () => {
+
+  const navigation = useNavigation()
   const { token, basketItems } = useContext(AuthContext)
+
 
   const [fromDate, setFromDate] = useState(new Date())
   const [date, setDate] = useState(new Date())
@@ -164,23 +168,23 @@ const BookAppointment = () => {
   }
 
   const fetchTimelineForCurrentSelection = (start, end, from, to) => {
-  if (!start || !end) return
+    if (!start || !end) return
 
-  const dates = getDatesInRange(from, to)
+    const dates = getDatesInRange(from, to)
 
-  if (dates.length === 1) {
-    fetchTimeline(start, end)
-  } else {
-    setTimelineLoading(true)
+    if (dates.length === 1) {
+      fetchTimeline(start, end)
+    } else {
+      setTimelineLoading(true)
 
-    Promise.all(
-      dates.map((d) => {
-        const dateStr = d.toISOString().split('T')[0]
-        return fetchTimelineForDate(dateStr, start, end)
-      })
-    ).finally(() => setTimelineLoading(false))
+      Promise.all(
+        dates.map((d) => {
+          const dateStr = d.toISOString().split('T')[0]
+          return fetchTimelineForDate(dateStr, start, end)
+        })
+      ).finally(() => setTimelineLoading(false))
+    }
   }
-}
 
   // ---------------- PICKER ----------------
 
@@ -190,54 +194,54 @@ const BookAppointment = () => {
   }
 
   const handleConfirm = (selected) => {
-  setPickerVisible(false)
+    setPickerVisible(false)
 
-  let newFromDate = fromDate
-  let newToDate = date
-  let newStartTime = startTime
-  let newEndTime = endTime
+    let newFromDate = fromDate
+    let newToDate = date
+    let newStartTime = startTime
+    let newEndTime = endTime
 
-  // reset UI
-  setTimelineData(null)
-  setTimelineByDate({})
-  setSelectedEmployeesByDate({})
-  setShowModal(false)
-  setIsAutoAssigned(false)
+    // reset UI
+    setTimelineData(null)
+    setTimelineByDate({})
+    setSelectedEmployeesByDate({})
+    setShowModal(false)
+    setIsAutoAssigned(false)
 
-  if (pickerMode === 'fromDate') {
-    newFromDate = selected
-    setFromDate(selected)
+    if (pickerMode === 'fromDate') {
+      newFromDate = selected
+      setFromDate(selected)
+    }
+
+    if (pickerMode === 'toDate') {
+      newToDate = selected
+      setDate(selected)
+    }
+
+    if (pickerMode === 'start') {
+      const formatted = formatToAPI(selected)
+      newStartTime = formatted
+      setStartTime(formatted)
+      setEndTime(null)
+      newEndTime = null
+    }
+
+    if (pickerMode === 'end') {
+      const formatted = formatToAPI(selected)
+      newEndTime = formatted
+      setEndTime(formatted)
+    }
+
+    // ✅ KEY FIX: refetch if we have both times
+    if (newStartTime && newEndTime) {
+      fetchTimelineForCurrentSelection(
+        newStartTime,
+        newEndTime,
+        newFromDate,
+        newToDate
+      )
+    }
   }
-
-  if (pickerMode === 'toDate') {
-    newToDate = selected
-    setDate(selected)
-  }
-
-  if (pickerMode === 'start') {
-    const formatted = formatToAPI(selected)
-    newStartTime = formatted
-    setStartTime(formatted)
-    setEndTime(null)
-    newEndTime = null
-  }
-
-  if (pickerMode === 'end') {
-    const formatted = formatToAPI(selected)
-    newEndTime = formatted
-    setEndTime(formatted)
-  }
-
-  // ✅ KEY FIX: refetch if we have both times
-  if (newStartTime && newEndTime) {
-    fetchTimelineForCurrentSelection(
-      newStartTime,
-      newEndTime,
-      newFromDate,
-      newToDate
-    )
-  }
-}
   // ---------------- AUTO ASSIGN ----------------
 
   const handleAutoAssign = () => {
@@ -279,31 +283,72 @@ const BookAppointment = () => {
 
   // ---------------- PROCEED ----------------
 
+
+  // const handleProceed = () => {
+  //   const dates = getDatesInRangeStrings()
+
+  //   if (!allDatesSelected()) {
+  //     Alert.alert('Incomplete', 'Assign employee for all dates')
+  //     return
+  //   }
+
+  //   const bookingData = dates.map((dateStr) => ({
+  //     start_date: dateStr,
+  //     employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
+  //      assigned_to_usernames: [
+  //     selectedEmployeesByDate[dateStr]?.employee_username,],
+  //     startTime,
+  //     endTime,
+  //     // package: basketItems?.map((item) => item.displayName) || [],
+  //      package_names: basketItems?.map((item) => item.displayName) || [],
+  //   // package_ids: basketItems?.map((item) => item.id) || [],
+  //   }))
+
+  //   // ✅ IMPORTANT: pass data
+  //   navigation.navigate('Notes', {
+  //     appointmentData: bookingData,
+  //   })
+  // }
+
   const handleProceed = () => {
-    const dates = getDatesInRangeStrings()
+  const dates = getDatesInRangeStrings()
 
-    if (!allDatesSelected()) {
-      Alert.alert('Incomplete', 'Assign employee for all dates')
-      return
-    }
-
-    const bookingData = dates.map((dateStr) => ({
-      date: dateStr,
-      employee_id: selectedEmployeesByDate[dateStr].employee_id,
-      startTime,
-      endTime,
-    }))
-
-    console.log('BOOKING DATA:', bookingData)
-    Alert.alert('Success', 'Ready to proceed')
+  if (!allDatesSelected()) {
+    Alert.alert('Incomplete', 'Assign employee for all dates')
+    return
   }
 
+  const packageIds = basketItems
+    ?.map((item) => item.details?.package_id)
+    .filter(Boolean)
+
+  const packageNames = basketItems
+    ?.map((item) => item.displayName)
+
+  const bookingData = dates.map((dateStr) => ({
+    start_date: dateStr,
+    employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
+    assigned_to_usernames: [
+      selectedEmployeesByDate[dateStr]?.employee_username,
+    ],
+    startTime,
+    endTime,
+
+    // ✅ SEND BOTH
+    package_ids: packageIds,
+    package_names: packageNames,
+  }))
+
+  navigation.navigate('Notes', {
+    appointmentData: bookingData,
+  })
+}
   // ---------------- UI ----------------
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50 px-4">
       <ScrollView showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 100 }}>
+        contentContainerStyle={{ paddingBottom: 100 }}>
 
         <Text className="text-2xl font-bold text-center mt-4 mb-6 text-primary">
           Book Appointment
@@ -353,7 +398,7 @@ const BookAppointment = () => {
         {/* AUTO BUTTON */}
         <TouchableOpacity
           onPress={handleAutoAssign}
-          className="py-3 rounded-xl mt-4 bg-primary "
+          className="py-3 rounded-xl mt-4 bg-secondary "
         >
           <Text className="text-white text-center font-bold">
             Auto Assign
@@ -524,6 +569,19 @@ const BookAppointment = () => {
         )}
 
       </ScrollView>
+      {/* <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
+        <TouchableOpacity
+          onPress={handleProceed}
+          disabled={!allDatesSelected()}
+          className={`py-4 rounded-xl ${allDatesSelected() ? 'bg-primary' : 'bg-gray-300'
+            }`}
+        >
+          <Text 
+          className="text-white text-center font-bold text-base">
+            Proceed
+          </Text>
+        </TouchableOpacity>
+      </View> */}
       <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
         <TouchableOpacity
           onPress={handleProceed}
@@ -536,7 +594,6 @@ const BookAppointment = () => {
           </Text>
         </TouchableOpacity>
       </View>
-
       {/* MODAL */}
       {showModal && (
         <View className="absolute inset-0 bg-black/40 px-4 py-10 justify-center">
@@ -657,7 +714,7 @@ const BookAppointment = () => {
 
     </SafeAreaView>
   )
-}
+} 
 
 export default BookAppointment
 

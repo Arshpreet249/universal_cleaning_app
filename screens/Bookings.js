@@ -1,107 +1,204 @@
-import React from 'react'
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import React, { useEffect, useState, useContext } from 'react'
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-const bookingsData = [
-  {
-    id: 1,
-    title: 'One Time Cleaning',
-    date: '25 April 2026',
-    time: '02:00 PM',
-    price: '$250',
-    status: 'Confirmed',
-  },
-  {
-    id: 2,
-    title: 'Curtain Cleaning',
-    date: '28 April 2026',
-    time: '11:00 AM',
-    price: '$80',
-    status: 'Pending',
-  },
-  {
-    id: 3,
-    title: 'Head Massage',
-    date: '30 April 2026',
-    time: '05:00 PM',
-    price: '$120',
-    status: 'Cancelled',
-  },
-]
+import { useNavigation } from '@react-navigation/native'
+import { AuthContext } from '../context/AuthContext'
+import { apiBaseUrl } from '../components/variable'
 
-const getStatusStyle = (status) => {
-  switch (status) {
-    case 'Confirmed':
-      return 'bg-green-500'
-    case 'Pending':
-      return 'bg-orange-400'
-    case 'Cancelled':
-      return 'bg-red-500'
+
+const getStatusTextColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case 'completed':
+      return 'text-[#28a745] font-semibold'
+
+    case 'cancelled':
+    case 'rejected':
+      return 'text-[#dc3545] font-semibold'
+
+    case 'pending':
+      return 'text-[#6c757d] font-semibold'
+
+    case 'accepted':
+      return 'text-[#007bff] font-semibold'
+
+    case 'assigned':
+      return 'text-[#af51af] font-semibold'
+
     default:
-      return 'bg-gray-400'
+      return 'text-gray-500'
   }
 }
-
 const Bookings = () => {
-  return (
-     <SafeAreaView className="flex-1  bg-gray-100 ">
-    <View className="flex-1 px-4">
+  const { token, user } = useContext(AuthContext)
+  const navigation = useNavigation()
 
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchAppointments()
+  }, [])
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true)
+
+      const response = await fetch(`${apiBaseUrl}all-appointments/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+        }),
+      })
+
+      const data = await response.json()
+      setBookings(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.log('Error fetching appointments:', error)
+      setBookings([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ✅ LOADING
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-100">
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    )
+  }
+
+  // ✅ FIRST TIME USER (NO BOOKINGS)
+  if (!loading && bookings.length === 0) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center bg-gray-100 px-6">
+        
+
+        <Text className="text-xl font-semibold text-gray-700 mb-2">
+          No Bookings Yet
+        </Text>
+
+        <Text className="text-gray-500 text-center mb-6">
+          You haven’t booked any service yet. Start by creating your first booking.
+        </Text>
+
+     
+      </SafeAreaView>
+    )
+  }
+
+  return (
+    <SafeAreaView className="flex-1 bg-gray-100 px-4 pb-24">
       {/* HEADER */}
       <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
         My Bookings
       </Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+        {bookings.map((item) => {
+          const startDate = new Date(item.start_from)
+          const endDate = new Date(item.end_at)
 
-        {bookingsData.map((item) => (
-          <View
-            key={item.id}
-            className="bg-white mb-4 p-4 rounded-2xl shadow-md border border-gray-100"
-          >
+          const formattedDate = startDate.toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })
 
-            {/* TITLE + STATUS */}
-            <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-semibold text-gray-900">
-                {item.title}
-              </Text>
+          const formattedStartTime = startDate.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
 
-              <View
-                className={`px-3 py-1 rounded-full ${getStatusStyle(
-                  item.status
-                )}`}
-              >
-                <Text className="text-white text-xs font-semibold">
-                  {item.status}
+          const formattedEndTime = endDate.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+
+          const statusText =
+            item.process || (item.status ? 'Completed' : 'In Progress')
+
+          const packageText =
+            item.description?.split('Package:')[1]?.trim() ||
+            'Cleaning Service'
+
+          return (
+            <View
+              key={item.id}
+              className="bg-white mb-5 p-4 rounded-2xl"
+              style={{
+                shadowColor: '#000',
+                shadowOpacity: 0.08,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              {/* TOP ROW */}
+              <View className="flex-row justify-between items-center">
+                <View>
+                  <Text className="text-gray-900 font-semibold text-base">
+                    {item.title || 'Service Provider'}
+                  </Text>
+
+                  <Text className="text-secondary text-xs mt-1">
+                    ★ 4.7
+                  </Text>
+                </View>
+              </View>
+
+              {/* SERVICE + PRICE */}
+              <View className="flex-row justify-between items-center mt-4">
+                <Text className="text-lg font-semibold text-gray-800 flex-1 pr-2">
+                  {packageText}
+                </Text>
+
+                <Text className="text-2xl font-bold text-secondary">
+                  ${item.amount}
                 </Text>
               </View>
+
+              {/* DATE + TIME + STATUS */}
+              <View className="flex-row justify-between mt-4">
+                <View>
+                  <Text className="text-gray-400 text-xs">Date</Text>
+                  <Text className="text-gray-700 text-sm">
+                    {formattedDate}
+                  </Text>
+                </View>
+
+                <View>
+                  <Text className="text-gray-400 text-xs">Time</Text>
+                  <Text className="text-gray-700 text-sm">
+                    {formattedStartTime} - {formattedEndTime}
+                  </Text>
+                </View>
+
+                <View>
+                  <Text className="text-gray-400 text-xs">Status</Text>
+                  <Text
+                    className={`text-sm font-medium ${getStatusTextColor(
+                      statusText
+                    )}`}
+                  >
+                    {statusText}
+                  </Text>
+                </View>
+              </View>
             </View>
-
-            {/* DETAILS */}
-            <Text className="text-gray-500 mt-2">
-              📅 {item.date}
-            </Text>
-
-            <Text className="text-gray-500 mt-1">
-              ⏰ {item.time}
-            </Text>
-
-            {/* PRICE */}
-            <Text className="text-black font-bold text-base mt-2">
-              {item.price}
-            </Text>
-
-            {/* BUTTON */}
-            <TouchableOpacity className="mt-4 bg-blue-500 py-3 rounded-xl">
-              <Text className="text-white text-center font-semibold">
-                View Details
-              </Text>
-            </TouchableOpacity>
-
-          </View>
-        ))}
-
+          )
+        })}
       </ScrollView>
-    </View>
     </SafeAreaView>
   )
 }
