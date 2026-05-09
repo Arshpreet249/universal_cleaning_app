@@ -196,8 +196,8 @@ const BookAppointment = () => {
   const handleConfirm = (selected) => {
     setPickerVisible(false)
 
-     let now = new Date()
-  let minTime = new Date(now.getTime() + 30 * 60000) // +30 min
+    let now = new Date()
+    let minTime = new Date(now.getTime() + 3 * 60 * 60 * 1000)
     let newFromDate = fromDate
     let newToDate = date
     let newStartTime = startTime
@@ -211,35 +211,35 @@ const BookAppointment = () => {
     setIsAutoAssigned(false)
 
     if (pickerMode === 'fromDate') {
-       if (selected < new Date().setHours(0,0,0,0)) {
-      Alert.alert('Invalid Date', 'You cannot select past dates')
-      return
-    }
+      if (selected < new Date().setHours(0, 0, 0, 0)) {
+        Alert.alert('Invalid Date', 'You cannot select past dates')
+        return
+      }
       newFromDate = selected
       setFromDate(selected)
     }
 
     if (pickerMode === 'toDate') {
       if (selected < fromDate) {
-      Alert.alert('Invalid Date', 'End date cannot be before start date')
-      return
-    }
+        Alert.alert('Invalid Date', 'End date cannot be before start date')
+        return
+      }
       newToDate = selected
       setDate(selected)
     }
 
     if (pickerMode === 'start') {
-       // ✅ If selected date is today → enforce 30 min rule
-    const isToday =
-      fromDate.toDateString() === new Date().toDateString()
+      // ✅ If selected date is today → enforce 30 min rule
+      const isToday =
+        fromDate.toDateString() === new Date().toDateString()
 
-    if (isToday && selected < minTime) {
-      Alert.alert(
-        'Invalid Time',
-        'Start time must be at least 30 minutes from now'
-      )
-      return
-    }
+      if (isToday && selected < minTime) {
+        Alert.alert(
+          'Invalid Time',
+          'Start time must be at least 3 hours from now'
+        )
+        return
+      }
       const formatted = formatToAPI(selected)
       newStartTime = formatted
       setStartTime(formatted)
@@ -248,23 +248,23 @@ const BookAppointment = () => {
     }
 
     if (pickerMode === 'end') {
-       if (!startTime) {
-      Alert.alert('Select start time first')
-      return
-    }
-     const startDateObj = new Date()
-    const [h, m] = startTime.split(':')
-    startDateObj.setHours(h, m)
+      if (!startTime) {
+        Alert.alert('Select start time first')
+        return
+      }
+      const startDateObj = new Date()
+      const [h, m] = startTime.split(':')
+      startDateObj.setHours(h, m)
 
-    const minEndTime = new Date(startDateObj.getTime() + 30 * 60000)
+      const minEndTime = new Date(startDateObj.getTime() + 30 * 60000)
 
-    if (selected < minEndTime) {
-      Alert.alert(
-        'Invalid Time',
-        'End time must be at least 30 minutes after start time'
-      )
-      return
-    }
+      if (selected < minEndTime) {
+        Alert.alert(
+          'Invalid Time',
+          'End time must be at least 30 minutes after start time'
+        )
+        return
+      }
       const formatted = formatToAPI(selected)
       newEndTime = formatted
       setEndTime(formatted)
@@ -318,35 +318,6 @@ const BookAppointment = () => {
     // Alert.alert('Auto Assign', ' employees assigned')
   }
 
-
-  // ---------------- PROCEED ----------------
-
-
-  // const handleProceed = () => {
-  //   const dates = getDatesInRangeStrings()
-
-  //   if (!allDatesSelected()) {
-  //     Alert.alert('Incomplete', 'Assign employee for all dates')
-  //     return
-  //   }
-
-  //   const bookingData = dates.map((dateStr) => ({
-  //     start_date: dateStr,
-  //     employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
-  //      assigned_to_usernames: [
-  //     selectedEmployeesByDate[dateStr]?.employee_username,],
-  //     startTime,
-  //     endTime,
-  //     // package: basketItems?.map((item) => item.displayName) || [],
-  //      package_names: basketItems?.map((item) => item.displayName) || [],
-  //   // package_ids: basketItems?.map((item) => item.id) || [],
-  //   }))
-
-  //   // ✅ IMPORTANT: pass data
-  //   navigation.navigate('Notes', {
-  //     appointmentData: bookingData,
-  //   })
-  // }
 
   const handleProceed = () => {
     const dates = getDatesInRangeStrings()
@@ -420,16 +391,6 @@ const BookAppointment = () => {
           </TouchableOpacity>
         </View>
 
-        {/* <DateTimePickerModal
-          isVisible={isPickerVisible}
-          mode={pickerMode === 'start' || pickerMode === 'end' ? 'time' : 'date'}
-          date={pickerMode === 'fromDate' ? fromDate : pickerMode === 'toDate' ? date : new Date()}
-          onConfirm={handleConfirm}
-          onCancel={() => setPickerVisible(false)}
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          themeVariant="light"
-          textColor="#000000"
-        /> */}
 
         <DateTimePickerModal
           isVisible={isPickerVisible}
@@ -574,25 +535,56 @@ const BookAppointment = () => {
               return (
                 <View
                   key={i}
-                  className="bg-white p-4 rounded-xl mb-4 border border-gray-200"
+                  className="bg-white mb-5 p-4 rounded-2xl"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOpacity: 0.08,
+                    shadowRadius: 10,
+                    elevation: 4,
+                  }}
                 >
 
-                  {/* DATE */}
-                  <Text className="font-bold text-base">
-                    {d.toDateString()}
-                  </Text>
-
-                  {/* 🧾 PACKAGE NAME (NEW ADDITION) */}
-                  {basketItems?.length > 0 && (
-                    <View className="mt-2">
-                      <Text className="text-xs text-gray-500">
-                        Packages:
+                  {/* HEADER */}
+                  <View className="flex-row justify-between items-center">
+                    <View>
+                      <Text className="text-gray-900 font-semibold text-base">
+                        {d.toDateString()}
                       </Text>
+
+                      <Text className="text-secondary text-xs mt-1">
+                        {basketItems?.length || 0} Service(s)
+                      </Text>
+                    </View>
+
+                    {/* STATUS BADGE */}
+                    <View
+                      className={`px-3 py-1 rounded-full ${selectedEmployeesByDate[dateStr]
+                          ? 'bg-green-100'
+                          : 'bg-gray-100'
+                        }`}
+                    >
+                      <Text
+                        className={`text-xs font-semibold ${selectedEmployeesByDate[dateStr]
+                            ? 'text-green-700'
+                            : 'text-gray-500'
+                          }`}
+                      >
+                        {selectedEmployeesByDate[dateStr]
+                          ? 'Assigned'
+                          : 'Pending'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* PACKAGE LIST */}
+                  {basketItems?.length > 0 && (
+                    <View className="mt-3">
+                      <Text className="text-gray-400 text-xs">Packages</Text>
 
                       {basketItems.map((item, index) => (
                         <Text
                           key={index}
-                          className="text-primary font-semibold"
+                          className="text-gray-800 font-medium"
                         >
                           • {item.displayName}
                         </Text>
@@ -601,26 +593,45 @@ const BookAppointment = () => {
                   )}
 
                   {/* SELECTED EMPLOYEE */}
-                  {selectedEmployeesByDate[dateStr] && (
-                    <Text className="text-secondary mt-2">
-                      Assigned: {selectedEmployeesByDate[dateStr].employee_name}
-                    </Text>
-                  )}
+                  <View className="mt-3">
+                    <Text className="text-gray-400 text-xs">Assigned Employee</Text>
 
-                  {/* BUTTON */}
+                    <Text className="text-gray-800 font-semibold">
+                      {selectedEmployeesByDate[dateStr]?.employee_name ||
+                        'Not selected'}
+                    </Text>
+                  </View>
+
+                  {/* TIME ROW */}
+                  <View className="flex-row justify-between mt-4">
+                    <View>
+                      <Text className="text-gray-400 text-xs">Start</Text>
+                      <Text className="text-gray-700 text-sm font-medium">
+                        {startTime ? formatTime(startTime) : '--'}
+                      </Text>
+                    </View>
+
+                    <View>
+                      <Text className="text-gray-400 text-xs">End</Text>
+                      <Text className="text-gray-700 text-sm font-medium">
+                        {endTime ? formatTime(endTime) : '--'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* ACTION BUTTON */}
                   <TouchableOpacity
-                    className="mt-3 bg-primary py-2 rounded"
+                    className="mt-4 bg-primary py-3 rounded-xl"
                     onPress={() => {
                       setModalDate(dateStr)
                       setModalData(timelineByDate[dateStr])
                       setShowModal(true)
                     }}
                   >
-                    <Text className="text-white text-center">
+                    <Text className="text-white text-center font-semibold">
                       Assign Employee
                     </Text>
                   </TouchableOpacity>
-
                 </View>
               )
             })}
@@ -628,24 +639,12 @@ const BookAppointment = () => {
         )}
 
       </ScrollView>
-      {/* <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
-        <TouchableOpacity
-          onPress={handleProceed}
-          disabled={!allDatesSelected()}
-          className={`py-4 rounded-xl ${allDatesSelected() ? 'bg-primary' : 'bg-gray-300'
-            }`}
-        >
-          <Text 
-          className="text-white text-center font-bold text-base">
-            Proceed
-          </Text>
-        </TouchableOpacity>
-      </View> */}
+
       <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
         <TouchableOpacity
           onPress={handleProceed}
           disabled={!allDatesSelected()}
-          className={`py-4 rounded-xl ${allDatesSelected() ? 'bg-primary' : 'bg-gray-300'
+          className={`py-3 rounded-xl ${allDatesSelected() ? 'bg-primary' : 'bg-gray-300'
             }`}
         >
           <Text className="text-white text-center font-bold text-base">

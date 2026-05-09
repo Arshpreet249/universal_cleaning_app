@@ -250,7 +250,7 @@ const Basket = () => {
                   }`}
               >
                 <Text className="text-white font-semibold">
-                  Book Now
+                  Proceed
                 </Text>
               </TouchableOpacity>
             </View>

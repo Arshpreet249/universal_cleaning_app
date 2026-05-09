@@ -10,6 +10,9 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { AuthContext } from '../context/AuthContext'
 import { apiBaseUrl } from '../components/variable'
+import { useFocusEffect } from '@react-navigation/native'
+import { useCallback } from 'react'
+
 
 
 const getStatusTextColor = (status) => {
@@ -29,11 +32,14 @@ const getStatusTextColor = (status) => {
 
     case 'assigned':
       return 'text-[#af51af] font-semibold'
+    case 'payment pending':
+      return 'text-[#f39c12] font-semibold' 
 
     default:
       return 'text-gray-500'
   }
 }
+
 const Bookings = () => {
   const { token, user } = useContext(AuthContext)
   const navigation = useNavigation()
@@ -42,9 +48,15 @@ const Bookings = () => {
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState(null)
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   fetchAppointments()
+  // }, [])
+
+  useFocusEffect(
+  useCallback(() => {
     fetchAppointments()
   }, [])
+)
 
   const fetchAppointments = async () => {
     try {
@@ -131,9 +143,14 @@ const Bookings = () => {
             minute: '2-digit',
           })
 
-          const statusText =
-            item.process || (item.status ? 'Completed' : 'In Progress')
+          // const statusText =
+          //   item.process || (item.status ? 'Completed' : 'In Progress')
+          let statusText = item.process || (item.status ? 'Completed' : 'In Progress')
 
+          // 🔁 Replace "initiated" with "Payment Pending"
+          if (statusText?.toLowerCase() === 'initiated') {
+            statusText = 'Payment Pending'
+          }
           const packageText =
             item.description?.split('Package:')[1]?.trim() ||
             'Cleaning Service'
@@ -159,14 +176,14 @@ const Bookings = () => {
                       : item.description?.split('Package:')[1]?.trim() || 'Cleaning Service'}
                   </Text>
                   <Text className="text-secondary text-base mt-1">
-                    ★★★★★ 
+                    ★★★★★
                   </Text>
                 </View>
               </View>
 
               {/* SERVICE + PRICE */}
               <View className="flex-row justify-between items-center mt-4">
-                
+
 
                 <Text className="text-2xl font-bold text-secondary">
                   ${item.amount}

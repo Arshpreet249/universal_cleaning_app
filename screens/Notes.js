@@ -229,7 +229,7 @@ const Notes = ({ route, navigation }) => {
                             <ActivityIndicator color="#fff" />
                         ) : (
                             <Text className="text-white text-center font-bold">
-                                Create Appointment & Continue
+                              Proceed
                             </Text>
                         )}
                     </TouchableOpacity>
