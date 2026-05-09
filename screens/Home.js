@@ -3,6 +3,7 @@ import {
   ScrollView,
   Text,
   View,
+  Share,
   TouchableOpacity,
   Image,
   ActivityIndicator,
@@ -16,22 +17,50 @@ import { ProductContext } from '../context/ProductContext'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Dimensions } from 'react-native'
 import { BlurView } from 'expo-blur'
-
+import { AuthContext } from '../context/AuthContext'
 
 const Home = () => {
   const navigation = useNavigation()
+  const { token, user } = useContext(AuthContext)
 
   const { products, setProducts } = useContext(ProductContext)
   const [loading, setLoading] = useState(true)
   const [promotions, setPromotions] = useState([])
   const [promoLoading, setPromoLoading] = useState(true)
   const screenWidth = Dimensions.get('window').width
+  const [recentBookings, setRecentBookings] = useState([])
 
 
   useEffect(() => {
     fetchProducts()
     fetchPromotions()
+    fetchrecentBookings()
   }, [])
+
+
+   const fetchrecentBookings = async () => {
+    try {
+      // setLoading(true)
+
+      const response = await fetch(`${apiBaseUrl}all-appointments/`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                user_id: user?.id,
+              }),
+            })
+      
+            const data = await response.json()
+            console.log('Recent Bookings:', data)
+            setRecentBookings(Array.isArray(data) ? data : [])
+
+    } catch (error) {
+      console.log('API ERROR:', error.message)
+    } 
+  }
 
   const fetchProducts = async () => {
     try {
@@ -365,10 +394,83 @@ const Home = () => {
             Recent Bookings
           </Text>
 
-          <View
+       
+            { token ? (
+               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', paddingHorizontal: 16 }}>
+                
+                {recentBookings.slice(0, 5).map((item) => (
+                  
+                  <TouchableOpacity
+                    key={item.id}
+                    style={{
+                      backgroundColor: '#fff',
+                      width: 300,
+                      minHeight: 160,
+                      marginRight: 12,
+                      borderRadius: 16,
+                      padding: 16,
+                      justifyContent: 'center',
+                    }}
+                  >
+
+                    {/* Title */}
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        fontWeight: 'bold',
+                        color: '#111',
+                      }}
+                      numberOfLines={2}
+                    >
+                      {item.title}
+                    </Text>
+
+                    {/* Start From */}
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: '#666',
+                        marginTop: 10,
+                      }}
+                    >
+                      Start: {new Date(item.start_from).toLocaleString()}
+                    </Text>
+
+                    {/* Process */}
+                    <View
+                      style={{
+                        marginTop: 14,
+                        alignSelf: 'flex-start',
+                        backgroundColor: '#ffe5e5',
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 20,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: '#ff3b30',
+                          fontWeight: '600',
+                          fontSize: 12,
+                        }}
+                      >
+                        {item.process}
+                      </Text>
+                    </View>
+
+                  </TouchableOpacity>
+
+                ))}
+
+              </View>
+            </ScrollView>
+            ):(
+
+                 <View
             style={{
               flexDirection: 'row',
-              backgroundColor: '#fff',
+              // backgroundColor: '#fff',
               borderRadius: 16,
               overflow: 'hidden',
               elevation: 6,
@@ -376,24 +478,20 @@ const Home = () => {
               marginTop: 10,
             }}
           >
-            {/* LEFT RED STRIP */}
+
             <View className="flex-1 ">
 
 
-              {/* CONTENT */}
               <View className="flex-1 px-4 py-6 items-center justify-center">
 
-                {/* Title */}
                 <Text className="text-2xl font-bold text-red-500 mb-2">
                   Oh! No!
                 </Text>
 
-                {/* Subtitle */}
                 <Text className="text-gray-500 text-sm text-center mb-6">
                   You should login before booking.
                 </Text>
 
-                {/* Button */}
                 <TouchableOpacity
                   className="bg-red-500 px-6 py-3 rounded-xl shadow-md"
                   onPress={() => navigation.navigate('Auth')}
@@ -406,9 +504,12 @@ const Home = () => {
               </View>
 
             </View>
-
-
           </View>
+            )
+            }
+
+
+
         </View>
 
         {/* ================= REFER & EARN ================= */}
@@ -423,7 +524,16 @@ const Home = () => {
 
             <TouchableOpacity
               activeOpacity={0.9}
-              onPress={() => navigation.navigate('Refer')}
+              onPress={async () => {
+                try {
+                  await Share.share({
+                    message:
+                      'Download this amazing app 🚀\n\nhttps://yourapp.link',
+                  });
+                } catch (error) {
+                  console.log(error);
+                }
+              }}
               style={{
                 height: 170,
                 borderRadius: 18,
@@ -441,12 +551,26 @@ const Home = () => {
                 }}
                 resizeMode="cover"
               />
+              <BlurView
+                intensity={70}
+                tint="light"
+                style={{
+                  flex: 1,
+                  // padding: 16,
+                  margin: 15,
+                      borderWidth: 1,
+                       borderColor: 'rgba(255,255,255,0.7)',
+                  borderRadius: 18,
+                  justifyContent: 'space-between',
+                  overflow: 'hidden',
+                }}
+>
 
               {/* Overlay */}
               <View
                 style={{
                   flex: 1,
-                  backgroundColor: 'rgba(0,0,0,0.35)',
+                  // backgroundColor: 'rgba(0,0,0,0.35)',
                   padding: 16,
                   justifyContent: 'space-between',
                 }}
@@ -459,7 +583,7 @@ const Home = () => {
 
                   <Text
                     style={{
-                      color: '#ddd',
+                      color: '#fff',
                       fontSize: 13,
                       marginTop: 6,
                       lineHeight: 18,
@@ -491,6 +615,7 @@ const Home = () => {
 
                 </View>
               </View>
+              </BlurView>
             </TouchableOpacity>
           </View>
         )}
