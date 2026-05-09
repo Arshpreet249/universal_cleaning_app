@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import DateTimePickerModal from 'react-native-modal-datetime-picker'
 import { AuthContext } from '../context/AuthContext'
-import { REACT_APP_HOST_API_URL } from '../components/variable'
+import { REACT_APP_HOST_API_URL,apiBaseUrl } from '../components/variable'
 import { useNavigation } from '@react-navigation/native'
 
 const BookAppointment = () => {
@@ -115,7 +115,7 @@ const BookAppointment = () => {
       }
 
       const res = await fetch(
-        `${REACT_APP_HOST_API_URL}/admin-user/employee-timeline/`,
+        `${apiBaseUrl}employee-timeline/`,
         {
           method: 'POST',
           headers: {
@@ -145,7 +145,7 @@ const BookAppointment = () => {
       }
 
       const res = await fetch(
-        `${REACT_APP_HOST_API_URL}/admin-user/employee-timeline/`,
+        `${apiBaseUrl}employee-timeline/`,
         {
           method: 'POST',
           headers: {

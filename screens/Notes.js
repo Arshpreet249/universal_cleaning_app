@@ -63,6 +63,7 @@ const Notes = ({ route, navigation }) => {
 
     // ================= CREATE APPOINTMENT =================
     const handleSubmit = async () => {
+        console.log("ITEM DATA:", appointmentData)
         if (appointmentData.length === 0) {
             Alert.alert('Error', 'No appointment data found')
             return
@@ -78,9 +79,9 @@ const Notes = ({ route, navigation }) => {
         // ✅ FINAL PAYLOAD (MATCHES BACKEND)
         const payload = {
             data: appointmentData.map((item) => ({
-                title: "Appointment",
+                title: item.package_names?.join(', ') || '' ,
                 address: selectedAddress.address,
-                // description: `Notes: ${notes || 'N/A'} | Package: ${item.package_names?.join(', ') || 'None'}`,
+               
                 description: `Notes: ${notes || 'N/A'}\nPackage: ${item.package_names?.join(', ') || 'None'}`,
                 start_date: item.start_date,
                 end_date: item.start_date,

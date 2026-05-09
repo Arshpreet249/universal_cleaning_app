@@ -40,6 +40,7 @@ const Bookings = () => {
 
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState(null)
 
   useEffect(() => {
     fetchAppointments()
@@ -69,8 +70,12 @@ const Bookings = () => {
       setLoading(false)
     }
   }
+  
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id)
+  }
 
-  // ✅ LOADING
+  //  LOADING
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-100">
@@ -79,11 +84,11 @@ const Bookings = () => {
     )
   }
 
-  // ✅ FIRST TIME USER (NO BOOKINGS)
+
   if (!loading && bookings.length === 0) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-gray-100 px-6">
-        
+
 
         <Text className="text-xl font-semibold text-gray-700 mb-2">
           No Bookings Yet
@@ -93,7 +98,7 @@ const Bookings = () => {
           You haven’t booked any service yet. Start by creating your first booking.
         </Text>
 
-     
+
       </SafeAreaView>
     )
   }
@@ -147,10 +152,12 @@ const Bookings = () => {
               {/* TOP ROW */}
               <View className="flex-row justify-between items-center">
                 <View>
-                  <Text className="text-gray-900 font-semibold text-base">
-                    {item.title || 'Service Provider'}
-                  </Text>
 
+                  <Text className="text-gray-900 font-semibold text-base">
+                    {item.title !== 'Appointment'
+                      ? item.title
+                      : item.description?.split('Package:')[1]?.trim() || 'Cleaning Service'}
+                  </Text>
                   <Text className="text-secondary text-xs mt-1">
                     ★ 4.7
                   </Text>
@@ -195,6 +202,34 @@ const Bookings = () => {
                   </Text>
                 </View>
               </View>
+
+              {/* 🔽 EXPANDED CONTENT */}
+              {expandedId === item.id && (
+                <View className="mt-4 pt-3">
+                  {/* Address */}
+                  <Text className="text-gray-400 text-xs">Address</Text>
+                  <Text className="text-gray-700 text-sm mb-2">
+                    {item.address || 'N/A'}
+                  </Text>
+
+                  {/* Notes */}
+                  <Text className="text-gray-400 text-xs">Notes</Text>
+                  <Text className="text-gray-700 text-sm">
+                    {item.description?.split('Notes:')[1]?.split('Package:')[0]?.trim() ||
+                      'No notes'}
+                  </Text>
+                </View>
+              )}
+
+              {/* 🔘 MORE BUTTON */}
+              <TouchableOpacity
+                onPress={() => toggleExpand(item.id)}
+                className="mt-3 items-center"
+              >
+                <Text className="text-blue-600 font-semibold">
+                  {expandedId === item.id ? 'Show Less ▲' : 'Show More ▼'}
+                </Text>
+              </TouchableOpacity>
             </View>
           )
         })}
