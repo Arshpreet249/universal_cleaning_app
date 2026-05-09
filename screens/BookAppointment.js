@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import DateTimePickerModal from 'react-native-modal-datetime-picker'
 import { AuthContext } from '../context/AuthContext'
-import { REACT_APP_HOST_API_URL,apiBaseUrl } from '../components/variable'
+import { REACT_APP_HOST_API_URL, apiBaseUrl } from '../components/variable'
 import { useNavigation } from '@react-navigation/native'
 
 const BookAppointment = () => {
@@ -196,6 +196,8 @@ const BookAppointment = () => {
   const handleConfirm = (selected) => {
     setPickerVisible(false)
 
+     let now = new Date()
+  let minTime = new Date(now.getTime() + 30 * 60000) // +30 min
     let newFromDate = fromDate
     let newToDate = date
     let newStartTime = startTime
@@ -209,16 +211,35 @@ const BookAppointment = () => {
     setIsAutoAssigned(false)
 
     if (pickerMode === 'fromDate') {
+       if (selected < new Date().setHours(0,0,0,0)) {
+      Alert.alert('Invalid Date', 'You cannot select past dates')
+      return
+    }
       newFromDate = selected
       setFromDate(selected)
     }
 
     if (pickerMode === 'toDate') {
+      if (selected < fromDate) {
+      Alert.alert('Invalid Date', 'End date cannot be before start date')
+      return
+    }
       newToDate = selected
       setDate(selected)
     }
 
     if (pickerMode === 'start') {
+       // ✅ If selected date is today → enforce 30 min rule
+    const isToday =
+      fromDate.toDateString() === new Date().toDateString()
+
+    if (isToday && selected < minTime) {
+      Alert.alert(
+        'Invalid Time',
+        'Start time must be at least 30 minutes from now'
+      )
+      return
+    }
       const formatted = formatToAPI(selected)
       newStartTime = formatted
       setStartTime(formatted)
@@ -227,6 +248,23 @@ const BookAppointment = () => {
     }
 
     if (pickerMode === 'end') {
+       if (!startTime) {
+      Alert.alert('Select start time first')
+      return
+    }
+     const startDateObj = new Date()
+    const [h, m] = startTime.split(':')
+    startDateObj.setHours(h, m)
+
+    const minEndTime = new Date(startDateObj.getTime() + 30 * 60000)
+
+    if (selected < minEndTime) {
+      Alert.alert(
+        'Invalid Time',
+        'End time must be at least 30 minutes after start time'
+      )
+      return
+    }
       const formatted = formatToAPI(selected)
       newEndTime = formatted
       setEndTime(formatted)
@@ -311,38 +349,38 @@ const BookAppointment = () => {
   // }
 
   const handleProceed = () => {
-  const dates = getDatesInRangeStrings()
+    const dates = getDatesInRangeStrings()
 
-  if (!allDatesSelected()) {
-    Alert.alert('Incomplete', 'Assign employee for all dates')
-    return
+    if (!allDatesSelected()) {
+      Alert.alert('Incomplete', 'Assign employee for all dates')
+      return
+    }
+
+    const packageIds = basketItems
+      ?.map((item) => item.details?.package_id)
+      .filter(Boolean)
+
+    const packageNames = basketItems
+      ?.map((item) => item.displayName)
+
+    const bookingData = dates.map((dateStr) => ({
+      start_date: dateStr,
+      employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
+      assigned_to_usernames: [
+        selectedEmployeesByDate[dateStr]?.employee_username,
+      ],
+      startTime,
+      endTime,
+
+      // ✅ SEND BOTH
+      package_ids: packageIds,
+      package_names: packageNames,
+    }))
+
+    navigation.navigate('Notes', {
+      appointmentData: bookingData,
+    })
   }
-
-  const packageIds = basketItems
-    ?.map((item) => item.details?.package_id)
-    .filter(Boolean)
-
-  const packageNames = basketItems
-    ?.map((item) => item.displayName)
-
-  const bookingData = dates.map((dateStr) => ({
-    start_date: dateStr,
-    employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
-    assigned_to_usernames: [
-      selectedEmployeesByDate[dateStr]?.employee_username,
-    ],
-    startTime,
-    endTime,
-
-    // ✅ SEND BOTH
-    package_ids: packageIds,
-    package_names: packageNames,
-  }))
-
-  navigation.navigate('Notes', {
-    appointmentData: bookingData,
-  })
-}
   // ---------------- UI ----------------
 
   return (
@@ -382,10 +420,31 @@ const BookAppointment = () => {
           </TouchableOpacity>
         </View>
 
-        <DateTimePickerModal
+        {/* <DateTimePickerModal
           isVisible={isPickerVisible}
           mode={pickerMode === 'start' || pickerMode === 'end' ? 'time' : 'date'}
           date={pickerMode === 'fromDate' ? fromDate : pickerMode === 'toDate' ? date : new Date()}
+          onConfirm={handleConfirm}
+          onCancel={() => setPickerVisible(false)}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          themeVariant="light"
+          textColor="#000000"
+        /> */}
+
+        <DateTimePickerModal
+          isVisible={isPickerVisible}
+          mode={pickerMode === 'start' || pickerMode === 'end' ? 'time' : 'date'}
+          date={
+            pickerMode === 'fromDate'
+              ? fromDate
+              : pickerMode === 'toDate'
+                ? date
+                : new Date()
+          }
+
+          // ✅ ADD THIS
+          minimumDate={new Date()}
+
           onConfirm={handleConfirm}
           onCancel={() => setPickerVisible(false)}
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
@@ -714,7 +773,7 @@ const BookAppointment = () => {
 
     </SafeAreaView>
   )
-} 
+}
 
 export default BookAppointment
 

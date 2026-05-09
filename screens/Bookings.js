@@ -70,7 +70,7 @@ const Bookings = () => {
       setLoading(false)
     }
   }
-  
+
   const toggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id)
   }
@@ -158,17 +158,15 @@ const Bookings = () => {
                       ? item.title
                       : item.description?.split('Package:')[1]?.trim() || 'Cleaning Service'}
                   </Text>
-                  <Text className="text-secondary text-xs mt-1">
-                    ★ 4.7
+                  <Text className="text-secondary text-base mt-1">
+                    ★★★★★ 
                   </Text>
                 </View>
               </View>
 
               {/* SERVICE + PRICE */}
               <View className="flex-row justify-between items-center mt-4">
-                <Text className="text-lg font-semibold text-gray-800 flex-1 pr-2">
-                  {packageText}
-                </Text>
+                
 
                 <Text className="text-2xl font-bold text-secondary">
                   ${item.amount}
@@ -221,12 +219,12 @@ const Bookings = () => {
                 </View>
               )}
 
-              {/* 🔘 MORE BUTTON */}
+              {/*  MORE BUTTON */}
               <TouchableOpacity
                 onPress={() => toggleExpand(item.id)}
                 className="mt-3 items-center"
               >
-                <Text className="text-blue-600 font-semibold">
+                <Text className="text-secondary font-semibold">
                   {expandedId === item.id ? 'Show Less ▲' : 'Show More ▼'}
                 </Text>
               </TouchableOpacity>
