@@ -17,8 +17,8 @@ export default function Profile() {
   const navigation = useNavigation()
   const { user, token, logout } = useContext(AuthContext)
 
-  console.log(user)
-  console.log('token::', token)
+  // console.log(user)
+  // console.log('token::', token)
 
 
   const MenuItem = ({ icon, title, subtitle, onPress, danger }) => (
@@ -82,7 +82,6 @@ export default function Profile() {
               icon={require('../assets/icons/payment.png')}
               title="Payment History"
               subtitle="Track your bookings"
-              // onPress={() => navigation.navigate('Orders')}
             />
 
             <MenuItem

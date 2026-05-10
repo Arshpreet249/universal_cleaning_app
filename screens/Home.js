@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   ScrollView,
   Text,
@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Dimensions } from 'react-native'
 import { BlurView } from 'expo-blur'
 import { AuthContext } from '../context/AuthContext'
+import { useFocusEffect } from '@react-navigation/native'
 
 const Home = () => {
   const navigation = useNavigation()
@@ -31,35 +32,43 @@ const Home = () => {
   const [recentBookings, setRecentBookings] = useState([])
 
 
-  useEffect(() => {
-    fetchProducts()
-    fetchPromotions()
-    fetchrecentBookings()
-  }, [])
+  // useEffect(() => {
+  //   fetchProducts()
+  //   fetchPromotions()
+  //   fetchrecentBookings()
+  // }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProducts()
+      fetchPromotions()
+      fetchrecentBookings()
+    }, [])
+  )
 
 
-   const fetchrecentBookings = async () => {
+  const fetchrecentBookings = async () => {
     try {
       // setLoading(true)
 
       const response = await fetch(`${apiBaseUrl}all-appointments/`, {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                user_id: user?.id,
-              }),
-            })
-      
-            const data = await response.json()
-            console.log('Recent Bookings:', data)
-            setRecentBookings(Array.isArray(data) ? data : [])
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+        }),
+      })
+
+      const data = await response.json()
+      // console.log('Recent Bookings:', data)
+      setRecentBookings(Array.isArray(data?.appointments) ? data.appointments : [])
 
     } catch (error) {
       console.log('API ERROR:', error.message)
-    } 
+    }
   }
 
   const fetchProducts = async () => {
@@ -394,119 +403,130 @@ const Home = () => {
             Recent Bookings
           </Text>
 
-       
-            { token ? (
-               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={{ flexDirection: 'row', paddingHorizontal: 16 }}>
-                
+
+          {token ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', paddingHorizontal: 1 }}>
+
                 {recentBookings.slice(0, 5).map((item) => (
-                  
-                  <TouchableOpacity
+                  <View
                     key={item.id}
                     style={{
-                      backgroundColor: '#fff',
+                      flexDirection: 'row',
                       width: 300,
                       minHeight: 160,
                       marginRight: 12,
                       borderRadius: 16,
-                      padding: 16,
-                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      backgroundColor: '#fff',
                     }}
                   >
-
-                    {/* Title */}
-                    <Text
+                    {/*  LEFT GRADIENT BAR */}
+                    <LinearGradient
+                      colors={['#ff0000', '#ff9900', '#33cc33', '#3399ff', '#cc00ff']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0, y: 1 }}
                       style={{
-                        fontSize: 18,
-                        fontWeight: 'bold',
-                        color: '#111',
+                        width: 7,
                       }}
-                      numberOfLines={2}
-                    >
-                      {item.title}
-                    </Text>
+                    />
 
-                    {/* Start From */}
-                    <Text
+                    {/*  MAIN CARD CONTENT */}
+                    <TouchableOpacity
+                      activeOpacity={0.8}
                       style={{
-                        fontSize: 13,
-                        color: '#666',
-                        marginTop: 10,
+                        flex: 1,
+                        padding: 16,
+                        justifyContent: 'center',
                       }}
                     >
-                      Start: {new Date(item.start_from).toLocaleString()}
-                    </Text>
-
-                    {/* Process */}
-                    <View
-                      style={{
-                        marginTop: 14,
-                        alignSelf: 'flex-start',
-                        backgroundColor: '#ffe5e5',
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        borderRadius: 20,
-                      }}
-                    >
+                      {/* Title */}
                       <Text
+                        style={{ fontSize: 18, fontWeight: 'bold', color: '#111' }}
+                        numberOfLines={2}
+                      >
+                        {item.title}
+                      </Text>
+
+                      {/* Start */}
+                      <Text style={{ fontSize: 13, color: '#666', marginTop: 10 }}>
+                        Start: {new Date(item.start_from).toLocaleString()}
+                      </Text>
+                      {/* Rating */}
+                      <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        <Text style={{ fontSize: 13, color: '#666', marginTop: 10 }}>
+                          Rating:
+                        </Text>
+                        <Text style={{ fontSize: 13, color: '#ff9900', marginTop: 10, marginLeft: 4 }}>
+                          ★★★★★
+                        </Text>
+
+                      </View>
+
+
+                      {/* Status */}
+                      <View
                         style={{
-                          color: '#ff3b30',
-                          fontWeight: '600',
-                          fontSize: 12,
+                          marginTop: 14,
+                          alignSelf: 'flex-start',
+                          backgroundColor: '#ffe5e5',
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          borderRadius: 20,
                         }}
                       >
-                        {item.process}
-                      </Text>
-                    </View>
-
-                  </TouchableOpacity>
-
+                        <Text style={{ color: '#ff3b30', fontWeight: '600', fontSize: 12 }}>
+                          {item.process}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
                 ))}
 
               </View>
             </ScrollView>
-            ):(
+          ) : (
 
-                 <View
-            style={{
-              flexDirection: 'row',
-              // backgroundColor: '#fff',
-              borderRadius: 16,
-              overflow: 'hidden',
-              elevation: 6,
-              marginHorizontal: 10,
-              marginTop: 10,
-            }}
-          >
+            <View
+              style={{
+                flexDirection: 'row',
+                // backgroundColor: '#fff',
+                borderRadius: 16,
+                overflow: 'hidden',
+                elevation: 6,
+                marginHorizontal: 10,
+                marginTop: 10,
+              }}
+            >
 
-            <View className="flex-1 ">
+              <View className="flex-1 ">
 
 
-              <View className="flex-1 px-4 py-6 items-center justify-center">
+                <View className="flex-1 px-4 py-6 items-center justify-center">
 
-                <Text className="text-2xl font-bold text-red-500 mb-2">
-                  Oh! No!
-                </Text>
-
-                <Text className="text-gray-500 text-sm text-center mb-6">
-                  You should login before booking.
-                </Text>
-
-                <TouchableOpacity
-                  className="bg-red-500 px-6 py-3 rounded-xl shadow-md"
-                  onPress={() => navigation.navigate('Auth')}
-                >
-                  <Text className="text-white font-semibold text-base">
-                    Login Now
+                  <Text className="text-2xl font-bold text-red-500 mb-2">
+                    Oh! No!
                   </Text>
-                </TouchableOpacity>
+
+                  <Text className="text-gray-500 text-sm text-center mb-6">
+                    You should login before booking.
+                  </Text>
+
+                  <TouchableOpacity
+                    className="bg-red-500 px-6 py-3 rounded-xl shadow-md"
+                    onPress={() => navigation.navigate('Auth')}
+                  >
+                    <Text className="text-white font-semibold text-base">
+                      Login Now
+                    </Text>
+                  </TouchableOpacity>
+
+                </View>
 
               </View>
-
             </View>
-          </View>
-            )
-            }
+          )
+          }
 
 
 
@@ -558,63 +578,63 @@ const Home = () => {
                   flex: 1,
                   // padding: 16,
                   margin: 15,
-                      borderWidth: 1,
-                       borderColor: 'rgba(255,255,255,0.7)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.7)',
                   borderRadius: 18,
                   justifyContent: 'space-between',
                   overflow: 'hidden',
                 }}
->
-
-              {/* Overlay */}
-              <View
-                style={{
-                  flex: 1,
-                  // backgroundColor: 'rgba(0,0,0,0.35)',
-                  padding: 16,
-                  justifyContent: 'space-between',
-                }}
               >
-                {/* Top Content */}
-                <View>
-                  <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
-                    {referPromo.title}
-                  </Text>
 
-                  <Text
-                    style={{
-                      color: '#fff',
-                      fontSize: 13,
-                      marginTop: 6,
-                      lineHeight: 18,
-                    }}
-                  >
-                    {referPromo.description}
-                  </Text>
-                </View>
-
-                {/* Bottom Section */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-
-                  {/* Referral Code */}
-                  <View
-                    style={{
-                      backgroundColor: '#fff',
-                      paddingVertical: 6,
-                      paddingHorizontal: 12,
-                      borderRadius: 10,
-                    }}
-                  >
-                    <Text style={{ fontSize: 10, color: '#888' }}>
-                      YOUR CODE
+                {/* Overlay */}
+                <View
+                  style={{
+                    flex: 1,
+                    // backgroundColor: 'rgba(0,0,0,0.35)',
+                    padding: 16,
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  {/* Top Content */}
+                  <View>
+                    <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
+                      {referPromo.title}
                     </Text>
-                    <Text style={{ color: '#0564BF', fontWeight: 'bold', fontSize: 14 }}>
-                      HRAHIDNO63
+
+                    <Text
+                      style={{
+                        color: '#fff',
+                        fontSize: 13,
+                        marginTop: 6,
+                        lineHeight: 18,
+                      }}
+                    >
+                      {referPromo.description}
                     </Text>
                   </View>
 
+                  {/* Bottom Section */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+
+                    {/* Referral Code */}
+                    <View
+                      style={{
+                        backgroundColor: '#fff',
+                        paddingVertical: 6,
+                        paddingHorizontal: 12,
+                        borderRadius: 10,
+                      }}
+                    >
+                      <Text style={{ fontSize: 10, color: '#888' }}>
+                        YOUR CODE
+                      </Text>
+                      <Text style={{ color: '#0564BF', fontWeight: 'bold', fontSize: 14 }}>
+                        HRAHIDNO63
+                      </Text>
+                    </View>
+
+                  </View>
                 </View>
-              </View>
               </BlurView>
             </TouchableOpacity>
           </View>
