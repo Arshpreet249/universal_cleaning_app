@@ -1,4 +1,3 @@
-
 import React, { useState, useContext, useEffect } from 'react'
 import {
     View,
@@ -9,11 +8,11 @@ import {
     Platform,
     ScrollView,
     Alert,
-    ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AuthContext } from '../context/AuthContext'
-import { REACT_APP_HOST_API_URL, apiBaseUrl } from '../components/variable'
+import { REACT_APP_HOST_API_URL } from '../components/variable'
+import { Ionicons } from '@expo/vector-icons'
 
 const Notes = ({ route, navigation }) => {
     const {
@@ -25,11 +24,8 @@ const Notes = ({ route, navigation }) => {
     } = useContext(AuthContext)
 
     const appointmentData = route?.params?.appointmentData || []
-
     const [notes, setNotes] = useState('')
-    const [loading, setLoading] = useState(false)
 
-    // ================= FETCH ADDRESSES =================
     const fetchAddresses = async () => {
         try {
             const res = await fetch(`${REACT_APP_HOST_API_URL}/api/address/list/`, {
@@ -47,8 +43,6 @@ const Notes = ({ route, navigation }) => {
                 if (result.data?.length > 0 && !selectedAddress) {
                     setSelectedAddress(result.data[0])
                 }
-            } else {
-                console.log('ADDRESS ERROR:', result)
             }
         } catch (err) {
             console.log('ADDRESS FETCH ERROR:', err)
@@ -56,14 +50,10 @@ const Notes = ({ route, navigation }) => {
     }
 
     useEffect(() => {
-        if (token) {
-            fetchAddresses()
-        }
+        if (token) fetchAddresses()
     }, [token])
 
-    // ================= CREATE APPOINTMENT =================
-    const handleSubmit = async () => {
-        console.log("ITEM DATA:", appointmentData)
+    const handleSubmit = () => {
         if (appointmentData.length === 0) {
             Alert.alert('Error', 'No appointment data found')
             return
@@ -74,85 +64,13 @@ const Notes = ({ route, navigation }) => {
             return
         }
 
-        setLoading(true)
-
-        // ✅ FINAL PAYLOAD (MATCHES BACKEND)
-        const payload = {
-            data: appointmentData.map((item) => ({
-                title: item.package_names?.join(', ') || '' ,
-                address: selectedAddress.address,
-               
-                description: `Notes: ${notes || 'N/A'}\nPackage: ${item.package_names?.join(', ') || 'None'}`,
-                start_date: item.start_date,
-                end_date: item.start_date,
-
-                startTime: item.startTime,
-                endTime: item.endTime,
-
-                // ✅ REQUIRED
-                assigned_to_usernames: item.assigned_to_usernames || [],
-
-                // ✅ LOCATION
-                location: {
-                    latitude: Number(selectedAddress.lat),
-                    longitude: Number(selectedAddress.lon),
-                },
-
-                // ✅ IMPORTANT: SEND IDS ONLY
-                package: item.package_ids || [],
-            })),
-        }
-
-        console.log(" FINAL PAYLOAD:", JSON.stringify(payload, null, 2))
-
-        try {
-            const res = await fetch(
-                `${apiBaseUrl}create-appointment-by-client/`,
-                {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                }
-            )
-
-            const text = await res.text()
-            console.log(" RAW RESPONSE:", text)
-
-            let result = null
-            try {
-                result = JSON.parse(text)
-            } catch {
-                console.log("Not JSON response")
-            }
-
-            console.log("STATUS:", res.status)
-
-            if (res.status === 200 || res.status === 201) {
-                navigation.navigate('Payment', {
-                    payload,
-                    notes,
-                    selectedAddress,
-                })
-            }
-            else {
-                Alert.alert(
-                    'Failed ',
-                    result?.message || 'Could not create appointment'
-                )
-            }
-
-        } catch (err) {
-            console.log(" ERROR:", err)
-            Alert.alert('Error ', 'Something went wrong')
-        }
-
-        setLoading(false)
+        navigation.navigate('Payment', {
+            appointmentData,
+            notes,
+            selectedAddress,
+        })
     }
 
-    // ================= UI =================
     return (
         <SafeAreaView className="flex-1 bg-gray-100">
             <KeyboardAvoidingView
@@ -164,74 +82,111 @@ const Notes = ({ route, navigation }) => {
                     keyboardShouldPersistTaps="handled"
                 >
                     {/* HEADER */}
-                    <View className="mb-6">
-                        <Text className="text-3xl font-bold text-primary text-center">
-                            Additional Notes
+                    <View className="mb-8 items-center">
+                        <Text className="text-2xl font-bold text-primary">
+                            Notes
                         </Text>
-                        <Text className="text-gray-500 mt-2 text-base text-center">
-                            Add any instructions for your appointment.
+                        <Text className="text-gray-500 mt-2 text-center">
+                            Add instructions for a smoother experience
                         </Text>
                     </View>
 
-                    {/* ADDRESS */}
-                    <View className="bg-white rounded-2xl p-5 mb-5">
-                        <Text className="text-lg font-bold mb-4">
-                            Select Address
+                    {/* ADDRESS CARD */}
+                    <View className="bg-white rounded-2xl p-4 mb-5">
+                        <Text className="text-lg font-semibold mb-4">
+                            📍 Select Address
                         </Text>
 
-                        {addresses.map((item) => (
-                            <TouchableOpacity
-                                key={item.id}
-                                onPress={() => setSelectedAddress(item)}
-                                className={`p-4 mb-3 rounded-xl ${selectedAddress?.id === item.id
-                                        ? 'bg-blue-50 border border-blue-500'
-                                        : 'border border-gray-200'
+                        {addresses.map((item) => {
+                            const isSelected = selectedAddress?.id === item.id
+                            const iconColor = isSelected ? '#4f46e5' : '#6b7280'
+
+                            return (
+                                <TouchableOpacity
+                                    key={item.id}
+                                    onPress={() => setSelectedAddress(item)}
+                                    className={`p-4 mb-3 rounded-xl border ${
+                                        isSelected
+                                            ? 'border-indigo-600 bg-indigo-50'
+                                            : 'border-gray-200 bg-white'
                                     }`}
-                            >
-                                <Text className="font-bold">{item.name}</Text>
-                                <Text>{item.address}</Text>
-                                <Text>📞 {item.mobile}</Text>
-                            </TouchableOpacity>
-                        ))}
+                                >
+                                    <View className="gap-2">
+
+                                        {/* NAME */}
+                                        <View className="flex-row items-center">
+                                            <Ionicons
+                                                name="person-circle-outline"
+                                                size={18}
+                                                color={iconColor}
+                                            />
+                                            <Text className="ml-2 text-[15px] font-bold text-gray-900">
+                                                {item.name}
+                                            </Text>
+                                        </View>
+
+                                        {/* ADDRESS */}
+                                        <View className="flex-row items-start">
+                                            <Ionicons
+                                                name="location-outline"
+                                                size={18}
+                                                color={iconColor}
+                                            />
+                                            <Text className="ml-2 text-gray-600 flex-1">
+                                                {item.address}
+                                            </Text>
+                                        </View>
+
+                                        {/* PHONE */}
+                                        <View className="flex-row items-center">
+                                            <Ionicons
+                                                name="call-outline"
+                                                size={16}
+                                                color={iconColor}
+                                            />
+                                            <Text className="ml-2 text-gray-800">
+                                                {item.mobile}
+                                            </Text>
+                                        </View>
+
+                                    </View>
+                                </TouchableOpacity>
+                            )
+                        })}
 
                         {addresses.length === 0 && (
-                            <Text className="text-center text-gray-400">
+                            <Text className="text-center text-gray-400 mt-2">
                                 No addresses found
                             </Text>
                         )}
                     </View>
 
-                    {/* NOTES */}
-                    <View className="bg-white rounded-2xl p-5">
-                        <Text className="text-lg font-bold mb-3">
-                            Notes / Instructions
+                    {/* NOTES CARD */}
+                    <View className="bg-white rounded-2xl p-4 shadow-sm">
+                        <Text className="text-lg font-semibold mb-3">
+                            📝 Notes / Instructions
                         </Text>
 
                         <TextInput
                             value={notes}
                             onChangeText={setNotes}
                             multiline
-                            placeholder="Write your notes..."
-                            className="bg-gray-100 p-4 rounded-xl min-h-[150px]"
+                            placeholder="E.g. Please call before arriving..."
+                            className="bg-gray-50 p-4 rounded-xl min-h-[140px] border border-gray-200 text-gray-800"
+                            textAlignVertical="top"
                         />
                     </View>
                 </ScrollView>
 
                 {/* BUTTON */}
-                <View className="p-4 bg-white">
+                <View className="p-4 bg-white border-t border-gray-200">
                     <TouchableOpacity
                         onPress={handleSubmit}
-                        disabled={loading}
-                        className={`p-4 rounded-xl ${loading ? 'bg-gray-400' : 'bg-blue-600'
-                            }`}
+                        className="bg-indigo-600 p-4 rounded-xl shadow-md"
                     >
-                        {loading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text className="text-white text-center font-bold">
-                              Proceed
-                            </Text>
-                        )}
+                        <Text className="text-white text-center font-bold text-base">
+                            Continue to Payment →
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>

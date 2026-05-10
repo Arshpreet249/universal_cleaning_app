@@ -407,7 +407,7 @@ const Home = () => {
           {token ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', paddingHorizontal: 1 }}>
-
+                {/* 
                 {recentBookings.slice(0, 5).map((item) => (
                   <View
                     key={item.id}
@@ -420,40 +420,40 @@ const Home = () => {
                       overflow: 'hidden',
                       backgroundColor: '#fff',
                     }}
-                  >
-                    {/*  LEFT GRADIENT BAR */}
-                    <LinearGradient
+                  > */}
+                {/*  LEFT GRADIENT BAR */}
+                {/* <LinearGradient
                       colors={['#ff0000', '#ff9900', '#33cc33', '#3399ff', '#cc00ff']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 0, y: 1 }}
                       style={{
                         width: 7,
                       }}
-                    />
+                    /> */}
 
-                    {/*  MAIN CARD CONTENT */}
-                    <TouchableOpacity
+                {/*  MAIN CARD CONTENT */}
+                {/* <TouchableOpacity
                       activeOpacity={0.8}
                       style={{
                         flex: 1,
                         padding: 16,
                         justifyContent: 'center',
                       }}
-                    >
-                      {/* Title */}
-                      <Text
+                    > */}
+                {/* Title */}
+                {/* <Text
                         style={{ fontSize: 18, fontWeight: 'bold', color: '#111' }}
                         numberOfLines={2}
                       >
                         {item.title}
-                      </Text>
+                      </Text> */}
 
-                      {/* Start */}
-                      <Text style={{ fontSize: 13, color: '#666', marginTop: 10 }}>
+                {/* Start */}
+                {/* <Text style={{ fontSize: 13, color: '#666', marginTop: 10 }}>
                         Start: {new Date(item.start_from).toLocaleString()}
-                      </Text>
-                      {/* Rating */}
-                      <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      </Text> */}
+                {/* Rating */}
+                {/* <View style={{ flexDirection: "row", alignItems: "center" }}>
                         <Text style={{ fontSize: 13, color: '#666', marginTop: 10 }}>
                           Rating:
                         </Text>
@@ -461,11 +461,11 @@ const Home = () => {
                           ★★★★★
                         </Text>
 
-                      </View>
+                      </View> */}
 
 
-                      {/* Status */}
-                      <View
+                {/* Status */}
+                {/* <View
                         style={{
                           marginTop: 14,
                           alignSelf: 'flex-start',
@@ -481,8 +481,139 @@ const Home = () => {
                       </View>
                     </TouchableOpacity>
                   </View>
-                ))}
+                ))} */}
 
+
+                {recentBookings.slice(0, 5).map((item) => {
+
+                  const getPriorityColor = (priority) => {
+                    switch (priority?.toLowerCase()) {
+                      case "urgent":
+                        return "#ff5c5c"
+                      case "moderate":
+                        return "#ff8c42"
+                      case "low":
+                        return "#34c759"
+                      default:
+                        return "#4da3ff"
+                    }
+                  }
+
+                  const getStatusColor = (status) => {
+                    switch (status?.toLowerCase()) {
+                      case 'completed':
+                        return '#28a745'
+                      case 'cancelled':
+                      case 'rejected':
+                        return '#dc3545'
+                      case 'pending':
+                        return '#6c757d'
+                      case 'accepted':
+                        return '#007bff'
+                      case 'assigned':
+                        return '#af51af'
+                      case 'payment pending':
+                        return '#f39c12'
+                      default:
+                        return '#f39c12'
+                    }
+                  }
+
+                  return (
+                    <View
+                      key={item.id}
+                      style={{
+                        width: 300,
+                        marginRight: 14,
+                        borderRadius: 18,
+                        // backgroundColor: "#f3f4f6",
+                        padding: 6,
+                      }}
+                    >
+                      {/* 🔴 TOP PRIORITY BAR */}
+                      <View
+                        style={{
+                          backgroundColor: getPriorityColor(item.priority),
+                          paddingVertical: 14,
+                          borderTopLeftRadius: 14,
+                          borderTopRightRadius: 14,
+                          alignItems: "center",
+                        }}
+                      >
+
+                      </View>
+
+                      {/* 🧾 INNER CARD */}
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        style={{
+                          backgroundColor: "#fff",
+                          borderBottomEndRadius: 14,
+                          borderBottomLeftRadius: 14,
+                          padding: 14,
+
+                        }}
+                      >
+                        {/* TITLE */}
+                        <Text
+                          style={{
+                            fontSize: 15,
+                            fontWeight: "700",
+                            color: "#111",
+                          }}
+                          numberOfLines={2}
+                        >
+                          {item.title}
+                        </Text>
+
+                        {/* 🟢 STATUS BADGE */}
+                        <View
+                          style={{
+                            paddingVertical: 4,
+                            borderRadius: 12,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: getStatusColor(item.process),
+                              fontSize: 11,
+                              fontWeight: "600",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {item.process}
+                          </Text>
+                        </View>
+
+                         <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        <Text style={{ fontSize: 13, color: '#666', marginTop: 10 }}>
+                          Rating:
+                        </Text>
+                        <Text style={{ fontSize: 13, color: '#ff9900', marginTop: 10, marginLeft: 4 }}>
+                          ★★★★★
+                        </Text>
+
+                      </View> 
+
+                        {/* 📅 BOTTOM ROW */}
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginTop: 14,
+                          }}
+                        >
+                          <Text style={{ fontSize: 11, color: "#9ca3af" }}>
+                            {new Date(item.start_from).toDateString()}
+                          </Text>
+
+
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  )
+                })}
               </View>
             </ScrollView>
           ) : (

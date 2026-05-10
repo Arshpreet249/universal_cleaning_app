@@ -62,13 +62,22 @@ export default function Profile() {
         ) : (
           <>
             {/* USER HEADER */}
-            <View className="p-4 ">
-              <Text className="text-lg font-semibold text-gray-800">
+            <View className=" flex-row items-center justify-between">
+              <View className= 'p-4'>
+                <Text className="text-lg font-semibold text-gray-800">
                 Welcome 👋 {user?.user?.full_name || 'User'}
               </Text>
               <Text className="text-sm text-gray-500">
                 Manage your account & orders
               </Text>
+              </View>
+              <View>
+                <Image source={require('../assets/images/coin.png')}
+                className="w-16 h-16"
+                />
+              </View>
+              
+
             </View>
 
             <MenuItem
