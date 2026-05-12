@@ -182,7 +182,7 @@ console.log('total in Notes::', totalAmount)
                             value={notes}
                             onChangeText={setNotes}
                             multiline
-                            placeholder="E.g. Call before arriving, gate code is 1234..."
+                            placeholder="E.g. Call before arriving,"
                             className="bg-blue-50 p-4 rounded-xl min-h-[140px] border border-blue-200 text-gray-800"
                             textAlignVertical="top"
                         />
