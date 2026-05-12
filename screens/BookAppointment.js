@@ -13,13 +13,17 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import DateTimePickerModal from 'react-native-modal-datetime-picker'
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL, apiBaseUrl } from '../components/variable'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation,useRoute } from '@react-navigation/native'
 
 const BookAppointment = () => {
 
   const navigation = useNavigation()
-  const { token, basketItems } = useContext(AuthContext)
+  const route = useRoute()
 
+ const totalAmount = route?.params?.totalAmount
+ console.log('totalAmount in BookAppointment::', totalAmount) 
+ 
+  const { token, basketItems } = useContext(AuthContext)
 
   const [fromDate, setFromDate] = useState(new Date())
   const [date, setDate] = useState(new Date())
@@ -350,43 +354,53 @@ const BookAppointment = () => {
 
     navigation.navigate('Notes', {
       appointmentData: bookingData,
+       totalAmount: totalAmount, 
+       
     })
+    
   }
   // ---------------- UI ----------------
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 px-4">
+    <SafeAreaView className="flex-1 bg-blue-50 px-4">
       <ScrollView showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}>
 
-        <Text className="text-2xl font-bold text-center mt-4 mb-6 text-primary">
-          Book Appointment
-        </Text>
-
-
+         {/* HEADER */}
+        <View className="mt-4 mb-6 p-5 rounded-2xl bg-primary shadow">
+          <Text className="text-white text-center text-xl font-bold">
+            Book Appointment
+          </Text>
+          <Text className="text-white/80 text-sm mt-1 text-center">
+            Choose your preferred schedule ✨
+          </Text>
+        </View>
 
         {/* DATE */}
         <View className="flex-row mb-4">
-          <TouchableOpacity onPress={() => openPicker('fromDate')} className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1">
-            <Text className="text-gray-500 text-xs">From Date</Text>
+          <TouchableOpacity onPress={() => openPicker('fromDate')} 
+          className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
+            <Text className="text-secondary text-xs">From Date</Text>
             <Text className="text-sm font-semibold mt-1">{fromDate.toDateString()}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => openPicker('toDate')} className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1">
-            <Text className="text-gray-500 text-xs">To Date</Text>
+          <TouchableOpacity onPress={() => openPicker('toDate')} 
+          className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
+            <Text className="text-secondary text-xs">To Date</Text>
             <Text className="text-sm font-semibold mt-1">{date.toDateString()}</Text>
           </TouchableOpacity>
         </View>
 
         {/* TIME */}
         <View className="flex-row mb-4">
-          <TouchableOpacity onPress={() => openPicker('start')} className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1">
-            <Text className="text-gray-500 text-xs">Start Time</Text>
+          <TouchableOpacity onPress={() => openPicker('start')} 
+          className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
+            <Text className="text-secondary text-xs">Start Time</Text>
             <Text className="text-sm font-semibold mt-1">{startTime ? formatTime(startTime) : 'Select'}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => openPicker('end')} className="flex-1 bg-white p-4 rounded-xl border border-gray-200 mx-1">
-            <Text className="text-gray-500 text-xs">End Time</Text>
+          <TouchableOpacity onPress={() => openPicker('end')} className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
+            <Text className="text-secondary text-xs">End Time</Text>
             <Text className="text-sm font-semibold mt-1">{endTime ? formatTime(endTime) : 'Select'}</Text>
           </TouchableOpacity>
         </View>
@@ -435,11 +449,9 @@ const BookAppointment = () => {
 
             {/* EMPTY */}
             {getEmployees().length === 0 && (
-              <View className="items-center mt-10">
-                <Text className="text-gray-400">
-                  No employees available at this time
-                </Text>
-              </View>
+              <Text className="text-center text-gray-400 mt-10">
+                No employees available at this time
+              </Text>
             )}
 
             {/* EMPLOYEES */}
@@ -468,7 +480,7 @@ const BookAppointment = () => {
                     })
                   }
                   className={`p-4 rounded-xl mb-3 border ${selectedEmployeesByDate[dateStr]?.employee_id === emp.employee_id
-                    ? 'border-primary bg-blue-50'
+                    ? 'border-primary bg-blue-100'
                     : 'border-gray-200 bg-white'
                     }`}
                 >
@@ -476,7 +488,7 @@ const BookAppointment = () => {
                   {/* HEADER */}
                   <View className="flex-row justify-between items-center">
                     <View>
-                      <Text className="font-bold">
+                      <Text className="font-bold text-gray-900">
                         {emp.employee_name}
                       </Text>
                       <Text className="text-xs text-gray-500">
@@ -535,13 +547,8 @@ const BookAppointment = () => {
               return (
                 <View
                   key={i}
-                  className="bg-white mb-5 p-4 rounded-2xl"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOpacity: 0.08,
-                    shadowRadius: 10,
-                    elevation: 4,
-                  }}
+                  className="bg-white mb-5 p-4 rounded-2xl border border-blue-100 shadow-sm"
+                
                 >
 
                   {/* HEADER */}
@@ -559,8 +566,8 @@ const BookAppointment = () => {
                     {/* STATUS BADGE */}
                     <View
                       className={`px-3 py-1 rounded-full ${selectedEmployeesByDate[dateStr]
-                          ? 'bg-green-100'
-                          : 'bg-gray-100'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-500'
                         }`}
                     >
                       <Text
@@ -621,7 +628,7 @@ const BookAppointment = () => {
 
                   {/* ACTION BUTTON */}
                   <TouchableOpacity
-                    className="mt-4 bg-primary py-3 rounded-xl"
+                    className="mt-4 bg-secondary py-3 rounded-xl"
                     onPress={() => {
                       setModalDate(dateStr)
                       setModalData(timelineByDate[dateStr])
@@ -657,7 +664,7 @@ const BookAppointment = () => {
         <View className="absolute inset-0 bg-black/40 px-4 py-10 justify-center">
           <View className="bg-white p-4 rounded-2xl max-h-[80%]">
 
-            <Text className="font-bold mb-2">
+            <Text className="font-bold mb-3 text-center">
               {new Date(modalDate).toDateString()}
             </Text>
 
@@ -699,7 +706,7 @@ const BookAppointment = () => {
                           [modalDate]: emp,
                         }))
                       }
-                      className={`p-4 mb-3 rounded-xl border ${selectedEmployeesByDate[modalDate]?.employee_id === emp.employee_id
+                      className={`p-4 mb-3 rounded-xl border  ${selectedEmployeesByDate[modalDate]?.employee_id === emp.employee_id
                         ? 'border-primary bg-blue-50'
                         : 'border-gray-200 bg-white'
                         }`}
@@ -761,7 +768,7 @@ const BookAppointment = () => {
               onPress={() => setShowModal(false)}
               className="bg-primary mt-3 p-3 rounded"
             >
-              <Text className="text-white text-center">
+              <Text className="text-white text-center font-semibold">
                 Confirm
               </Text>
             </TouchableOpacity>

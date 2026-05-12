@@ -52,8 +52,7 @@ const Basket = () => {
 
           try {
             details = item.note ? JSON.parse(item.note) : {}
-          } catch (e) { }
-
+          } catch (e) {}
 
           const metaEntries = Object.entries(details).filter(
             ([key]) =>
@@ -63,8 +62,8 @@ const Basket = () => {
                 'quantity',
                 'totalPrice',
                 'total',
-                'package_id',   // hide
-                'rowIndex',     // hide
+                'package_id',
+                'rowIndex',
               ].includes(key)
           )
 
@@ -81,7 +80,7 @@ const Basket = () => {
               details.totalPrice ||
               details.total ||
               (details.price || item.price || 0) *
-              (details.quantity || 1),
+                (details.quantity || 1),
           }
         })
 
@@ -97,14 +96,11 @@ const Basket = () => {
     }
   }
 
-  // ✅ ONLY FETCH IF LOGGED IN
   useEffect(() => {
-    if (token) {
-      fetchCart()
-    }
+    if (token) fetchCart()
   }, [token])
 
-  // ---------------- DELETE API ----------------
+  // ---------------- DELETE ----------------
   const confirmDelete = async () => {
     if (!selectedId || !token) return
 
@@ -143,49 +139,6 @@ const Basket = () => {
     return sum + (item.displayTotal || 0)
   }, 0)
 
-  // ---------------- RENDER ITEM ----------------
-  const renderItem = ({ item }) => (
-    <View className="border border-gray-200 p-4 rounded-xl flex-row mb-3 bg-white">
-
-      <View className="flex-1 px-3">
-        <Text className="text-md font-semibold text-primary">
-          {item.displayName}
-        </Text>
-
-        {item.displayMeta?.length > 0 && (
-          <View className="mt-1">
-            {item.displayMeta.map((meta, index) => (
-              <View key={index} className="flex-row">
-                <Text className="font-semibold capitalize">
-                  {meta.key}:
-                </Text>
-                <Text className="text-gray-600 ml-2">
-                  {meta.value}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        <Text className="text-primary text-base font-semibold mt-2">
-          Price: ${item.displayPrice}
-        </Text>
-      </View>
-
-      <TouchableOpacity
-        onPress={() => {
-          setSelectedId(item.id)
-          setShowDeleteModal(true)
-        }}
-        className="bg-red-500 px-3 py-2 rounded-lg self-start"
-      >
-        <Text className="text-white font-semibold">
-          Remove
-        </Text>
-      </TouchableOpacity>
-    </View>
-  )
-
   // ---------------- LOADING ----------------
   if (loading) {
     return (
@@ -198,23 +151,24 @@ const Basket = () => {
   const isCartEmpty = cartData.length === 0
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1 px-4 pb-20">
+    <SafeAreaView className="flex-1 bg-blue-50 pb-20">
+      <View className="flex-1 px-4 ">
 
         {/* HEADER */}
-        <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
-          My Basket
-        </Text>
+        <View className="mt-4 mb-4 p-5 rounded-2xl bg-primary shadow">
+          <Text className="text-white text-center text-xl font-bold">
+            My Basket
+          </Text>
+          <Text className="text-white/80 text-center text-sm mt-1">
+            Review your selected services ✨
+          </Text>
+        </View>
 
         {!token ? (
-          // 🔒 NOT LOGGED IN UI
           <View className="flex-1 justify-center items-center">
-
-            <Text className="text-gray-500 text-center mb-4">
+            <Text className="text-gray-500 text-center">
               Please login to view your basket
             </Text>
-
-
           </View>
         ) : (
           <>
@@ -222,37 +176,93 @@ const Basket = () => {
             <FlatList
               data={cartData}
               keyExtractor={(item) => item.id.toString()}
-              renderItem={renderItem}
               showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <View className="bg-white p-4 rounded-2xl mb-3 border border-blue-100 shadow-sm">
+
+                  <View className="flex-row justify-between">
+
+                    {/* LEFT */}
+                    <View className="flex-1 pr-3">
+                      <Text className="text-primary font-bold text-base">
+                        {item.displayName}
+                      </Text>
+
+                      {item.displayMeta?.length > 0 && (
+                        <View className="mt-1">
+                          {item.displayMeta.map((meta, i) => (
+                            <View key={i} className="flex-row">
+                              <Text className="text-gray-500 capitalize">
+                                {meta.key}:
+                              </Text>
+                              <Text className="ml-2 text-gray-700">
+                                {meta.value}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+
+                      <Text className="text-secondary font-bold mt-2">
+                        price: ${item.displayTotal}
+                      </Text>
+                    </View>
+
+                    {/* REMOVE */}
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedId(item.id)
+                        setShowDeleteModal(true)
+                      }}
+                      className="bg-red-100 px-3 py-2 rounded-xl self-start"
+                    >
+                      <Text className="text-red-600 font-semibold text-xs">
+                        Remove
+                      </Text>
+                    </TouchableOpacity>
+
+                  </View>
+
+                </View>
+              )}
               ListEmptyComponent={
-                <Text className="text-center mt-10 text-gray-500">
-                  No items in basket
-                </Text>
+                <View className="items-center mt-20">
+                  <Text className="text-gray-400 text-base">
+                    Your basket is empty 🛒
+                  </Text>
+                </View>
               }
             />
 
             {/* FOOTER */}
-            <View className="bg-white px-5 py-4 flex-row justify-between items-center">
+            <View className="absolute bottom-0 left-0 right-0 bg-white px-5 py-4 border-t border-blue-100 flex-row justify-between items-center">
+
               <View>
-                <Text>Total </Text>
-                <Text className="text-lg font-bold">${total}</Text>
+                <Text className="text-gray-500 text-xs">Total</Text>
+                <Text className="text-xl font-bold text-primary">
+                  $ {total}
+                </Text>
               </View>
 
-          
               <TouchableOpacity
                 onPress={() => {
                   if (!isCartEmpty) {
-                    navigation.navigate('BookAppointment')
+                    navigation.navigate('BookAppointment', {
+                      appointmentData: cartData,
+                       totalAmount: total,
+                    })
                   }
                 }}
                 disabled={isCartEmpty}
-                className={`px-6 py-3 rounded-lg ${isCartEmpty ? 'bg-gray-300' : 'bg-primary'
-                  }`}
+                className={`px-6 py-3 rounded-xl ${
+                  isCartEmpty ? 'bg-gray-300' : 'bg-primary'
+                }`}
               >
                 <Text className="text-white font-semibold">
-                  Proceed
+                  Proceed 
                 </Text>
               </TouchableOpacity>
+
             </View>
           </>
         )}
@@ -261,7 +271,7 @@ const Basket = () => {
         <Modal transparent visible={showDeleteModal} animationType="fade">
           <View className="flex-1 bg-black/40 justify-center items-center px-6">
 
-            <View className="w-full bg-white rounded-3xl p-6 shadow-xl">
+            <View className="w-full bg-white rounded-3xl p-6">
 
               <View className="items-center mb-3">
                 <View className="bg-red-100 p-4 rounded-full">
