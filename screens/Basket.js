@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
+  Platform
 } from 'react-native'
 
 import { AuthContext } from '../context/AuthContext'
@@ -52,7 +53,7 @@ const Basket = () => {
 
           try {
             details = item.note ? JSON.parse(item.note) : {}
-          } catch (e) {}
+          } catch (e) { }
 
           const metaEntries = Object.entries(details).filter(
             ([key]) =>
@@ -80,7 +81,7 @@ const Basket = () => {
               details.totalPrice ||
               details.total ||
               (details.price || item.price || 0) *
-                (details.quantity || 1),
+              (details.quantity || 1),
           }
         })
 
@@ -151,7 +152,7 @@ const Basket = () => {
   const isCartEmpty = cartData.length === 0
 
   return (
-    <SafeAreaView className="flex-1 bg-blue-50 pb-20">
+    <SafeAreaView className="flex-1 bg-blue-50 ">
       <View className="flex-1 px-4 ">
 
         {/* HEADER */}
@@ -177,6 +178,9 @@ const Basket = () => {
               data={cartData}
               keyExtractor={(item) => item.id.toString()}
               showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingBottom: Platform.OS === 'ios' ? 110 : 80,
+              }}
               renderItem={({ item }) => (
                 <View className="bg-white p-4 rounded-2xl mb-3 border border-blue-100 shadow-sm">
 
@@ -235,8 +239,16 @@ const Basket = () => {
             />
 
             {/* FOOTER */}
-            <View className="absolute bottom-0 left-0 right-0 bg-white px-5 py-4 border-t border-blue-100 flex-row justify-between items-center">
-
+            <View
+              // className="absolute bottom-0 left-0 right-0 bg-white px-5 py-4 border-t border-blue-100 flex-row justify-between items-center">
+              style={{
+                position: 'absolute',
+                bottom: Platform.OS === 'ios' ? 45 : 65,
+                left: 0,
+                right: 0,
+              }}
+              className="bg-white px-5 py-4 border-t border-blue-100 flex-row justify-between items-center"
+            >
               <View>
                 <Text className="text-gray-500 text-xs">Total</Text>
                 <Text className="text-xl font-bold text-primary">
@@ -249,17 +261,16 @@ const Basket = () => {
                   if (!isCartEmpty) {
                     navigation.navigate('BookAppointment', {
                       appointmentData: cartData,
-                       totalAmount: total,
+                      totalAmount: total,
                     })
                   }
                 }}
                 disabled={isCartEmpty}
-                className={`px-6 py-3 rounded-xl ${
-                  isCartEmpty ? 'bg-gray-300' : 'bg-primary'
-                }`}
+                className={`px-6 py-3 rounded-xl ${isCartEmpty ? 'bg-gray-300' : 'bg-primary'
+                  }`}
               >
                 <Text className="text-white font-semibold">
-                  Proceed 
+                  Proceed
                 </Text>
               </TouchableOpacity>
 

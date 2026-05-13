@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { AuthContext } from '../context/AuthContext'
 
 const TabBar = ({ state, navigation }) => {
+  
   const { cartCount } = useContext(AuthContext)
 
   const iconMap = {
