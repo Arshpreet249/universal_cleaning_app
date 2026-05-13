@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -26,12 +26,44 @@ const Payment = ({ route, navigation }) => {
   } = route.params || {}
 
   const [loading, setLoading] = useState(false)
+  // ================= COINS =================
+  const [coins, setCoins] = useState(0)
+  const [useCoins, setUseCoins] = useState(false)
+  const [coinsLoading, setCoinsLoading] = useState(false)
 
   // ✅ COUPON STATES
   const [couponCode, setCouponCode] = useState('')
   const [discount, setDiscount] = useState(0)
   const [couponLoading, setCouponLoading] = useState(false)
   const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [couponDescription, setCouponDescription] = useState('')
+
+  // ================= FETCH COINS =================
+  const fetchCoins = async () => {
+    setCoinsLoading(true)
+    try {
+      const res = await fetch(`${apiBaseUrl}get_user_coins/`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await res.json()
+      console.log(' Coins API:', data)
+
+      if (res.status === 200) {
+
+        setCoins(data?.data?.available_coins || 0)
+      }
+    } catch (err) {
+      console.log('Coins error:', err)
+    }
+    setCoinsLoading(false)
+  }
+  useEffect(() => {
+    fetchCoins()
+  }, [])
 
   // ================= FEE =================
   const calculatePayNowFee = (total) => {
@@ -49,8 +81,18 @@ const Payment = ({ route, navigation }) => {
 
   const fee = calculatePayNowFee(totalAmount || 0)
 
+  // ================= COINS LOGIC =================
+  const coinValue = coins * 1 // 1 coin = $1
+
+  const coinDiscount = useCoins
+    ? Math.min(coinValue, (totalAmount || 0) + fee - discount)
+    : 0
+
+
+
   // ✅ FINAL TOTAL
-  const finalTotal = (totalAmount || 0) + fee - discount
+  const finalTotal = (totalAmount || 0) + fee - discount - coinDiscount
+
 
   // ================= APPLY COUPON =================
   const applyCoupon = async (codeParam) => {
@@ -76,7 +118,7 @@ const Payment = ({ route, navigation }) => {
       })
 
       const text = await res.text()
-      console.log('📥 RAW RESPONSE:', text)
+      console.log('RAW RESPONSE:', text)
 
       let data
       try {
@@ -86,7 +128,7 @@ const Payment = ({ route, navigation }) => {
         return
       }
 
-      console.log('📦 Parsed JSON:', data)
+      console.log('Parsed JSON:', data)
 
       if (res.status === 200) {
         const coupon = data.data
@@ -101,7 +143,7 @@ const Payment = ({ route, navigation }) => {
         if ((totalAmount || 0) < minAmount) {
           Alert.alert(
             'Not Eligible',
-            `Minimum purchase should be ₹${minAmount}`
+            `Minimum purchase should be $${minAmount}`
           )
           setDiscount(0)
           setAppliedCoupon(null)
@@ -123,20 +165,21 @@ const Payment = ({ route, navigation }) => {
 
         discountValue = parseFloat(discountValue.toFixed(2))
 
-        console.log('💰 Discount Applied:', discountValue)
+        console.log(' Discount Applied:', discountValue)
 
         setDiscount(discountValue)
         setAppliedCoupon(coupon.promo_code)
+        setCouponDescription(coupon.description || '')
         setCouponCode(coupon.promo_code)
 
-        Alert.alert('Success', data.message || 'Coupon applied 🎉')
+        // Alert.alert('Success', data.message || 'Coupon applied ')
       } else {
         setDiscount(0)
         setAppliedCoupon(null)
         Alert.alert('Invalid', data?.message || 'Coupon not valid')
       }
     } catch (error) {
-      console.log('🚨 Network Error:', error)
+      console.log(' Network Error:', error)
       Alert.alert('Error', 'Network issue')
     }
 
@@ -151,7 +194,7 @@ const Payment = ({ route, navigation }) => {
       data: appointmentData.map((item) => ({
         title: item.package_names?.join(', ') || '',
         address: selectedAddress.address,
-        description: `Notes: ${notes || 'N/A'} | Coupon: ${appliedCoupon || 'None'}`,
+        description: `Notes: ${notes || 'N/A'} | Packages: ${item.package_names?.join(', ') || 'None'}`,
         start_date: item.start_date,
         end_date: item.start_date,
         startTime: item.startTime,
@@ -292,6 +335,35 @@ const Payment = ({ route, navigation }) => {
             </View>
           </View>
 
+          {/* COINS */}
+          <View className="bg-white p-4 rounded-2xl mb-4 shadow-sm">
+            <Text className="text-lg font-semibold text-primary mb-2">
+              🪙 Wallet Coins
+            </Text>
+
+            {coinsLoading ? (
+              <ActivityIndicator />
+            ) : (
+              <>
+                <Text className="text-gray-700 mb-2">
+                  Available Coins: {coins}
+                </Text>
+
+                <TouchableOpacity
+                  onPress={() => setUseCoins(!useCoins)}
+                  className={`p-3 rounded-xl bg-secondary }`}
+                >
+                  <Text className="text-white text-center font-semibold">
+                    {useCoins ? 'Coins Applied' : 'Use Coins'}
+                  </Text>
+                </TouchableOpacity>
+
+
+              </>
+            )}
+          </View>
+
+
           {/* APPLY COUPONS */}
           <View className="bg-white p-4 rounded-2xl mb-4 shadow-sm">
             <Text className="text-lg font-semibold mb-3 text-primary">
@@ -309,7 +381,7 @@ const Payment = ({ route, navigation }) => {
 
               <TouchableOpacity
                 onPress={() => applyCoupon()}
-                className="ml-3 bg-primary px-4 py-3 rounded-xl"
+                className="ml-3 bg-secondary px-4 py-3 rounded-xl"
               >
                 {couponLoading ? (
                   <ActivityIndicator color="#fff" />
@@ -320,11 +392,12 @@ const Payment = ({ route, navigation }) => {
             </View>
 
             {appliedCoupon && (
-              <Text className="text-green-600 mt-2">
-                Applied: {appliedCoupon} (-${discount})
-              </Text>
+              <View className="mt-2">
+                <Text className="text-green-600 font-semibold">
+                  {appliedCoupon} - {couponDescription}
+                </Text>
+              </View>
             )}
-
 
           </View>
 
@@ -346,11 +419,17 @@ const Payment = ({ route, navigation }) => {
 
             {discount > 0 && (
               <View className="flex-row justify-between mb-2">
-                <Text className="text-green-600">Discount</Text>
+                <Text className="text-gray-600">Discount</Text>
                 <Text className="text-green-600">-${discount}</Text>
               </View>
             )}
 
+            {coinDiscount > 0 && (
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-gray-600">Coins</Text>
+                <Text className="text-green-600">-${coinDiscount}</Text>
+              </View>
+            )}
             <View className="border-t border-gray-200 mt-3 pt-3 flex-row justify-between">
               <Text className="font-bold text-lg">Total</Text>
               <Text className="font-bold text-lg text-green-600">
