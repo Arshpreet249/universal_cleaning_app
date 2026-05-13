@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
+  
   ActivityIndicator,
   KeyboardAvoidingView,
   Alert,
@@ -14,7 +14,7 @@ import {
 import { AuthContext } from '../context/AuthContext'
 import { apiBaseUrl } from '../components/variable'
 import { Ionicons } from '@expo/vector-icons'
-
+import { SafeAreaView } from 'react-native-safe-area-context'
 const Payment = ({ route, navigation }) => {
   const { token } = useContext(AuthContext)
 
