@@ -19,6 +19,7 @@ import BookAppointment from './screens/BookAppointment'
 import Welcome from './screens/Welcome'
 import Notes from './screens/Notes'
 import Payment from './screens/Payment'
+import Countdown from './screens/Countdown'
 const Stack = createNativeStackNavigator()
 
 export default function App() {
@@ -61,6 +62,7 @@ export default function App() {
               <Stack.Screen name='BookAppointment' component={BookAppointment} options={{ title: 'BookAppointment' }} />
               <Stack.Screen name='Notes' component={Notes} options={{title:'Notes'}}/>
               <Stack.Screen name='Payment' component={Payment} options={{title: 'payment'}}/>
+              <Stack.Screen name="Countdown" component={Countdown} options={{title: 'countdown'}} />
             </Stack.Navigator>
             <Toast />
             <StatusBar style="auto" />

@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  
+
   ActivityIndicator,
   KeyboardAvoidingView,
   Alert,
@@ -15,7 +15,10 @@ import { AuthContext } from '../context/AuthContext'
 import { apiBaseUrl } from '../components/variable'
 import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Linking } from 'react-native'
+
 const Payment = ({ route, navigation }) => {
+
   const { token } = useContext(AuthContext)
 
   const {
@@ -24,6 +27,10 @@ const Payment = ({ route, navigation }) => {
     selectedAddress,
     totalAmount,
   } = route.params || {}
+
+  console.log("address", selectedAddress)
+
+  // console.log("apointmentData in Payment::", appointmentData)
 
   const [loading, setLoading] = useState(false)
   // ================= COINS =================
@@ -37,7 +44,9 @@ const Payment = ({ route, navigation }) => {
   const [couponLoading, setCouponLoading] = useState(false)
   const [appliedCoupon, setAppliedCoupon] = useState(null)
   const [couponDescription, setCouponDescription] = useState('')
+  const [appliedCouponId, setAppliedCouponId] = useState(null)
 
+  const [checkoutUrl, setCheckoutUrl] = useState(null)
   // ================= FETCH COINS =================
   const fetchCoins = async () => {
     setCoinsLoading(true)
@@ -116,9 +125,10 @@ const Payment = ({ route, navigation }) => {
           promo_code: codeToApply,
         }),
       })
+      console.log(' Apply Coupon Response ', res)
 
       const text = await res.text()
-      console.log('RAW RESPONSE:', text)
+      console.log('RAW RESPONSE coupon:', text)
 
       let data
       try {
@@ -131,12 +141,15 @@ const Payment = ({ route, navigation }) => {
       console.log('Parsed JSON:', data)
 
       if (res.status === 200) {
+
         const coupon = data.data
 
         if (!coupon) {
           Alert.alert('Error', 'Invalid coupon data')
           return
         }
+
+        setAppliedCouponId(coupon.id || null)
 
         const minAmount = coupon.min_purchase_amount || 0
 
@@ -191,7 +204,18 @@ const Payment = ({ route, navigation }) => {
     setLoading(true)
 
     const payload = {
+
+      amount: totalAmount,
+      discount: discount || 0,
+      tax: fee,
+      coins: useCoins ? coinDiscount : 0,
+      coupen_number: appliedCoupon || '',
+      coupen_id: appliedCouponId || null,
+      booking_service_ids: appointmentData.flatMap(item => item.booking_ids || []),
+      booking_address_id: selectedAddress?.id,
+
       data: appointmentData.map((item) => ({
+
         title: item.package_names?.join(', ') || '',
         address: selectedAddress.address,
         description: `Notes: ${notes || 'N/A'} | Packages: ${item.package_names?.join(', ') || 'None'}`,
@@ -206,7 +230,9 @@ const Payment = ({ route, navigation }) => {
         },
         package: item.package_ids || [],
       })),
+
     }
+    console.log('Payload for API:', JSON.stringify(payload, null, 2))
 
     try {
       const res = await fetch(`${apiBaseUrl}create-appointment-by-client/`, {
@@ -218,14 +244,38 @@ const Payment = ({ route, navigation }) => {
         body: JSON.stringify(payload),
       })
 
+
       const result = await res.json()
+      console.log(' Create Appointment Response:', result)
 
       if (res.status === 200 || res.status === 201) {
-        Alert.alert('Success', 'Appointment Created')
+        // Alert.alert('Success', 'Appointment Created')
+
+        // const checkoutUrl = result?.data?.checkout_url
+        let url = result?.data?.checkout_url
+        if (!url && result?.data?.detail === "Transaction already exists") {
+          if (checkoutUrl) {
+            navigation.navigate('Countdown', { checkoutUrl })
+            return
+          } else {
+            Alert.alert("Error", "Payment already exists but no URL found")
+            return
+          }
+        }
+        if (url) {
+          setCheckoutUrl(url)
+
+          navigation.navigate('Countdown', {
+            checkoutUrl: url
+          })
+        }
+
+
       } else {
         Alert.alert('Failed', result?.message || 'Error')
       }
     } catch (err) {
+      console.log('FULL ERROR:', err)
       Alert.alert('Error', 'Something went wrong')
     }
 
@@ -373,9 +423,11 @@ const Payment = ({ route, navigation }) => {
             <View className="flex-row items-center">
               <TextInput
                 value={couponCode}
-                onChangeText={setCouponCode}
+                // onChangeText={setCouponCode}
+                onChangeText={(text) => setCouponCode(text.toUpperCase())}
                 placeholder="Enter coupon code"
                 placeholderTextColor="#9ca3af"
+                autoCapitalize='characters'
                 className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-gray-800"
               />
 
@@ -448,7 +500,11 @@ const Payment = ({ route, navigation }) => {
             paddingBottom: Platform.OS === 'ios' ? 24 : 12,
           }}>
           <TouchableOpacity
-            onPress={createAppointment}
+            // onPress={createAppointment}
+            // disabled={loading}
+            onPress={() => {
+              if (!loading) createAppointment()
+            }}
             disabled={loading}
             className={`p-4 rounded-xl ${loading ? 'bg-gray-400' : 'bg-primary'}`}
           >

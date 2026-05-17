@@ -21,9 +21,8 @@ const BookAppointment = () => {
   const route = useRoute()
 
  const totalAmount = route?.params?.totalAmount
- console.log('totalAmount in BookAppointment::', totalAmount) 
- 
   const { token, basketItems } = useContext(AuthContext)
+  console.log("booking:: basketItems:", basketItems)
 
   const [fromDate, setFromDate] = useState(new Date())
   const [date, setDate] = useState(new Date())
@@ -221,6 +220,8 @@ const BookAppointment = () => {
       }
       newFromDate = selected
       setFromDate(selected)
+
+      
     }
 
     if (pickerMode === 'toDate') {
@@ -338,6 +339,9 @@ const BookAppointment = () => {
     const packageNames = basketItems
       ?.map((item) => item.displayName)
 
+        const bookingIds = basketItems?.map(item => item.id)
+
+  console.log('BookAppointment Booking IDs:', bookingIds) // 🔥 debug
     const bookingData = dates.map((dateStr) => ({
       start_date: dateStr,
       employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
@@ -350,6 +354,7 @@ const BookAppointment = () => {
       // ✅ SEND BOTH
       package_ids: packageIds,
       package_names: packageNames,
+       booking_ids: bookingIds, 
     }))
 
     navigation.navigate('Notes', {
@@ -418,7 +423,12 @@ const BookAppointment = () => {
           }
 
           // ✅ ADD THIS
-          minimumDate={new Date()}
+          // minimumDate={new Date()}
+            minimumDate={
+    pickerMode === 'fromDate' || pickerMode === 'toDate'
+      ? new Date()
+      : undefined
+  }
 
           onConfirm={handleConfirm}
           onCancel={() => setPickerVisible(false)}

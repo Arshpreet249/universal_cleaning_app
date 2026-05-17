@@ -49,6 +49,7 @@ const Basket = () => {
 
       if (data.status === 200) {
         const cleanedData = data.data.map(item => {
+          console.log('Booking ID (from API):', item.id)
           let details = {}
 
           try {

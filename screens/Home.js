@@ -396,272 +396,141 @@ const Home = () => {
             </ScrollView>
           )}
         </View>
-
         {/* ================= Recent Booking ================= */}
-        <View style={{ marginHorizontal: 10, marginTop: 20 }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
-            Recent Bookings
-          </Text>
 
+        {/* ✅ SHOW BOOKINGS */}
+        {token && recentBookings?.length > 0 && (
+          <View style={{ marginHorizontal: 10, marginTop: 20 }}>
 
-          {token ? (
+            <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
+              Recent Bookings
+            </Text>
+
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={{ flexDirection: 'row', paddingHorizontal: 1 }}>
-                {/* 
-                {recentBookings.slice(0, 5).map((item) => (
-                  <View
-                    key={item.id}
-                    style={{
-                      flexDirection: 'row',
-                      width: 300,
-                      minHeight: 160,
-                      marginRight: 12,
-                      borderRadius: 16,
-                      overflow: 'hidden',
-                      backgroundColor: '#fff',
-                    }}
-                  > */}
-                {/*  LEFT GRADIENT BAR */}
-                {/* <LinearGradient
-                      colors={['#ff0000', '#ff9900', '#33cc33', '#3399ff', '#cc00ff']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={{
-                        width: 7,
-                      }}
-                    /> */}
+              <View style={{ flexDirection: 'row', paddingHorizontal: 6 }}>
 
-                {/*  MAIN CARD CONTENT */}
-                {/* <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={{
-                        flex: 1,
-                        padding: 16,
-                        justifyContent: 'center',
-                      }}
-                    > */}
-                {/* Title */}
-                {/* <Text
-                        style={{ fontSize: 18, fontWeight: 'bold', color: '#111' }}
-                        numberOfLines={2}
-                      >
-                        {item.title}
-                      </Text> */}
+                {recentBookings.slice(0, 5).map((item, index) => {
 
-                {/* Start */}
-                {/* <Text style={{ fontSize: 13, color: '#666', marginTop: 10 }}>
-                        Start: {new Date(item.start_from).toLocaleString()}
-                      </Text> */}
-                {/* Rating */}
-                {/* <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Text style={{ fontSize: 13, color: '#666', marginTop: 10 }}>
-                          Rating:
-                        </Text>
-                        <Text style={{ fontSize: 13, color: '#ff9900', marginTop: 10, marginLeft: 4 }}>
-                          ★★★★★
-                        </Text>
+                  const cardColors = [
+                    "#219ebc",
+                    "#f07167",
+                    "#f6bd60",
+                    "#a7c957",
+                    "#7b2cbf",
+                    "#ef476f",
+                  ]
 
-                      </View> */}
-
-
-                {/* Status */}
-                {/* <View
-                        style={{
-                          marginTop: 14,
-                          alignSelf: 'flex-start',
-                          backgroundColor: '#ffe5e5',
-                          paddingHorizontal: 12,
-                          paddingVertical: 6,
-                          borderRadius: 20,
-                        }}
-                      >
-                        <Text style={{ color: '#ff3b30', fontWeight: '600', fontSize: 12 }}>
-                          {item.process}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                ))} */}
-
-
-                {recentBookings.slice(0, 5).map((item) => {
-
-                  const getPriorityColor = (priority) => {
-                    switch (priority?.toLowerCase()) {
-                      case "urgent":
-                        return "#ff5c5c"
-                      case "moderate":
-                        return "#ff8c42"
-                      case "low":
-                        return "#34c759"
-                      default:
-                        return "#4da3ff"
-                    }
-                  }
-
-                  const getStatusColor = (status) => {
-                    switch (status?.toLowerCase()) {
-                      case 'completed':
-                        return '#28a745'
-                      case 'cancelled':
-                      case 'rejected':
-                        return '#dc3545'
-                      case 'pending':
-                        return '#6c757d'
-                      case 'accepted':
-                        return '#007bff'
-                      case 'assigned':
-                        return '#af51af'
-                      case 'payment pending':
-                        return '#f39c12'
-                      default:
-                        return '#f39c12'
-                    }
-                  }
+                  const getCardColor = (i) => cardColors[i % cardColors.length]
 
                   return (
-                    <View
+                    <TouchableOpacity
                       key={item.id}
-                      style={{
-                        width: 300,
-                        marginRight: 14,
-                        borderRadius: 18,
-                        // backgroundColor: "#f3f4f6",
-                        padding: 6,
-                      }}
+                      activeOpacity={0.9}
+                      onPress={() => navigation.navigate('BookingDetail', { item })}
                     >
-                      {/* 🔴 TOP PRIORITY BAR */}
-                      <View
+                      <LinearGradient
+                        colors={[getCardColor(index), "#ffffff"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
                         style={{
-                          backgroundColor: getPriorityColor(item.priority),
-                          paddingVertical: 14,
-                          borderTopLeftRadius: 14,
-                          borderTopRightRadius: 14,
-                          alignItems: "center",
+                          width: 280,
+                          height: 170,
+                          marginRight: 14,
+                          borderRadius: 22,
+                          padding: 16,
+                          // minHeight: 160,
+                          justifyContent: "space-between",
                         }}
                       >
 
-                      </View>
+                        {/* TAG */}
+                        <View style={{
+                          backgroundColor: "rgba(255,255,255,0.6)",
+                          alignSelf: "flex-start",
+                          paddingHorizontal: 10,
+                          paddingVertical: 4,
+                          borderRadius: 20,
+                        }}>
+                          <Text style={{
+                            fontSize: 10,
+                            fontWeight: "600",
+                            color: "#333",
+                            textTransform: "capitalize"
+                          }}>
+                            {item.process || "Booking"}
+                          </Text>
+                        </View>
 
-                      {/* 🧾 INNER CARD */}
-                      <TouchableOpacity
-                        activeOpacity={0.85}
-                        style={{
-                          backgroundColor: "#fff",
-                          borderBottomEndRadius: 14,
-                          borderBottomLeftRadius: 14,
-                          padding: 14,
-
-                        }}
-                      >
                         {/* TITLE */}
-                        <Text
-                          style={{
-                            fontSize: 15,
-                            fontWeight: "700",
-                            color: "#111",
-                          }}
-                          numberOfLines={2}
-                        >
+                        <Text numberOfLines={2}
+                        ellipsizeMode="tail"
+                         style={{
+                          fontSize: 18,
+                          fontWeight: "700",
+                          color: "#111",
+                          marginTop: 10,
+                        }}>
                           {item.title}
                         </Text>
 
-                        {/* 🟢 STATUS BADGE */}
-                        <View
-                          style={{
-                            paddingVertical: 4,
-                            borderRadius: 12,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: getStatusColor(item.process),
-                              fontSize: 11,
-                              fontWeight: "600",
-                              textTransform: "capitalize",
-                            }}
-                          >
-                            {item.process}
-                          </Text>
-                        </View>
-
-                         <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Text style={{ fontSize: 13, color: '#666', marginTop: 10 }}>
-                          Rating:
-                        </Text>
-                        <Text style={{ fontSize: 13, color: '#ff9900', marginTop: 10, marginLeft: 4 }}>
-                          ★★★★★
+                        {/* DESCRIPTION */}
+                        <Text numberOfLines={2} style={{
+                          fontSize: 12,
+                          color: "#444",
+                          marginTop: 6,
+                        }}>
+                          {item.description || "Tap to view booking details"}
                         </Text>
 
-                      </View> 
+                        {/* DATE */}
+                        <Text style={{
+                          fontSize: 11,
+                          color: "#555",
+                          marginTop: 10
+                        }}>
+                          {new Date(item.start_from).toDateString()}
+                        </Text>
 
-                        {/* 📅 BOTTOM ROW */}
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginTop: 14,
-                          }}
-                        >
-                          <Text style={{ fontSize: 11, color: "#9ca3af" }}>
-                            {new Date(item.start_from).toDateString()}
-                          </Text>
-
-
-                        </View>
-                      </TouchableOpacity>
-                    </View>
+                      </LinearGradient>
+                    </TouchableOpacity>
                   )
                 })}
+
               </View>
             </ScrollView>
-          ) : (
+          </View>
+        )}
 
-            <View
-              style={{
-                flexDirection: 'row',
-                // backgroundColor: '#fff',
-                borderRadius: 16,
-                overflow: 'hidden',
-                elevation: 6,
-                marginHorizontal: 10,
-                marginTop: 10,
-              }}
+        {/*  NOT LOGGED IN */}
+        {!token && (
+          <View
+            style={{
+              borderRadius: 16,
+              marginHorizontal: 10,
+              marginTop: 20,
+              backgroundColor: '#fff',
+              padding: 20,
+              alignItems: 'center',
+            }}
+          >
+            <Text className="text-2xl font-bold text-red-500 mb-2">
+              Oh! No!
+            </Text>
+
+            <Text className="text-gray-500 text-sm text-center mb-6">
+              You should login before booking.
+            </Text>
+
+            <TouchableOpacity
+              className="bg-red-500 px-6 py-3 rounded-xl"
+              onPress={() => navigation.navigate('Auth')}
             >
-
-              <View className="flex-1 ">
-
-
-                <View className="flex-1 px-4 py-6 items-center justify-center">
-
-                  <Text className="text-2xl font-bold text-red-500 mb-2">
-                    Oh! No!
-                  </Text>
-
-                  <Text className="text-gray-500 text-sm text-center mb-6">
-                    You should login before booking.
-                  </Text>
-
-                  <TouchableOpacity
-                    className="bg-red-500 px-6 py-3 rounded-xl shadow-md"
-                    onPress={() => navigation.navigate('Auth')}
-                  >
-                    <Text className="text-white font-semibold text-base">
-                      Login Now
-                    </Text>
-                  </TouchableOpacity>
-
-                </View>
-
-              </View>
-            </View>
-          )
-          }
-
-
-
-        </View>
+              <Text className="text-white font-semibold text-base">
+                Login Now
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* ================= REFER & EARN ================= */}
 

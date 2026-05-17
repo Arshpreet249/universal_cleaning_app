@@ -78,6 +78,7 @@ const Bookings = () => {
       })
 
       const data = await response.json()
+      console.log('Appointments data:', data)
       setBookings(Array.isArray(data?.appointments) ? data.appointments : [])
 
       //  build feedback map

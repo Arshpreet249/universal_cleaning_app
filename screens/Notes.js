@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons'
 const Notes = ({ route, navigation }) => {
 
     const totalAmount = route?.params?.totalAmount
-console.log('total in Notes::', totalAmount)
+   
     const {
         token,
         selectedAddress,
@@ -27,6 +27,10 @@ console.log('total in Notes::', totalAmount)
     } = useContext(AuthContext)
 
     const appointmentData = route?.params?.appointmentData || []
+    console.log(
+  'Notes Booking IDs:',
+  appointmentData?.flatMap(item => item.booking_ids || [])
+)
     const [notes, setNotes] = useState('')
 
     const fetchAddresses = async () => {
@@ -71,7 +75,7 @@ console.log('total in Notes::', totalAmount)
             appointmentData,
             notes,
             selectedAddress,
-            totalAmount, 
+            totalAmount,
         })
     }
 
@@ -108,11 +112,10 @@ console.log('total in Notes::', totalAmount)
                                 <TouchableOpacity
                                     key={item.id}
                                     onPress={() => setSelectedAddress(item)}
-                                    className={`p-4 mb-3 rounded-xl border ${
-                                        isSelected
+                                    className={`p-4 mb-3 rounded-xl border ${isSelected
                                             ? 'border-secondary bg-blue-100'
                                             : 'border-gray-200 bg-gray-50'
-                                    }`}
+                                        }`}
                                 >
                                     <View className="gap-2">
 
@@ -201,7 +204,7 @@ console.log('total in Notes::', totalAmount)
                         }}
                     >
                         <Text className="text-white text-center font-bold text-base">
-                            Continue to Payment 
+                            Continue to Payment
                         </Text>
                     </TouchableOpacity>
                 </View>
