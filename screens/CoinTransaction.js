@@ -119,6 +119,10 @@ const CoinTransaction = () => {
       >
         {/* ── Hero Balance Block ── */}
         <View className="px-6 pt-6 pb-8">
+
+          <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
+            Coins
+          </Text>
           <Text className="text-xs tracking-widest text-gray-400 uppercase mb-1">
             Coin Balance
           </Text>
@@ -200,14 +204,12 @@ const CoinTransaction = () => {
                 <View className="flex-row items-center py-3.5">
                   {/* Icon */}
                   <View
-                    className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${
-                      isCredit ? 'bg-emerald-50' : 'bg-rose-50'
-                    }`}
+                    className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${isCredit ? 'bg-emerald-50' : 'bg-rose-50'
+                      }`}
                   >
                     <Text
-                      className={`text-base font-bold ${
-                        isCredit ? 'text-emerald-500' : 'text-rose-400'
-                      }`}
+                      className={`text-base font-bold ${isCredit ? 'text-emerald-500' : 'text-rose-400'
+                        }`}
                     >
                       {isCredit ? '↓' : '↑'}
                     </Text>
@@ -225,9 +227,8 @@ const CoinTransaction = () => {
 
                   {/* Coin amount */}
                   <Text
-                    className={`text-base font-bold ${
-                      isCredit ? 'text-emerald-500' : 'text-rose-400'
-                    }`}
+                    className={`text-base font-bold ${isCredit ? 'text-emerald-500' : 'text-rose-400'
+                      }`}
                   >
                     {isCredit ? '+' : '-'}{item.coins} 🪙
                   </Text>
@@ -236,7 +237,7 @@ const CoinTransaction = () => {
                 {/* Row separator (skip last in group or last overall) */}
                 {index < transactions.length - 1 &&
                   formatDate(item.created_at) ===
-                    formatDate(transactions[index + 1]?.created_at) && (
+                  formatDate(transactions[index + 1]?.created_at) && (
                     <View className="h-px bg-gray-50 ml-14" />
                   )}
               </View>

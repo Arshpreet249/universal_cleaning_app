@@ -16,10 +16,12 @@ import { apiBaseUrl } from '../components/variable'
 const getStatusTextColor = (status) => {
   switch (status?.toLowerCase()) {
     case 'completed':
+    case 'succeeded':
       return 'text-[#28a745] font-semibold'
 
     case 'cancelled':
     case 'rejected':
+    case 'failed':
       return 'text-[#dc3545] font-semibold'
 
     case 'pending':
@@ -31,7 +33,7 @@ const getStatusTextColor = (status) => {
     case 'assigned':
       return 'text-[#af51af] font-semibold'
 
-    case 'payment pending':
+    case 'initiated':
       return 'text-[#f39c12] font-semibold'
 
     default:
@@ -47,14 +49,12 @@ const Bookings = () => {
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState(null)
 
-  //  MODAL STATES (ADDED)
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [rating, setRating] = useState(5)
   const [feedbackText, setFeedbackText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [feedbackMap, setFeedbackMap] = useState({})
-
 
   useFocusEffect(
     useCallback(() => {
@@ -79,18 +79,32 @@ const Bookings = () => {
 
       const data = await response.json()
       console.log('Appointments data:', data)
-      setBookings(Array.isArray(data?.appointments) ? data.appointments : [])
 
-      //  build feedback map
+      // 🔥 TRANSACTION MAP
+      const transactionsMap = {}
+      if (Array.isArray(data?.transactions)) {
+        data.transactions.forEach((txn) => {
+          transactionsMap[txn.id] = txn
+        })
+      }
+
+      // 🔥 MERGE BOOKINGS + TRANSACTIONS
+      const updatedBookings = (data?.appointments || []).map((appt) => ({
+        ...appt,
+        transaction: transactionsMap[appt.transaction_id] || null,
+      }))
+
+      setBookings(updatedBookings)
+
+      // 🔥 FEEDBACK MAP
       const map = {}
-
       if (Array.isArray(data?.feedback)) {
         data.feedback.forEach((fb) => {
           map[fb.appointment] = fb
         })
       }
 
-      setFeedbackMap(map) 
+      setFeedbackMap(map)
     } catch (error) {
       console.log('Error fetching appointments:', error)
       setBookings([])
@@ -103,12 +117,7 @@ const Bookings = () => {
     setExpandedId(expandedId === id ? null : id)
   }
 
-  // =========================
-  //  OPEN MODAL (ADDED)
-  // =========================
-
-
-    const openFeedbackModal = (item) => {
+  const openFeedbackModal = (item) => {
     const existing = feedbackMap[item.id]
 
     setSelectedAppointment(item)
@@ -123,8 +132,7 @@ const Bookings = () => {
 
     setModalVisible(true)
   }
- 
-  // ✅ SUBMIT (POST + PATCH)
+
   const submitFeedback = async () => {
     try {
       setSubmitting(true)
@@ -160,7 +168,7 @@ const Bookings = () => {
       const data = await response.json()
       console.log('Feedback response:', data)
 
-      await fetchAppointments() // refresh UI
+      await fetchAppointments()
       setModalVisible(false)
     } catch (error) {
       console.log('Feedback error:', error)
@@ -195,13 +203,15 @@ const Bookings = () => {
   return (
     <SafeAreaView className="flex-1 bg-gray-100 px-4 pb-24">
 
-      {/* HEADER */}
       <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
         My Bookings
       </Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {bookings.map((item) => {
+
+          const txn = item.transaction
+
           const startDate = new Date(item.start_from)
           const endDate = item.end_at ? new Date(item.end_at) : null
 
@@ -223,12 +233,28 @@ const Bookings = () => {
             })
             : 'N/A'
 
-          let statusText =
+          // ✅ BOOKING STATUS (UNCHANGED)
+          let bookingStatus =
             item.process || (item.status ? 'Completed' : 'In Progress')
 
-          if (statusText?.toLowerCase() === 'initiated') {
-            statusText = 'Payment Pending'
-          }
+          // ✅ PAYMENT STATUS FROM API (RAW)
+          const paymentStatus = txn?.status || 'N/A'
+
+          // ✅ FINAL AMOUNT
+          // const finalAmount = txn?.final_amount || item.amount
+
+          const hasValidTransaction =
+            txn &&
+            txn.final_amount &&
+            txn.final_amount !== "0.00000" &&
+            txn.final_amount !== "0.0000"
+
+          const rawAmount = txn?.final_amount || item.amount
+
+          const shouldShowAmount = hasValidTransaction || (item.amount && item.amount !== "0.0000")
+
+          const formattedAmount =
+            rawAmount && !isNaN(rawAmount) ? Number(rawAmount).toFixed(4) : null
 
           return (
             <View
@@ -242,32 +268,40 @@ const Bookings = () => {
               }}
             >
 
-              {/* TOP */}
+              {/* TITLE */}
               <View className="flex-row justify-between items-center">
                 <View>
                   <Text className="text-gray-900 font-semibold text-base">
-                    {item.title !== 'Appointment'
-                      ? item.title
-                      : item.description
-                        ?.split('Package:')[1]
-                        ?.trim() || 'Cleaning Service'}
+                    {item.title}
                   </Text>
 
-                  <Text className="text-secondary text-base mt-1">
-                    ★★★★★
-                  </Text>
+                  
+
+                  {feedbackMap[item.id] && (
+                    <Text className="text-yellow-500 text-base mt-1">
+                      {'★'.repeat(feedbackMap[item.id].rating)}
+                      {'☆'.repeat(5 - feedbackMap[item.id].rating)}
+                    </Text>
+                  )}
                 </View>
               </View>
 
               {/* PRICE */}
               <View className="flex-row justify-between items-center mt-4">
-                <Text className="text-2xl font-bold text-secondary">
-                  ${item.amount}
-                </Text>
+                {/* <Text className="text-2xl font-bold text-secondary">
+                  ${finalAmount}
+                </Text> */}
+
+                {shouldShowAmount && formattedAmount && (
+                  <Text className="text-2xl font-bold text-secondary">
+                    ${formattedAmount}
+                  </Text>
+                )}
               </View>
 
               {/* DATE + TIME + STATUS */}
               <View className="flex-row justify-between mt-4">
+
                 <View>
                   <Text className="text-gray-400 text-xs">Date</Text>
                   <Text className="text-gray-700 text-sm">
@@ -284,25 +318,38 @@ const Bookings = () => {
 
                 <View>
                   <Text className="text-gray-400 text-xs">Status</Text>
-                  <Text
-                    className={`text-sm font-medium ${getStatusTextColor(
-                      statusText
-                    )}`}
-                  >
-                    {statusText}
+                  <Text className={`text-sm ${getStatusTextColor(bookingStatus)}`}>
+                    {bookingStatus}
                   </Text>
                 </View>
               </View>
 
+              {/* 🔥 PAYMENT STATUS (SEPARATE) */}
+              <View className="mt-2">
+                <Text className="text-gray-400 text-xs">Payment Status</Text>
+                <Text className={`text-sm ${getStatusTextColor(paymentStatus)}`}>
+                  {paymentStatus}
+                </Text>
+              </View>
+
               {/* EXPANDED */}
               {expandedId === item.id && (
-
                 <View className="mt-4 pt-3">
 
                   <Text className="text-gray-400 text-xs">Address</Text>
                   <Text className="text-gray-700 text-sm mb-2">
                     {item.address || 'N/A'}
                   </Text>
+
+                  {/* 🔥 REFERENCE NUMBER */}
+                  {txn?.reference_number && (
+                    <>
+                      <Text className="text-gray-400 text-xs">Reference No</Text>
+                      <Text className="text-gray-700 text-sm mb-2">
+                        {txn.reference_number}
+                      </Text>
+                    </>
+                  )}
 
                   <Text className="text-gray-400 text-xs">Notes</Text>
                   <Text className="text-gray-700 text-sm mb-3">
@@ -312,23 +359,12 @@ const Bookings = () => {
                       ?.trim() || 'No notes'}
                   </Text>
 
-                   {/* FEEDBACK DISPLAY */}
                   {feedbackMap[item.id] ? (
                     <View className="mt-3 p-3 bg-gray-50 rounded-lg">
-
-                      <Text className="text-gray-400 text-xs">
-                        Feedback
-                      </Text>
-
-                      <Text className="text-yellow-500 text-sm mt-1">
-                        {'★'.repeat(feedbackMap[item.id].rating)}
-                        {'☆'.repeat(5 - feedbackMap[item.id].rating)}
-                      </Text>
-
+                      <Text className="text-gray-400 text-xs">Feedback</Text>
                       <Text className="text-gray-700 text-sm mt-1">
                         {feedbackMap[item.id].content}
                       </Text>
-
                     </View>
                   ) : (
                     <Text className="text-gray-400 text-xs mt-2">
@@ -336,9 +372,7 @@ const Bookings = () => {
                     </Text>
                   )}
 
-                  {/* FEEDBACK BUTTON */}
-                
-                   <TouchableOpacity
+                  {/* <TouchableOpacity
                     onPress={() => openFeedbackModal(item)}
                     className="mt-4 bg-secondary py-2 rounded-lg items-center"
                   >
@@ -347,18 +381,37 @@ const Bookings = () => {
                         ? 'Update Feedback'
                         : 'Give Feedback'}
                     </Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
+                  {item.process?.toLowerCase() === 'completed' && (
+                    <TouchableOpacity
+                      onPress={() => openFeedbackModal(item)}
+                      className="mt-4 bg-secondary py-2 rounded-lg items-center"
+                    >
+                      <Text className="text-white font-semibold">
+                        {feedbackMap[item.id]
+                          ? 'Update Feedback'
+                          : 'Give Feedback'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
 
                   <Text className="text-xs text-gray-400 mt-2">
-                    Appointment ID: {item.id}
+                    Appointment ID: #{item.id}
                   </Text>
 
                 </View>
-
-                
               )}
 
-              {/* MORE */}
+                 {/* BOTTOM BUTTONS */}
+              <View className="flex-row justify-between items-center mt-4">
+               <TouchableOpacity
+                  onPress={() => console.log('edit', item.id)}
+                  className=""
+                >
+                  <Text className='text-secondary font-semibold'>Edit</Text>
+                </TouchableOpacity>
+
+
               <TouchableOpacity
                 onPress={() => toggleExpand(item.id)}
                 className="mt-3 items-center"
@@ -368,42 +421,31 @@ const Bookings = () => {
                 </Text>
               </TouchableOpacity>
 
+              </View>
+
             </View>
           )
         })}
       </ScrollView>
 
-      {/* ================= FEEDBACK MODAL ================= */}
       <Modal visible={modalVisible} transparent animationType="slide">
-
         <View className="flex-1 justify-end bg-black/50">
-
           <View className="bg-white p-5 rounded-t-2xl">
 
             <Text className="text-lg font-bold mb-3">
               Give Feedback
             </Text>
 
-            {/*  STARS */}
             <View className="flex-row mb-4">
               {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity
-                  key={star}
-                  onPress={() => setRating(star)}
-                >
-                  <Text
-                    className={`text-2xl ${star <= rating
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                      }`}
-                  >
+                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                  <Text className={`text-2xl ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}>
                     ★
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            {/* INPUT */}
             <TextInput
               placeholder="Write your feedback..."
               value={feedbackText}
@@ -412,7 +454,6 @@ const Bookings = () => {
               className="border border-gray-300 rounded-lg p-2 mb-4"
             />
 
-            {/* BUTTONS */}
             <View className="flex-row justify-between">
 
               <TouchableOpacity
@@ -436,7 +477,6 @@ const Bookings = () => {
 
           </View>
         </View>
-
       </Modal>
 
     </SafeAreaView>

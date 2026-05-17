@@ -20,6 +20,7 @@ import { BlurView } from 'expo-blur'
 import { AuthContext } from '../context/AuthContext'
 import { useFocusEffect } from '@react-navigation/native'
 
+
 const Home = () => {
   const navigation = useNavigation()
   const { token, user } = useContext(AuthContext)
@@ -30,7 +31,7 @@ const Home = () => {
   const [promoLoading, setPromoLoading] = useState(true)
   const screenWidth = Dimensions.get('window').width
   const [recentBookings, setRecentBookings] = useState([])
-
+  const [upcomingAlert, setUpcomingAlert] = useState(null)
 
   // useEffect(() => {
   //   fetchProducts()
@@ -45,6 +46,23 @@ const Home = () => {
       fetchrecentBookings()
     }, [])
   )
+
+  const checkUpcomingBookings = (bookings) => {
+    const today = new Date()
+
+    const upcoming = bookings.find((item) => {
+      if (!item?.start_from) return false
+
+      const bookingDate = new Date(item.start_from)
+      const diffDays = Math.ceil(
+        (bookingDate - today) / (1000 * 60 * 60 * 24)
+      )
+
+      return diffDays >= 0 && diffDays <= 2
+    })
+
+    setUpcomingAlert(upcoming || null)
+  }
 
 
   const fetchrecentBookings = async () => {
@@ -64,7 +82,14 @@ const Home = () => {
 
       const data = await response.json()
       // console.log('Recent Bookings:', data)
-      setRecentBookings(Array.isArray(data?.appointments) ? data.appointments : [])
+      // setRecentBookings(Array.isArray(data?.appointments) ? data.appointments : [])
+
+      const bookings = Array.isArray(data?.appointments)
+        ? data.appointments
+        : []
+
+      setRecentBookings(bookings)
+      checkUpcomingBookings(bookings)
 
     } catch (error) {
       console.log('API ERROR:', error.message)
@@ -137,16 +162,36 @@ const Home = () => {
       <ScrollView>
         <Navbar />
 
+        {upcomingAlert && (
+          <View
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.9)',
+              padding: 12,
+              margin: 10,
+              borderRadius: 12,
+            }}
+          >
+            <Text style={{ fontWeight: 'bold', color: '#000' }}>
+              ⏰ Upcoming Appointment 
+            </Text>
+
+            <Text style={{ color: '#333', marginTop: 8 }}>
+              {upcomingAlert.title}
+            </Text>
+
+            <Text style={{ fontSize: 12, marginTop: 2 }}>
+              {new Date(upcomingAlert.start_from).toDateString()}
+            </Text>
+          </View>
+        )}
+
         {/* ================= HIGHLIGHTS ================= */}
         <View style={{ marginHorizontal: 16, marginTop: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
               Highlights
             </Text>
-            <Image
-              source={require('../assets/gif/dot.gif')}
-              style={{ width: 40, height: 40 }}
-            />
+
           </View>
 
           {loading ? (
@@ -463,13 +508,13 @@ const Home = () => {
 
                         {/* TITLE */}
                         <Text numberOfLines={2}
-                        ellipsizeMode="tail"
-                         style={{
-                          fontSize: 18,
-                          fontWeight: "700",
-                          color: "#111",
-                          marginTop: 10,
-                        }}>
+                          ellipsizeMode="tail"
+                          style={{
+                            fontSize: 18,
+                            fontWeight: "700",
+                            color: "#111",
+                            marginTop: 10,
+                          }}>
                           {item.title}
                         </Text>
 

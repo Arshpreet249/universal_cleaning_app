@@ -167,7 +167,7 @@ const PaymentTransaction = () => {
       >
         {/* ── Header ── */}
         <View className="px-6 pt-6 pb-6">
-          <Text className="text-2xl font-black text-gray-900">Payments</Text>
+          <Text className="text-2xl font-black text-primary text-center">Payments</Text>
           <Text className="text-xs text-gray-400 mt-1">
             {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
           </Text>

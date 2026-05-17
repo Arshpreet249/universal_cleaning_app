@@ -71,11 +71,7 @@ export default function Profile() {
                 Manage your account & orders
               </Text>
               </View>
-              <View>
-                <Image source={require('../assets/images/coin.png')}
-                className="w-16 h-16"
-                />
-              </View>
+             
               
 
             </View>
@@ -94,7 +90,7 @@ export default function Profile() {
                onPress={() => navigation.navigate('PaymentTransaction')}
             />
             <MenuItem
-              icon={require('../assets/icons/payment.png')}
+              icon={require('../assets/icons/coin.png')}
               title="Coin History"
               subtitle="All Coin Transactions"
                onPress={() => navigation.navigate('CoinTransaction')}
