@@ -90,7 +90,14 @@ export default function Profile() {
             <MenuItem
               icon={require('../assets/icons/payment.png')}
               title="Payment History"
-              subtitle="Track your bookings"
+              subtitle="All Payment Transactions"
+               onPress={() => navigation.navigate('PaymentTransaction')}
+            />
+            <MenuItem
+              icon={require('../assets/icons/payment.png')}
+              title="Coin History"
+              subtitle="All Coin Transactions"
+               onPress={() => navigation.navigate('CoinTransaction')}
             />
 
             <MenuItem

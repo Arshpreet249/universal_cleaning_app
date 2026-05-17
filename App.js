@@ -9,6 +9,8 @@ import MainTabs from './MainTabs'
 import { ProductProvider } from './context/ProductContext'
 
 import PackageDetail from './screens/PackageDetail'
+import PaymentTransaction from './screens/PaymentTransaction'
+import CoinTransaction from './screens/CoinTransaction'
 import Auth from './screens/Auth'
 import AllPackages from './screens/AllPackages'
 import "./global.css"
@@ -63,6 +65,8 @@ export default function App() {
               <Stack.Screen name='Notes' component={Notes} options={{title:'Notes'}}/>
               <Stack.Screen name='Payment' component={Payment} options={{title: 'payment'}}/>
               <Stack.Screen name="Countdown" component={Countdown} options={{title: 'countdown'}} />
+              <Stack.Screen name="PaymentTransaction" component={PaymentTransaction} options={{title: 'PaymentTransaction'}} />
+              <Stack.Screen name="CoinTransaction" component={CoinTransaction} options={{title: 'CoinTransaction'}} />
             </Stack.Navigator>
             <Toast />
             <StatusBar style="auto" />
