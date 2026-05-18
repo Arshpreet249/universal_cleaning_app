@@ -30,7 +30,7 @@ const Payment = ({ route, navigation }) => {
 
   console.log("address", selectedAddress)
 
-  // console.log("apointmentData in Payment::", appointmentData)
+   console.log("apointmentData in Payment::", appointmentData)
 
   const [loading, setLoading] = useState(false)
   // ================= COINS =================
@@ -94,13 +94,13 @@ const Payment = ({ route, navigation }) => {
   const coinValue = coins * 1 // 1 coin = $1
 
   const coinDiscount = useCoins
-    ? Math.min(coinValue, (totalAmount || 0) + fee - discount)
+    ? Math.min(coinValue, (totalAmount || 0) - discount)
     : 0
 
 
 
   // ✅ FINAL TOTAL
-  const finalTotal = (totalAmount || 0) + fee - discount - coinDiscount
+  const finalTotal = (totalAmount || 0) - discount - coinDiscount + fee
 
 
   // ================= APPLY COUPON =================
@@ -205,7 +205,7 @@ const Payment = ({ route, navigation }) => {
 
     const payload = {
 
-      amount: totalAmount,
+      amount: finalTotal,
       discount: discount || 0,
       tax: fee,
       coins: useCoins ? coinDiscount : 0,
@@ -400,11 +400,17 @@ const Payment = ({ route, navigation }) => {
                 </Text>
 
                 <TouchableOpacity
-                  onPress={() => setUseCoins(!useCoins)}
-                  className={`p-3 rounded-xl bg-secondary }`}
+                  // onPress={() => setUseCoins(!useCoins)}
+                  onPress={()=> {
+                    if (coins > 0 ) setUseCoins(!useCoins)
+                  }}
+                disabled={coins === 0}
+                
+                  className={`p-3 rounded-xl ${coins === 0 ? 'bg-gray-300' : useCoins ? 'bg-green-500' : 'bg-secondary'}`}
                 >
                   <Text className="text-white text-center font-semibold">
-                    {useCoins ? 'Coins Applied' : 'Use Coins'}
+                    {/* {useCoins ? 'Coins Applied' : 'Use Coins'} */}
+                    {coins === 0 ? 'No Coins Available' : useCoins ? 'Coins Applied' : 'Use Coins'}
                   </Text>
                 </TouchableOpacity>
 
@@ -493,7 +499,7 @@ const Payment = ({ route, navigation }) => {
         </ScrollView>
 
         {/* BUTTON */}
-        <View className="p-4 bg-white border-t border-gray-200"
+        <View className=" p-4 border-t border-gray-200"
           style={{
             paddingHorizontal: 20,
             paddingTop: 12,
@@ -506,7 +512,7 @@ const Payment = ({ route, navigation }) => {
               if (!loading) createAppointment()
             }}
             disabled={loading}
-            className={`p-4 rounded-xl ${loading ? 'bg-gray-400' : 'bg-primary'}`}
+            className={`py-3 rounded-xl ${loading ? 'bg-gray-400' : 'bg-primary'}`}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />

@@ -13,14 +13,14 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import DateTimePickerModal from 'react-native-modal-datetime-picker'
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL, apiBaseUrl } from '../components/variable'
-import { useNavigation,useRoute } from '@react-navigation/native'
+import { useNavigation, useRoute } from '@react-navigation/native'
 
 const BookAppointment = () => {
 
   const navigation = useNavigation()
   const route = useRoute()
 
- const totalAmount = route?.params?.totalAmount
+  const totalAmount = route?.params?.totalAmount
   const { token, basketItems } = useContext(AuthContext)
   console.log("booking:: basketItems:", basketItems)
 
@@ -44,6 +44,8 @@ const BookAppointment = () => {
   const [modalData, setModalData] = useState(null)
 
   const [isAutoAssigned, setIsAutoAssigned] = useState(false)
+
+
 
   const isSingleDate =
     fromDate.toDateString() === date.toDateString()
@@ -221,7 +223,7 @@ const BookAppointment = () => {
       newFromDate = selected
       setFromDate(selected)
 
-      
+
     }
 
     if (pickerMode === 'toDate') {
@@ -339,9 +341,9 @@ const BookAppointment = () => {
     const packageNames = basketItems
       ?.map((item) => item.displayName)
 
-        const bookingIds = basketItems?.map(item => item.id)
+    const bookingIds = basketItems?.map(item => item.id)
 
-  console.log('BookAppointment Booking IDs:', bookingIds) // 🔥 debug
+    console.log('BookAppointment Booking IDs:', bookingIds) // 🔥 debug
     const bookingData = dates.map((dateStr) => ({
       start_date: dateStr,
       employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
@@ -354,15 +356,15 @@ const BookAppointment = () => {
       // ✅ SEND BOTH
       package_ids: packageIds,
       package_names: packageNames,
-       booking_ids: bookingIds, 
+      booking_ids: bookingIds,
     }))
 
     navigation.navigate('Notes', {
       appointmentData: bookingData,
-       totalAmount: totalAmount, 
-       
+      totalAmount: totalAmount,
+
     })
-    
+
   }
   // ---------------- UI ----------------
 
@@ -371,7 +373,7 @@ const BookAppointment = () => {
       <ScrollView showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}>
 
-         {/* HEADER */}
+        {/* HEADER */}
         <View className="mt-4 mb-6 p-5 rounded-2xl bg-primary shadow">
           <Text className="text-white text-center text-xl font-bold">
             Book Appointment
@@ -383,14 +385,14 @@ const BookAppointment = () => {
 
         {/* DATE */}
         <View className="flex-row mb-4">
-          <TouchableOpacity onPress={() => openPicker('fromDate')} 
-          className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
+          <TouchableOpacity onPress={() => openPicker('fromDate')}
+            className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
             <Text className="text-secondary text-xs">From Date</Text>
             <Text className="text-sm font-semibold mt-1">{fromDate.toDateString()}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => openPicker('toDate')} 
-          className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
+          <TouchableOpacity onPress={() => openPicker('toDate')}
+            className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
             <Text className="text-secondary text-xs">To Date</Text>
             <Text className="text-sm font-semibold mt-1">{date.toDateString()}</Text>
           </TouchableOpacity>
@@ -398,8 +400,8 @@ const BookAppointment = () => {
 
         {/* TIME */}
         <View className="flex-row mb-4">
-          <TouchableOpacity onPress={() => openPicker('start')} 
-          className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
+          <TouchableOpacity onPress={() => openPicker('start')}
+            className="flex-1 bg-white p-4 rounded-xl border border-blue-200 mx-1">
             <Text className="text-secondary text-xs">Start Time</Text>
             <Text className="text-sm font-semibold mt-1">{startTime ? formatTime(startTime) : 'Select'}</Text>
           </TouchableOpacity>
@@ -424,11 +426,11 @@ const BookAppointment = () => {
 
           // ✅ ADD THIS
           // minimumDate={new Date()}
-            minimumDate={
-    pickerMode === 'fromDate' || pickerMode === 'toDate'
-      ? new Date()
-      : undefined
-  }
+          minimumDate={
+            pickerMode === 'fromDate' || pickerMode === 'toDate'
+              ? new Date()
+              : undefined
+          }
 
           onConfirm={handleConfirm}
           onCancel={() => setPickerVisible(false)}
@@ -558,7 +560,7 @@ const BookAppointment = () => {
                 <View
                   key={i}
                   className="bg-white mb-5 p-4 rounded-2xl border border-blue-100 shadow-sm"
-                
+
                 >
 
                   {/* HEADER */}
@@ -576,14 +578,14 @@ const BookAppointment = () => {
                     {/* STATUS BADGE */}
                     <View
                       className={`px-3 py-1 rounded-full ${selectedEmployeesByDate[dateStr]
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-500'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-500'
                         }`}
                     >
                       <Text
                         className={`text-xs font-semibold ${selectedEmployeesByDate[dateStr]
-                            ? 'text-green-700'
-                            : 'text-gray-500'
+                          ? 'text-green-700'
+                          : 'text-gray-500'
                           }`}
                       >
                         {selectedEmployeesByDate[dateStr]
@@ -657,7 +659,7 @@ const BookAppointment = () => {
 
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
+      <View className=" bottom-0 left-0 right-0 p-4 border-t border-gray-200">
         <TouchableOpacity
           onPress={handleProceed}
           disabled={!allDatesSelected()}

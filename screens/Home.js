@@ -162,28 +162,7 @@ const Home = () => {
       <ScrollView>
         <Navbar />
 
-        {upcomingAlert && (
-          <View
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              padding: 12,
-              margin: 10,
-              borderRadius: 12,
-            }}
-          >
-            <Text style={{ fontWeight: 'bold', color: '#000' }}>
-              ⏰ Upcoming Appointment 
-            </Text>
-
-            <Text style={{ color: '#333', marginTop: 8 }}>
-              {upcomingAlert.title}
-            </Text>
-
-            <Text style={{ fontSize: 12, marginTop: 2 }}>
-              {new Date(upcomingAlert.start_from).toDateString()}
-            </Text>
-          </View>
-        )}
+        
 
         {/* ================= HIGHLIGHTS ================= */}
         <View style={{ marginHorizontal: 16, marginTop: 20 }}>
@@ -252,6 +231,88 @@ const Home = () => {
             </View>
           )}
         </View>
+
+  {/* ================= UPCOMING ALERT ================= */}
+  {/* <View className="mx-4 mt-2">
+
+      <Text style={{ fontSize: 18, fontWeight: 'bold', padding: 10 }}>
+        
+          </Text>
+
+    
+        {upcomingAlert && (
+          <View
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.9)',
+              padding: 12,
+              margin: 10,
+              borderRadius: 12,
+            }}
+          >
+            <Text style={{ fontWeight: 'bold', color: '#000' }}>
+               Upcoming Appointment 
+            </Text>
+
+            <Text style={{ color: '#333', marginTop: 8 }}>
+              {upcomingAlert.title}
+            </Text>
+
+            <Text style={{ fontSize: 12, marginTop: 2 }}>
+              {new Date(upcomingAlert.start_from).toDateString()}
+            </Text>
+          </View>
+        )}
+
+        </View> */}
+
+        <View style={{ marginTop: 20 }}>
+
+  {upcomingAlert && (
+    <View
+      style={{
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        padding: 16,
+        margin: 10,
+        marginTop: 30,
+        borderRadius: 10,
+        position: 'relative',
+      }}
+    >
+      {/* DATE BADGE */}
+      <View
+        style={{
+          position: 'absolute',
+          top: -28, 
+          left: 15,
+          // backgroundColor: '#000',
+          paddingVertical: 6,
+          paddingHorizontal: 12,
+          borderRadius: 10,
+        }}
+      >
+        <Text style={{ color: '#666', fontWeight: 'bold',fontSize: 30, fontWeight: '900',  }}>
+          {new Date(upcomingAlert.start_from).getDate()}{" "}
+          {new Date(upcomingAlert.start_from).toLocaleString('default', {
+            month: 'short',
+          })}
+        </Text>
+      </View>
+
+      {/* CONTENT */}
+      <Text style={{ fontWeight: 'bold', color: '#000', marginTop: 8 }}>
+        Upcoming Appointment
+      </Text>
+
+      <Text style={{ color: '#333', marginTop: 8 }}>
+        {upcomingAlert.title}
+      </Text>
+      <Text style={{ fontSize: 12, marginTop: 2 }}>
+              {new Date(upcomingAlert.start_from).toDateString()}
+            </Text>
+    </View>
+  )}
+
+</View>
 
 
         {/* ================= PROMOS ================= */}

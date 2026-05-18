@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  Platform
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { AuthContext } from '../context/AuthContext'
 import { apiBaseUrl } from '../components/variable'
+import DateTimePickerModal from 'react-native-modal-datetime-picker'
 
 const getStatusTextColor = (status) => {
   switch (status?.toLowerCase()) {
@@ -55,12 +57,27 @@ const Bookings = () => {
   const [feedbackText, setFeedbackText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [feedbackMap, setFeedbackMap] = useState({})
+  const [editModalVisible, setEditModalVisible] = useState(false)
+  const [editData, setEditData] = useState({
+    appointment_id: null,
+    start_date: '',
+    end_date: '',
+    startTime: '',
+    endTime: '',
+    description: '',
+  })
+  const [updating, setUpdating] = useState(false)
+  // 🔥 PICKER
+  const [pickerMode, setPickerMode] = useState(null)
+  const [isPickerVisible, setPickerVisible] = useState(false)
+
 
   useFocusEffect(
     useCallback(() => {
       fetchAppointments()
     }, [])
   )
+
 
   const fetchAppointments = async () => {
     try {
@@ -113,6 +130,170 @@ const Bookings = () => {
     }
   }
 
+
+  // 🔥 OPEN EDIT
+  const openEditModal = (item) => {
+    const start = new Date(item.start_from)
+    const end = item.end_at ? new Date(item.end_at) : new Date()
+
+    setEditData({
+      appointment_id: item.id,
+      start_date: start.toISOString().split('T')[0],
+      end_date: end.toISOString().split('T')[0],
+      startTime: start.toTimeString().split(' ')[0],
+      endTime: end.toTimeString().split(' ')[0],
+      description: item.description || '',
+    })
+
+    setEditModalVisible(true)
+  }
+
+  // 🔥 PICKER
+  const openEditPicker = (mode) => {
+    setPickerMode(mode)
+    setPickerVisible(true)
+  }
+
+
+  const handleEditConfirm = (selected) => {
+    setPickerVisible(false)
+
+    let updated = { ...editData }
+
+    const now = new Date()
+
+    // ---------------- DATE ----------------
+    if (pickerMode === 'startDate') {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (selected < today) {
+        alert('You cannot select past date')
+        return
+      }
+
+      updated.start_date = selected.toISOString().split('T')[0]
+    }
+
+    if (pickerMode === 'endDate') {
+      const startDate = new Date(editData.start_date)
+
+      if (selected < startDate) {
+        alert('End date cannot be before start date')
+        return
+      }
+
+      updated.end_date = selected.toISOString().split('T')[0]
+    }
+
+    // ---------------- TIME ----------------
+    if (pickerMode === 'startTime') {
+      const selectedDate = new Date(editData.start_date)
+
+      const isToday =
+        selectedDate.toDateString() === now.toDateString()
+
+      // BLOCK PAST TIME (TODAY ONLY)
+      if (isToday) {
+        if (selected < now) {
+          alert('Cannot select past time')
+          return
+        }
+      }
+
+      const h = String(selected.getHours()).padStart(2, '0')
+      const m = String(selected.getMinutes()).padStart(2, '0')
+
+      updated.startTime = `${h}:${m}:00`
+      updated.endTime = '' // reset end time
+    }
+
+    if (pickerMode === 'endTime') {
+      if (!editData.startTime) {
+        alert('Select start time first')
+        return
+      }
+
+      const [h, m] = editData.startTime.split(':')
+      const start = new Date()
+      start.setHours(h, m)
+
+      const minEnd = new Date(start.getTime() + 30 * 60000)
+
+      if (selected < minEnd) {
+        alert('End time must be at least 30 minutes after start time')
+        return
+      }
+
+      const hh = String(selected.getHours()).padStart(2, '0')
+      const mm = String(selected.getMinutes()).padStart(2, '0')
+
+      updated.endTime = `${hh}:${mm}:00`
+    }
+
+    setEditData(updated)
+  }
+
+  const updateAppointment = async () => {
+    try {
+      setUpdating(true)
+
+        if (
+      !editData.start_date ||
+      !editData.end_date ||
+      !editData.startTime ||
+      !editData.endTime
+    ) {
+      alert("Please select complete date & time")
+      return
+    }
+  
+      //  CONVERT TO ISO FORMAT (REQUIRED BY BACKEND)
+    const start_from = `${editData.start_date}T${editData.startTime}`
+    const end_at = `${editData.end_date}T${editData.endTime}`
+
+        const payload = {
+      appointment_id: editData.appointment_id,
+      start_from,
+      end_at,
+      description: editData.description,
+    }
+
+    console.log(" SENDING:", payload)
+    
+      const response = await fetch(`${apiBaseUrl}appointment-edit/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await response.json()
+      console.log('Update response:', data)
+
+
+    //  BACKEND ERROR HANDLING
+    if (data?.error) {
+      alert(data.error)
+      return
+    }
+
+      if (response.ok) {
+        alert('Appointment updated successfully')
+        setEditModalVisible(false)
+        fetchAppointments()
+      } else {
+        alert(data?.message || 'Update failed')
+      }
+    } catch (error) {
+      console.log('Update error:', error)
+      alert('Something went wrong')
+    } finally {
+      setUpdating(false)
+    }
+  }
   const toggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id)
   }
@@ -176,6 +357,25 @@ const Bookings = () => {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'Select'
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+
+  const formatTime = (timeStr) => {
+    if (!timeStr) return 'Select'
+    const [h, m] = timeStr.split(':')
+    const hour = parseInt(h)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const finalHour = hour % 12 || 12
+    return `${finalHour}:${m} ${ampm}`
   }
 
   if (loading) {
@@ -275,7 +475,7 @@ const Bookings = () => {
                     {item.title}
                   </Text>
 
-                  
+
 
                   {feedbackMap[item.id] && (
                     <Text className="text-yellow-500 text-base mt-1">
@@ -402,24 +602,23 @@ const Bookings = () => {
                 </View>
               )}
 
-                 {/* BOTTOM BUTTONS */}
+              {/* BOTTOM BUTTONS */}
               <View className="flex-row justify-between items-center mt-4">
-               <TouchableOpacity
-                  onPress={() => console.log('edit', item.id)}
-                  className=""
+                <TouchableOpacity
+                  onPress={() => openEditModal(item)}
                 >
                   <Text className='text-secondary font-semibold'>Edit</Text>
                 </TouchableOpacity>
 
 
-              <TouchableOpacity
-                onPress={() => toggleExpand(item.id)}
-                className="mt-3 items-center"
-              >
-                <Text className="text-secondary font-semibold">
-                  {expandedId === item.id ? 'Show Less ▲' : 'Show More ▼'}
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => toggleExpand(item.id)}
+                  className="mt-3 items-center"
+                >
+                  <Text className="text-secondary font-semibold">
+                    {expandedId === item.id ? 'Show Less ▲' : 'Show More ▼'}
+                  </Text>
+                </TouchableOpacity>
 
               </View>
 
@@ -477,6 +676,107 @@ const Bookings = () => {
 
           </View>
         </View>
+      </Modal>
+
+
+      {/* EDIT MODAL */}
+      <Modal visible={editModalVisible} transparent animationType="fade">
+        <View className="flex-1 justify-center items-center bg-black/40">
+
+          <View className="bg-white w-[90%] p-5 rounded-3xl">
+
+            <Text className="text-xl font-bold text-primary mb-4">
+              Edit Booking
+            </Text>
+
+            {/* START DATE */}
+             <Text className="text-secondary px-2 py-1 text-base">Start Date</Text>
+            <TouchableOpacity
+              onPress={() => openEditPicker('startDate')}
+              className="bg-gray-100 p-4 rounded-xl mb-3"
+            >
+             
+              <Text className="font-semibold mt-1 text-gray-800">
+                {formatDate(editData.start_date)}
+              </Text>
+            </TouchableOpacity>
+
+            {/* END DATE */}
+            <Text className="text-secondary px-2 py-1 text-base">End Date</Text>
+            <TouchableOpacity
+              onPress={() => openEditPicker('endDate')}
+              className="bg-gray-100 p-4 rounded-xl mb-3"
+            >
+              
+              <Text className="font-semibold mt-1 text-gray-800">
+                {formatDate(editData.end_date)}
+              </Text>
+            </TouchableOpacity>
+
+            {/* START TIME */}
+             <Text className="text-secondary px-2 py-1 text-base">Start Time</Text>
+            <TouchableOpacity
+              onPress={() => openEditPicker('startTime')}
+              className="bg-gray-100 p-4 rounded-xl mb-3"
+            >
+             
+              <Text className="font-semibold mt-1 text-gray-800">
+                {formatTime(editData.startTime)}
+              </Text>
+            </TouchableOpacity>
+
+            {/* END TIME */}
+             <Text className="text-secondary px-2 py-1 text-base">End Time</Text>
+            <TouchableOpacity
+              onPress={() => openEditPicker('endTime')}
+              className="bg-gray-100 p-4 rounded-xl mb-3"
+            >
+             
+              <Text className="font-semibold mt-1 text-gray-800">
+                {formatTime(editData.endTime)}
+              </Text>
+            </TouchableOpacity>
+
+            <View className="flex-row mt-4">
+
+              <TouchableOpacity
+                onPress={() => setEditModalVisible(false)}
+                className="flex-1 border border-secondary p-3 rounded-xl mr-2"
+              >
+                <Text className="text-center">Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={updateAppointment}
+                className="flex-1 bg-secondary p-3 rounded-xl ml-2"
+              >
+                <Text className="text-white text-center">
+                  {updating ? 'Updating...' : 'Update'}
+                </Text>
+              </TouchableOpacity>
+
+            </View>
+
+          </View>
+
+        </View>
+
+        {/* PICKER */}
+        <DateTimePickerModal
+          isVisible={isPickerVisible}
+          mode={
+            pickerMode === 'startTime' || pickerMode === 'endTime'
+              ? 'time'
+              : 'date'
+          }
+          onConfirm={handleEditConfirm}
+          onCancel={() => setPickerVisible(false)}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          themeVariant="light"
+          textColor="#000000"
+
+        />
+
       </Modal>
 
     </SafeAreaView>

@@ -193,10 +193,10 @@ const Notes = ({ route, navigation }) => {
                 </ScrollView>
 
                 {/* BUTTON */}
-                <View className="p-4 bg-white border-t border-gray-200">
+                <View className="  p-4 border-t border-gray-200">
                     <TouchableOpacity
                         onPress={handleSubmit}
-                        className="bg-primary p-4 rounded-xl"
+                        className="bg-primary py-3 rounded-xl"
                         style={{
                             shadowColor: '#4f46e5',
                             shadowOpacity: 0.4,
