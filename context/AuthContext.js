@@ -107,7 +107,7 @@ const isTokenExpired = (token) => {
     
     return decoded.exp * 1000 < Date.now()
   } catch (error) {
-    console.log('JWT ERROR:', error)
+    // console.log('JWT ERROR:', error)
     return true
   }
 }
@@ -138,7 +138,7 @@ export const AuthProvider = ({ children }) => {
             setUser(parsedUser)
             setToken(savedToken)
           } else {
-            console.log('Token expired → logging out')
+            // console.log('Token expired → logging out')
 
             await AsyncStorage.multiRemove([
               'user',

@@ -5,7 +5,6 @@ import { useNavigation } from '@react-navigation/native'
 const BackButton = () => {
   const navigation = useNavigation()
 
-  // Only show on iOS (optional)
   if (Platform.OS !== 'ios') return null
 
   return (
@@ -24,7 +23,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 18,
-    color: '#007AFF', // iOS blue
+    color: '#007AFF', 
     fontWeight: '500'
   }
 })

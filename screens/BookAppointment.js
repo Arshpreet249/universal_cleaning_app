@@ -22,7 +22,7 @@ const BookAppointment = () => {
 
   const totalAmount = route?.params?.totalAmount
   const { token, basketItems } = useContext(AuthContext)
-  console.log("booking:: basketItems:", basketItems)
+  
 
   const [fromDate, setFromDate] = useState(new Date())
   const [date, setDate] = useState(new Date())
@@ -343,7 +343,7 @@ const BookAppointment = () => {
 
     const bookingIds = basketItems?.map(item => item.id)
 
-    console.log('BookAppointment Booking IDs:', bookingIds) // 🔥 debug
+    // console.log('BookAppointment Booking IDs:', bookingIds) 
     const bookingData = dates.map((dateStr) => ({
       start_date: dateStr,
       employee_id: selectedEmployeesByDate[dateStr]?.employee_id,

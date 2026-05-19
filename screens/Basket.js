@@ -26,6 +26,7 @@ const Basket = () => {
 
   const navigation = useNavigation()
 
+
   // ---------------- FETCH CART ----------------
   const fetchCart = async () => {
     if (!token) return
@@ -49,7 +50,7 @@ const Basket = () => {
 
       if (data.status === 200) {
         const cleanedData = data.data.map(item => {
-          console.log('Booking ID (from API):', item.id)
+          // console.log('Booking ID (from API):', item.id)
           let details = {}
 
           try {
@@ -91,7 +92,7 @@ const Basket = () => {
         setCartCount(data.cart_count || cleanedData.length)
       }
     } catch (err) {
-      console.log(err)
+      // console.log(err)
       Alert.alert('Error', 'Something went wrong')
     } finally {
       setLoading(false)
@@ -131,7 +132,7 @@ const Basket = () => {
         Alert.alert('Error', 'Failed to delete item')
       }
     } catch (err) {
-      console.log(err)
+      // console.log(err)
       Alert.alert('Error', 'Something went wrong')
     }
   }

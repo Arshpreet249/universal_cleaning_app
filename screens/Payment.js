@@ -28,9 +28,9 @@ const Payment = ({ route, navigation }) => {
     totalAmount,
   } = route.params || {}
 
-  console.log("address", selectedAddress)
+ 
 
-   console.log("apointmentData in Payment::", appointmentData)
+  //  console.log("apointmentData in Payment::", appointmentData)
 
   const [loading, setLoading] = useState(false)
   // ================= COINS =================
@@ -59,7 +59,7 @@ const Payment = ({ route, navigation }) => {
       })
 
       const data = await res.json()
-      console.log(' Coins API:', data)
+      // console.log(' Coins API:', data)
 
       if (res.status === 200) {
 
@@ -125,10 +125,10 @@ const Payment = ({ route, navigation }) => {
           promo_code: codeToApply,
         }),
       })
-      console.log(' Apply Coupon Response ', res)
+      // console.log(' Apply Coupon Response ', res)
 
       const text = await res.text()
-      console.log('RAW RESPONSE coupon:', text)
+      // console.log('RAW RESPONSE coupon:', text)
 
       let data
       try {
@@ -138,7 +138,7 @@ const Payment = ({ route, navigation }) => {
         return
       }
 
-      console.log('Parsed JSON:', data)
+      // console.log('Parsed JSON:', data)
 
       if (res.status === 200) {
 
@@ -178,7 +178,7 @@ const Payment = ({ route, navigation }) => {
 
         discountValue = parseFloat(discountValue.toFixed(2))
 
-        console.log(' Discount Applied:', discountValue)
+        // console.log(' Discount Applied:', discountValue)
 
         setDiscount(discountValue)
         setAppliedCoupon(coupon.promo_code)
@@ -192,7 +192,7 @@ const Payment = ({ route, navigation }) => {
         Alert.alert('Invalid', data?.message || 'Coupon not valid')
       }
     } catch (error) {
-      console.log(' Network Error:', error)
+      // console.log(' Network Error:', error)
       Alert.alert('Error', 'Network issue')
     }
 
@@ -205,7 +205,7 @@ const Payment = ({ route, navigation }) => {
 
     const payload = {
 
-      amount: finalTotal,
+      amount: totalAmount,
       discount: discount || 0,
       tax: fee,
       coins: useCoins ? coinDiscount : 0,

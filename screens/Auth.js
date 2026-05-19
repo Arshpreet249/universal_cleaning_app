@@ -106,7 +106,7 @@ const Auth = () => {
       })
 
       const data = await res.json()
-      console.log("data>>>>>>>>>>>>>>>>>>>>", data)
+      // console.log("data>>>>>>>>>>>>>>>>>>>>", data)
 
       if (res.ok) {
         Alert.alert('Success', 'OTP sent to email')
@@ -115,7 +115,7 @@ const Auth = () => {
         Alert.alert('Error', data.error)
       }
     } catch {
-      console.log('REGISTER ERROR:', error)
+      // console.log('REGISTER ERROR:', error)
       Alert.alert('Error', 'Registration failed')
     }
     setLoading(false)
@@ -140,7 +140,7 @@ const Auth = () => {
       })
 
       const data = await res.json()
-      console.log("REF VERIFY:", data)
+      // console.log("REF VERIFY:", data)
 
       if (res.ok) {
         setReferralValid(true)
@@ -155,7 +155,7 @@ const Auth = () => {
       }
 
     } catch (error) {
-      console.log('REF ERROR:', error)
+      // console.log('REF ERROR:', error)
       Alert.alert('Error', error.message || 'Verification failed')
     }
 
@@ -176,7 +176,7 @@ const Auth = () => {
       })
 
       const data = await res.json()
-      console.log(res.ok)
+      // console.log(res.ok)
 
       if (res.ok) {
         // Alert.alert('Success', 'Login successful')
@@ -185,7 +185,7 @@ const Auth = () => {
         setUser(data)
         setToken(data?.access_token)
         setCartCount(data.user.cart_count)
-        console.log(data)
+        // console.log(data)
         navigation.replace('Main', {
           screen: 'Home'
         })
@@ -194,7 +194,7 @@ const Auth = () => {
         Alert.alert('Error', data.error)
       }
     } catch (error) {
-      console.log('LOGIN ERROR 👉', error)   // 
+      // console.log('LOGIN ERROR 👉', error)   // 
       Alert.alert('Error', 'Login failed')
     }
     setLoading(false)
@@ -220,7 +220,7 @@ const Auth = () => {
       })
 
       const data = await res.json()
-      console.log("data otp", data)
+      // console.log("data otp", data)
 
       if (res.ok) {
         Alert.alert('Success', 'Account verified')
@@ -230,7 +230,7 @@ const Auth = () => {
       }
     } catch {
       Alert.alert('Error', 'OTP failed')
-      console.log('eror', error)
+      // console.log('eror', error)
     }
     setLoading(false)
   }
@@ -251,7 +251,7 @@ const Auth = () => {
       })
 
       const data = await res.json()
-      console.log("RESEND OTP:", data)
+      // console.log("RESEND OTP:", data)
 
       if (res.ok) {
         Alert.alert('Success', data.message || "OTP resent successfully")
@@ -260,7 +260,7 @@ const Auth = () => {
       }
 
     } catch (error) {
-      console.log("RESEND ERROR:", error)
+      // console.log("RESEND ERROR:", error)
       Alert.alert('Error', error.message || "Error resending OTP")
     }
 
@@ -320,18 +320,18 @@ const Auth = () => {
       })
 
       const data = await res.json()
-      console.log("reset password", data)
+      // console.log("reset password", data)
 
       if (res.ok) {
         Alert.alert('Success', 'Password reset successful')
         setStep('login')
       } else {
         Alert.alert('Error', data.error)
-        console.log(data.error)
+        // console.log(data.error)
       }
     } catch {
       Alert.alert('Error', 'Reset failed')
-      console.log(error)
+      // console.log(error)
     }
     setLoading(false)
   }

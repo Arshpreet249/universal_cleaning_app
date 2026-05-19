@@ -27,10 +27,11 @@ const Notes = ({ route, navigation }) => {
     } = useContext(AuthContext)
 
     const appointmentData = route?.params?.appointmentData || []
-    console.log(
-  'Notes Booking IDs:',
-  appointmentData?.flatMap(item => item.booking_ids || [])
-)
+//     console.log(
+
+//   'Notes Booking IDs:',
+//   appointmentData?.flatMap(item => item.booking_ids || [])
+// )
     const [notes, setNotes] = useState('')
 
     const fetchAddresses = async () => {

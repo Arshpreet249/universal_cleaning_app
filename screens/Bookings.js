@@ -95,7 +95,8 @@ const Bookings = () => {
       })
 
       const data = await response.json()
-      console.log('Appointments data:', data)
+      // console.log('Appointments data:', data)
+
 
       // 🔥 TRANSACTION MAP
       const transactionsMap = {}
@@ -123,7 +124,7 @@ const Bookings = () => {
 
       setFeedbackMap(map)
     } catch (error) {
-      console.log('Error fetching appointments:', error)
+      // console.log('Error fetching appointments:', error)
       setBookings([])
     } finally {
       setLoading(false)
@@ -259,7 +260,7 @@ const Bookings = () => {
       description: editData.description,
     }
 
-    console.log(" SENDING:", payload)
+    // console.log(" SENDING:", payload)
     
       const response = await fetch(`${apiBaseUrl}appointment-edit/`, {
         method: 'POST',
@@ -271,7 +272,7 @@ const Bookings = () => {
       })
 
       const data = await response.json()
-      console.log('Update response:', data)
+      // console.log('Update response:', data)
 
 
     //  BACKEND ERROR HANDLING
@@ -347,12 +348,12 @@ const Bookings = () => {
       })
 
       const data = await response.json()
-      console.log('Feedback response:', data)
+      // console.log('Feedback response:', data)
 
       await fetchAppointments()
       setModalVisible(false)
     } catch (error) {
-      console.log('Feedback error:', error)
+      // console.log('Feedback error:', error)
       alert('Failed to submit feedback')
     } finally {
       setSubmitting(false)
