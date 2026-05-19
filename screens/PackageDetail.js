@@ -32,6 +32,7 @@ const PackageDetail = ({ route }) => {
 
   const parsed = parseDescription(item.description)
 
+
   // ✅ GET DATA ARRAY
   const getDataArray = (parsed) => {
     if (!parsed) return []
@@ -112,15 +113,81 @@ const PackageDetail = ({ route }) => {
   }
 
   // ✅ SELECT
+  // const toggleSelection = (row, index) => {
+  //   const exists = selectedItems.find(i => i.rowIndex === index)
+  //   if (isAddOn) {
+  //     if (exists) {
+  //       setSelectedItems(prev => 
+  //         prev.filter(i => i.rowIndex !== index)
+  //       )
+  //     } else {
+  //       setSelectedItems(prev => [
+  //         ...prev,
+  //         { ...row, rowIndex: index }
+  //       ])
+  //     }
+  //   } else {
+
+  //   if (exists) {
+
+  //     setSelectedItems([])
+  //   } else {
+  //     setSelectedItems([{ ...row, rowIndex: index }])   
+  //   }
+  //   }
+  // }
+
+  const isAddOn =
+    parsed?.package_name?.toLowerCase().includes('add on') || false
+
   const toggleSelection = (row, index) => {
     const exists = selectedItems.find(i => i.rowIndex === index)
-    if (exists) {
 
-      setSelectedItems(selectedItems.filter(i => i.rowIndex !== index))
-    } else {
-      setSelectedItems([...selectedItems, { ...row, rowIndex: index }])
+    // 🔥 MULTI SELECT (ADD-ON)
+    if (isAddOn) {
+      if (exists) {
+        setSelectedItems(prev =>
+          prev.filter(i => i.rowIndex !== index)
+        )
+      } else {
+        setSelectedItems(prev => [
+          ...prev,
+          { ...row, rowIndex: index, quantity: 1 }
+        ])
+      }
+    }
+
+    // 🔒 SINGLE SELECT (NORMAL PACKAGE)
+    else {
+      if (exists) {
+        setSelectedItems([])
+      } else {
+        setSelectedItems([
+          { ...row, rowIndex: index, quantity: 1 }
+        ])
+      }
     }
   }
+
+
+  // ✅ QTY CHANGE
+  const updateQuantity = (index, type) => {
+    setSelectedItems(prev =>
+      prev.map(item => {
+        if (item.rowIndex === index) {
+          let qty = item.quantity || 1
+
+          if (type === 'inc') qty++
+          if (type === 'dec' && qty > 1) qty--
+
+          return { ...item, quantity: qty }
+        }
+        return item
+      })
+    )
+  }
+
+
 
   // ✅ API ADD TO CART
   const handleAddToCart = async () => {
@@ -147,15 +214,18 @@ const PackageDetail = ({ route }) => {
 
         price = Number(price)
         // const { id,price_sgd, ...cleanRow } = row
-         const { price_sgd, ...cleanRow } = row
+        const { price_sgd, ...cleanRow } = row
+        const qty = row.quantity || 1
+        const total = price * qty
+
         const itemToAdd = {
-          package_id: item.id, 
+          package_id: item.id,
           service: parsed?.package_name || 'Package',
           ...cleanRow,
           price,
-          quantity: 1,
-          totalPrice: price,
-          
+          quantity: qty,
+          totalPrice: total,
+
         }
 
         const res = await fetch(`${REACT_APP_HOST_API_URL}/api/booking/add/`, {
@@ -171,7 +241,7 @@ const PackageDetail = ({ route }) => {
         })
 
         const data = await res.json()
-        console .log("product" ,data)
+        console.log("product", data)
 
         if (data.status !== 200) {
           Alert.alert('Error', data.message || 'Booking failed')
@@ -265,8 +335,8 @@ const PackageDetail = ({ route }) => {
     <SafeAreaView className="flex-1">
       <ScrollView className="flex-1">
         <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
-                Package Details
-              </Text>
+          Package Details
+        </Text>
         {/* IMAGE */}
         <Image
           source={{ uri: item.view_images_url }}
@@ -276,7 +346,7 @@ const PackageDetail = ({ route }) => {
         <View className="bg-white -mt-5 rounded-t-2xl p-4">
           {/* TITLE */}
           <Text className="text-[22px] font-bold mb-4 text-blue-600">
-            {parsed?.package_name || 'Package'}
+            {parsed?.package_name}
           </Text>
 
           {/* STARTING PRICE */}
@@ -312,6 +382,13 @@ const PackageDetail = ({ route }) => {
 
           {/* TABLE */}
 
+          {/* SELECTION INFO */}
+          <Text className="text-gray-500 mb-3 text-[12px]">
+            {isAddOn
+              ? 'You can select multiple add-on services'
+              : 'Select one package'}
+          </Text>
+
           <ScrollView
             horizontal={!isShortTable}
             showsHorizontalScrollIndicator={false}
@@ -336,8 +413,7 @@ const PackageDetail = ({ route }) => {
               )}
 
               {/* ROWS */}
-              {data.map((row, index) => {
-                // const isSelected = selectedItems.some(i => i.id === index)
+              {/* {data.map((row, index) => {
                 const isSelected = selectedItems.some(i => i.rowIndex === index)
 
                 return (
@@ -348,16 +424,16 @@ const PackageDetail = ({ route }) => {
                       ? 'bg-blue-50 border border-blue-600  '
                       : 'bg-white'
                       }`}
-                  >
-                    {/* CHECKBOX */}
-                    <View className="w-6 h-6 border-[1.5px] border-blue-600 mr-2 items-center justify-center rounded-md">
+                  > */}
+              {/* CHECKBOX */}
+              {/* <View className="w-6 h-6 border-[1.5px] border-blue-600 mr-2 items-center justify-center rounded-md">
                       <Text className="text-blue-600 font-bold">
                         {isSelected ? '✓' : ''}
                       </Text>
-                    </View>
+                    </View> */}
 
-                    {/* VALUES */}
-                    <View className="flex-row flex-1">
+              {/* VALUES */}
+              {/* <View className="flex-row flex-1">
                       {headers.map((header, i) => {
                         let key =
                           header === 'PRICE'
@@ -376,12 +452,99 @@ const PackageDetail = ({ route }) => {
                           >
                             {value ? `${key === 'price_sgd' ? '$' : ''}${value}` : '-'}
                           </Text>
+
+                          
+                          
                         )
                       })}
                     </View>
                   </TouchableOpacity>
                 )
+              })} */}
+
+              {data.map((row, index) => {
+                const isSelected = selectedItems.some(i => i.rowIndex === index)
+
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => toggleSelection(row, index)}
+                    className={`flex-row items-center p-3 mb-2 rounded-xl border
+        ${isSelected ? 'bg-blue-50 border-blue-600' : 'bg-white border-transparent'}
+      `}
+                  >
+                    {/* CHECKBOX */}
+                    <View className="w-5 h-5 border border-blue-600 mr-3 rounded items-center justify-center">
+                      <Text className="text-blue-600 font-bold">
+                        {isSelected ? '✓' : ''}
+                      </Text>
+                    </View>
+
+                    {/* VALUES */}
+                    <View className="flex-1">
+
+                      <View className="flex-row">
+                        {headers.map((header, i) => {
+                          let key =
+                            header === 'PRICE'
+                              ? 'price_sgd'
+                              : header.toLowerCase().replace(/ /g, '_')
+
+                          let value = row[key]
+
+                          return (
+                            <Text
+                              key={i}
+                              className="flex-1 text-center text-[13px] text-gray-900"
+                            >
+                              {value ? `${key === 'price_sgd' ? '$' : ''}${value}` : '-'}
+                            </Text>
+                          )
+                        })}
+                      </View>
+
+                      {/* ✅ QTY (ONLY ADD-ON) */}
+                      {isAddOn && isSelected && (
+
+                        <>
+                          <View className="flex-row items-center justify-center mt-2">
+
+                            <TouchableOpacity
+                              onPress={() => updateQuantity(index, 'dec')}
+                              className="px-3 py-1 bg-gray-200 rounded-md"
+                            >
+                              <Text className="text-black font-bold">-</Text>
+                            </TouchableOpacity>
+
+                            <Text className="mx-4 text-base font-semibold">
+                              {selectedItems.find(i => i.rowIndex === index)?.quantity || 1}
+                            </Text>
+
+                            <TouchableOpacity
+                              onPress={() => updateQuantity(index, 'inc')}
+                              className="px-3 py-1 bg-gray-200 rounded-md"
+                            >
+                              <Text className="text-black font-bold">+</Text>
+                            </TouchableOpacity>
+
+
+
+                          </View>
+                          <Text className="text-center mt-2 text-blue-600 font-semibold">
+                            Total: $
+                            {(
+                              (selectedItems.find(i => i.rowIndex === index)?.quantity || 1) *
+                              Number(row.price_sgd || 0)
+                            ).toFixed(2)}
+                          </Text>
+                        </>
+                      )}
+
+                    </View>
+                  </TouchableOpacity>
+                )
               })}
+
             </View>
           </ScrollView>
 
@@ -436,18 +599,7 @@ const PackageDetail = ({ route }) => {
       </ScrollView>
 
       {/* BUTTON */}
-      {/* {selectedItems.length > 0 && (
-        <View className="p-3 bg-white border-t border-gray-200">
-          <TouchableOpacity
-            className="bg-blue-600 p-4 rounded-xl items-center"
-            onPress={addToBasket}
-          >
-            <Text className="text-white font-bold text-[16px]">
-              Add {selectedItems.length} items to Basket
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )} */}
+     
 
       {selectedItems.length > 0 && (
         <View className="p-3 bg-white">
