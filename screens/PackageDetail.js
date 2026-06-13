@@ -675,6 +675,7 @@ import { useNavigation } from '@react-navigation/native'
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import BackButton from '../components/BackButton'
 
 
 const PackageDetail = ({ route }) => {
@@ -905,6 +906,9 @@ const PackageDetail = ({ route }) => {
 
   return (
     <SafeAreaView className="flex-1">
+      <View className="px-4 py-2">
+        <BackButton/>
+      </View>
       <ScrollView className="flex-1">
         <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
           Package Details

@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons'
 const Notes = ({ route, navigation }) => {
 
     const totalAmount = route?.params?.totalAmount
-   
+
     const {
         token,
         selectedAddress,
@@ -27,11 +27,11 @@ const Notes = ({ route, navigation }) => {
     } = useContext(AuthContext)
 
     const appointmentData = route?.params?.appointmentData || []
-//     console.log(
+    //     console.log(
 
-//   'Notes Booking IDs:',
-//   appointmentData?.flatMap(item => item.booking_ids || [])
-// )
+    //   'Notes Booking IDs:',
+    //   appointmentData?.flatMap(item => item.booking_ids || [])
+    // )
     const [notes, setNotes] = useState('')
 
     const fetchAddresses = async () => {
@@ -100,6 +100,7 @@ const Notes = ({ route, navigation }) => {
                         </Text>
                     </View>
 
+
                     {/* ADDRESS CARD */}
                     <View className="bg-white rounded-2xl p-4 mb-5 shadow-sm">
                         <Text className="text-lg font-semibold mb-4 text-primary">
@@ -114,8 +115,8 @@ const Notes = ({ route, navigation }) => {
                                     key={item.id}
                                     onPress={() => setSelectedAddress(item)}
                                     className={`p-4 mb-3 rounded-xl border ${isSelected
-                                            ? 'border-secondary bg-blue-100'
-                                            : 'border-gray-200 bg-gray-50'
+                                        ? 'border-secondary bg-blue-100'
+                                        : 'border-gray-200 bg-gray-50'
                                         }`}
                                 >
                                     <View className="gap-2">
@@ -175,6 +176,19 @@ const Notes = ({ route, navigation }) => {
                             </Text>
                         )}
                     </View>
+
+
+                    {/*  ALWAYS SHOW ADD BUTTON */}
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('Address')} 
+                        className="bg-primary mb-4 py-3 rounded-xl flex-row justify-center items-center"
+                    >
+                        <Ionicons name="add" size={18} color="#fff" />
+                        <Text className="text-white ml-2 font-semibold">
+                            Add New Address
+                        </Text>
+                    </TouchableOpacity>
+
 
                     {/* NOTES CARD */}
                     <View className="bg-white rounded-2xl p-4 shadow-sm border border-blue-100">

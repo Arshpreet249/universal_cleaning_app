@@ -22,7 +22,7 @@ import Welcome from './screens/Welcome'
 import Notes from './screens/Notes'
 import Payment from './screens/Payment'
 import Countdown from './screens/Countdown'
-import BackButton from './components/BackButton'
+
 
 const Stack = createNativeStackNavigator()
 
@@ -59,16 +59,16 @@ export default function App() {
               />
 
               {/* OTHER SCREENS */}
-              <Stack.Screen name="PackageDetail" component={PackageDetail} options={{ title: 'Packages' ,headerShown: true, headerLeft: () => <BackButton /> }} />
+              <Stack.Screen name="PackageDetail" component={PackageDetail} options={{ title: 'Packages' ,headerShown: false }} />
               <Stack.Screen name="Auth" component={Auth} options={{ title: 'Authentication' }} />
-              <Stack.Screen name='AllPackages' component={AllPackages} options={{ title: 'Allpackages' ,headerShown: true, headerLeft: () => <BackButton /> }} />
+              <Stack.Screen name='AllPackages' component={AllPackages} options={{ title: 'Allpackages' ,headerShown: false, }} />
               <Stack.Screen name='Address' component={Address} options={{ title: 'Address' }} />
-              <Stack.Screen name='BookAppointment' component={BookAppointment} options={{ title: 'BookAppointment',headerShown: true, headerLeft: () => <BackButton /> }}  />
-              <Stack.Screen name='Notes' component={Notes} options={{title:'Notes',headerShown: true, headerLeft: () => <BackButton /> }} />
-              <Stack.Screen name='Payment' component={Payment} options={{title: 'payment',headerShown: true, headerLeft: () => <BackButton /> }} />
-              <Stack.Screen name="Countdown" component={Countdown} options={{title: 'countdown', headerShown: true, headerLeft: () => <BackButton /> }}  />
-              <Stack.Screen name="PaymentTransaction" component={PaymentTransaction} options={{title: 'PaymentTransaction',headerShown: true, headerLeft: () => <BackButton /> }}  />
-              <Stack.Screen name="CoinTransaction" component={CoinTransaction} options={{title: 'CoinTransaction',headerShown: true, headerLeft: () => <BackButton /> }}  />
+              <Stack.Screen name='BookAppointment' component={BookAppointment} options={{ title: 'BookAppointment',headerShown: false }}  />
+              <Stack.Screen name='Notes' component={Notes} options={{title:'Notes',headerShown: false, }} />
+              <Stack.Screen name='Payment' component={Payment} options={{title: 'payment',headerShown: false,}} />
+              <Stack.Screen name="Countdown" component={Countdown} options={{title: 'countdown', headerShown: false}}  />
+              <Stack.Screen name="PaymentTransaction" component={PaymentTransaction} options={{title: 'PaymentTransaction',headerShown: false, }}  />
+              <Stack.Screen name="CoinTransaction" component={CoinTransaction} options={{title: 'CoinTransaction',headerShown: false,}}  />
             </Stack.Navigator>
             <Toast />
             <StatusBar style="auto" />
