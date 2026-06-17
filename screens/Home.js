@@ -52,23 +52,77 @@ const Home = () => {
     }, [])
   )
 
-  const checkUpcomingBookings = (bookings) => {
+  // const checkUpcomingBookings = (bookings) => {
+  //   const today = new Date()
+
+  //   const upcoming = bookings.find((item) => {
+  //     if (!item?.start_from) return false
+
+  //     const bookingDate = new Date(item.start_from)
+  //     const diffDays = Math.ceil(
+  //       (bookingDate - today) / (1000 * 60 * 60 * 24)
+  //     )
+
+  //     return diffDays >= 0 && diffDays <= 2
+  //   })
+
+  //   setUpcomingAlert(upcoming || null)
+  // }
+
+  const checkUpcomingBookings = (bookings, transactions = []) => {
+    console.log('DEBUG bookings received:', bookings?.length, 'transactions received:', transactions?.length)
+ 
     const today = new Date()
-
-    const upcoming = bookings.find((item) => {
+    today.setHours(0, 0, 0, 0)
+    console.log('DEBUG today is:', today.toString())
+ 
+    // ✅ Build a quick lookup: transaction id -> transaction status
+    const transactionStatusById = {}
+    transactions.forEach((t) => {
+      transactionStatusById[t.id] = (t?.status || '').toLowerCase()
+    })
+    console.log('DEBUG transactionStatusById:', JSON.stringify(transactionStatusById))
+ 
+    // ✅ Only consider bookings whose linked transaction succeeded
+    const paidBookings = bookings.filter((item) => {
+      const txStatus = transactionStatusById[item?.transaction_id]
+      return txStatus === 'succeeded'
+    })
+    console.log('DEBUG paidBookings:', JSON.stringify(paidBookings))
+ 
+    // ✅ Check if any of them fall exactly on today
+    const todayBooking = paidBookings.find((item) => {
       if (!item?.start_from) return false
-
+ 
       const bookingDate = new Date(item.start_from)
+      bookingDate.setHours(0, 0, 0, 0)
+ 
+      return bookingDate.getTime() === today.getTime()
+    })
+    console.log('DEBUG todayBooking found:', JSON.stringify(todayBooking))
+ 
+    if (todayBooking) {
+      setUpcomingAlert({ ...todayBooking, isToday: true })
+      return
+    }
+ 
+    // ✅ Otherwise, find the next one within the next 2 days
+    const upcoming = paidBookings.find((item) => {
+      if (!item?.start_from) return false
+ 
+      const bookingDate = new Date(item.start_from)
+      bookingDate.setHours(0, 0, 0, 0)
+ 
       const diffDays = Math.ceil(
         (bookingDate - today) / (1000 * 60 * 60 * 24)
       )
-
-      return diffDays >= 0 && diffDays <= 2
+ 
+      return diffDays > 0 && diffDays <= 2
     })
-
-    setUpcomingAlert(upcoming || null)
+    console.log('DEBUG upcoming found:', JSON.stringify(upcoming))
+ 
+    setUpcomingAlert(upcoming ? { ...upcoming, isToday: false } : null)
   }
-
 
   const fetchrecentBookings = async () => {
     try {
@@ -93,8 +147,13 @@ const Home = () => {
         ? data.appointments
         : []
 
+          const transactions = Array.isArray(data?.transactions)
+        ? data.transactions
+        : []
+ 
+
       setRecentBookings(bookings)
-      checkUpcomingBookings(bookings)
+      checkUpcomingBookings(bookings, transactions)
 
     } catch (error) {
       console.log('API ERROR:', error.message)
@@ -132,7 +191,7 @@ const Home = () => {
   const isRefer = (p) => {
     const text = (p?.title || '').toLowerCase()
     return (
-      text.includes('refer') ||
+      text.includes('reffer') ||
       text.includes('invite') ||
       text.includes('earn')
     )
@@ -148,6 +207,20 @@ const Home = () => {
       return JSON.parse(item.description)
     } catch {
       return null
+    }
+  }
+
+  const getStatusColor = (process) => {
+    switch ((process || '').toLowerCase()) {
+      case 'completed':
+        return '#2a9d8f'
+      case 'cancelled':
+        return '#e63946'
+      case 'initiated':
+      case 'pending':
+        return '#f4a261'
+      default:
+        return '#888'
     }
   }
 
@@ -321,8 +394,10 @@ const Home = () => {
 
             {/* ================= UPCOMING ALERT ================= */}
 
-            <View style={{ marginTop: 20 }}>
+           
 
+             <View style={{ marginTop: 20 }}>
+ 
               {upcomingAlert && (
                 <View
                   style={{
@@ -353,12 +428,46 @@ const Home = () => {
                       })}
                     </Text>
                   </View>
-
-                  {/* CONTENT */}
-                  <Text style={{ fontWeight: 'bold', color: '#000', marginTop: 8 }}>
-                    Upcoming Appointment
-                  </Text>
-
+ 
+                  {/* ✅ HEADER ROW: Title + Status Badge */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginTop: 8,
+                    }}
+                  >
+                    <Text style={{ fontWeight: 'bold', color: '#000' }}>
+                      {upcomingAlert.isToday
+                        ? "Today's Appointment"
+                        : 'Upcoming Appointment'}
+                    </Text>
+ 
+                    {/* ✅ STATUS BADGE (only if completed) */}
+                    {(upcomingAlert.process || '').toLowerCase() === 'completed' && (
+                      <View
+                        style={{
+                          backgroundColor: getStatusColor(upcomingAlert.process),
+                          paddingHorizontal: 10,
+                          paddingVertical: 4,
+                          borderRadius: 20,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: '#fff',
+                            fontSize: 11,
+                            fontWeight: '700',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {upcomingAlert.process}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+ 
                   <Text style={{ color: '#333', marginTop: 8 }}>
                     {upcomingAlert.title}
                   </Text>
@@ -367,9 +476,8 @@ const Home = () => {
                   </Text>
                 </View>
               )}
-
+ 
             </View>
-
 
             {/* ================= PROMOS ================= */}
 
