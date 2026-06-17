@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Platform
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -659,8 +660,16 @@ const Bookings = () => {
       </ScrollView>
 
       <Modal visible={modalVisible} transparent animationType="slide">
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-white p-5 rounded-t-2xl">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
+        >
+          <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white p-5 rounded-t-2xl max-h-[80%]">
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
 
             <Text className="text-lg font-bold mb-3">
               Give Feedback
@@ -681,22 +690,23 @@ const Bookings = () => {
               value={feedbackText}
               onChangeText={setFeedbackText}
               multiline
-              className="border border-gray-300 rounded-lg p-2 mb-4"
+              textAlignVertical="top"
+              className="border border-gray-300 rounded-xl p-3 mb-4 min-h-[120px] text-gray-900"
             />
 
-            <View className="flex-row justify-between">
+            <View className="flex-row justify-between mb-2">
 
               <TouchableOpacity
                 onPress={() => setModalVisible(false)}
-                className="bg-gray-300 px-4 py-2 rounded-lg"
+                className="bg-gray-200 px-5 py-3 rounded-xl"
               >
-                <Text>Cancel</Text>
+                <Text className="font-semibold text-gray-800">Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={submitFeedback}
                 disabled={submitting}
-                className="bg-secondary px-4 py-2 rounded-lg"
+                className={`px-5 py-3 rounded-xl ${submitting ? 'bg-gray-400' : 'bg-secondary'}`}
               >
                 <Text className="text-white font-semibold">
                   {submitting ? 'Submitting...' : 'Submit'}
@@ -705,8 +715,10 @@ const Bookings = () => {
 
             </View>
 
+            </ScrollView>
           </View>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
 

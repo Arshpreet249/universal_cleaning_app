@@ -161,6 +161,7 @@ const PackageDetail = ({ route }) => {
           body: JSON.stringify({
             note: JSON.stringify(itemToAdd),
             price: itemToAdd.totalPrice,
+            package_id :item.id
           }),
         })
 
@@ -239,6 +240,22 @@ const PackageDetail = ({ route }) => {
       </Text>
     ))
   }
+
+  const GalleryTile = ({ img, height, rounded = 16, style }) => (
+    <View
+      style={[
+        {
+          height,
+          borderRadius: rounded,
+          overflow: 'hidden',
+          backgroundColor: '#e2e8f0',
+        },
+        style,
+      ]}
+    >
+      <Image source={{ uri: img.image_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+    </View>
+  )
 
   return (
     <SafeAreaView className="flex-1">
@@ -444,85 +461,74 @@ const PackageDetail = ({ route }) => {
           {item?.multiple_images?.length > 0 && (() => {
             const imgs = item.multiple_images
             const hero = imgs[0]
-            const pair1 = imgs.slice(1, 3)
-            const wide = imgs[3]
-            const pair2 = imgs.slice(4, 6)
+            const gallery = imgs.slice(1)
 
             return (
-              <View style={{ marginTop: 32, marginBottom: 8 }}>
-                {/* Eyebrow */}
+              <View style={{ marginTop: 28, marginBottom: 16 }}>
                 <SectionTitle title="Our Work" />
 
-
-                {/* Hero */}
                 {hero && (
-                  <View style={{ borderRadius: 16, overflow: 'hidden', marginBottom: 10 }}>
-                    <Image source={{ uri: hero.image_url }} style={{ width: '100%', height: 220 }} resizeMode="cover" />
-                    <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0)', justifyContent: 'flex-end' }}>
-                      <View style={{ position: 'absolute', top: 12, left: 12, backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.35)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
-                        <Text style={{ fontSize: 10, color: '#fff', fontWeight: '500', letterSpacing: 1 }}>Featured</Text>
-                      </View>
-                      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 90, backgroundColor: 'rgba(0,0,0,0.4)' }} />
-                      <View style={{ position: 'absolute', bottom: 14, left: 14, right: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: 14, fontWeight: '500', color: '#fff' }}></Text>
-                        <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>1 / {imgs.length}</Text>
-                      </View>
-                    </View>
+                  <View
+                    style={{
+                      marginTop: 8,
+                      marginBottom: 10,
+                      borderRadius: 20,
+                      padding: 4,
+                      backgroundColor: '#fff',
+                      shadowColor: '#0f172a',
+                      shadowOffset: { width: 0, height: 10 },
+                      shadowOpacity: 0.12,
+                      shadowRadius: 18,
+                      elevation: 4,
+                    }}
+                  >
+                    <GalleryTile img={hero} height={235} rounded={17} />
                   </View>
                 )}
 
-                {/* Pair 1 */}
-                {pair1.length > 0 && (
-                  <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
-                    {pair1.map((img, i) => (
-                      <View key={img.id} style={{ flex: 1, borderRadius: 12, overflow: 'hidden' }}>
-                        <Image source={{ uri: img.image_url }} style={{ width: '100%', height: 130 }} resizeMode="cover" />
-                        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, backgroundColor: 'rgba(0,0,0,0.35)' }} />
-                        <Text style={{ position: 'absolute', bottom: 9, right: 10, fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '500' }}>
-                          {i + 2} / {imgs.length}
-                        </Text>
-                      </View>
-                    ))}
+                {gallery.length > 0 && (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                    {gallery.map((img, i) => {
+                      const isLastOdd = gallery.length % 2 === 1 && i === gallery.length - 1
+
+                      return (
+                        <View
+                          key={img.id || img.image_url}
+                          style={{
+                            width: isLastOdd ? '100%' : '48.5%',
+                            borderRadius: 16,
+                            padding: 3,
+                            backgroundColor: '#fff',
+                            shadowColor: '#0f172a',
+                            shadowOffset: { width: 0, height: 6 },
+                            shadowOpacity: 0.08,
+                            shadowRadius: 12,
+                            elevation: 2,
+                          }}
+                        >
+                          <GalleryTile img={img} height={isLastOdd ? 180 : 142} rounded={13} />
+                        </View>
+                      )
+                    })}
                   </View>
                 )}
 
-                {/* Wide */}
-                {wide && (
-                  <View style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 10 }}>
-                    <Image source={{ uri: wide.image_url }} style={{ width: '100%', height: 160 }} resizeMode="cover" />
-                    <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, backgroundColor: 'rgba(0,0,0,0.4)' }} />
-                    <View style={{ position: 'absolute', bottom: 12, left: 12, borderLeftWidth: 2, borderLeftColor: 'rgba(255,255,255,0.5)', paddingLeft: 7 }}>
-                      <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: '500', letterSpacing: 0.8 }}></Text>
-                    </View>
+                {imgs.length === 1 && (
+                  <View
+                    style={{
+                      marginTop: 10,
+                      backgroundColor: '#f8fafc',
+                      borderRadius: 16,
+                      padding: 14,
+                      borderWidth: 1,
+                      borderColor: '#e2e8f0',
+                    }}
+                  >
+                    <Text style={{ color: '#64748b', fontSize: 12, textAlign: 'center' }}>
+                      More work photos coming soon
+                    </Text>
                   </View>
                 )}
-
-                {/* Pair 2 */}
-                {pair2.length > 0 && (
-                  <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
-                    {pair2.map((img, i) => (
-                      <View key={img.id} style={{ flex: 1, borderRadius: 12, overflow: 'hidden' }}>
-                        <Image source={{ uri: img.image_url }} style={{ width: '100%', height: 130 }} resizeMode="cover" />
-                        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, backgroundColor: 'rgba(0,0,0,0.35)' }} />
-                        <Text style={{ position: 'absolute', bottom: 9, right: 10, fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '500' }}>
-                          {i + 5} / {imgs.length}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                {/* Footer */}
-                {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <View style={{ flexDirection: 'row', gap: 5 }}>
-          {[0,1,2].map(i => (
-            <View key={i} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: i === 0 ? '#111827' : '#d1d5db' }} />
-          ))}
-        </View>
-        <TouchableOpacity style={{ borderWidth: 0.5, borderColor: '#d1d5db', borderRadius: 20, paddingHorizontal: 13, paddingVertical: 5 }}>
-          <Text style={{ fontSize: 12, color: '#6b7280' }}>View all photos</Text>
-        </TouchableOpacity>
-      </View> */}
               </View>
             )
           })()}
