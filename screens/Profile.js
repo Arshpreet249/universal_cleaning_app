@@ -17,7 +17,7 @@ export default function Profile() {
   const navigation = useNavigation()
   const { user, token, logout } = useContext(AuthContext)
 
-  // console.log(user)
+  console.log("profileuser", user)
   // console.log('token::', token)
 
 

@@ -70,18 +70,18 @@ const Home = () => {
   // }
 
   const checkUpcomingBookings = (bookings, transactions = []) => {
-    console.log('DEBUG bookings received:', bookings?.length, 'transactions received:', transactions?.length)
+    // console.log('DEBUG bookings received:', bookings?.length, 'transactions received:', transactions?.length)
  
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    console.log('DEBUG today is:', today.toString())
+    // console.log('DEBUG today is:', today.toString())
  
     // ✅ Build a quick lookup: transaction id -> transaction status
     const transactionStatusById = {}
     transactions.forEach((t) => {
       transactionStatusById[t.id] = (t?.status || '').toLowerCase()
     })
-    console.log('DEBUG transactionStatusById:', JSON.stringify(transactionStatusById))
+    // console.log('DEBUG transactionStatusById:', JSON.stringify(transactionStatusById))
  
     // ✅ Only consider bookings whose linked transaction succeeded
     const paidBookings = bookings.filter((item) => {
@@ -899,7 +899,8 @@ const Home = () => {
                             YOUR CODE
                           </Text>
                           <Text style={{ color: '#0564BF', fontWeight: 'bold', fontSize: 14 }}>
-                            HRAHIDNO63
+                            {/* HRAHIDNO63 */}
+                            {user?.referral_code || user?.user?.referral_code || '---'}
                           </Text>
                         </View>
 
