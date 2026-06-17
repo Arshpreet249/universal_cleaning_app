@@ -4,6 +4,7 @@ export const ProductContext = createContext()
 
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([])
+  // console.log('products', products)
   const [searchText, setSearchText] = useState('')
   const [filteredProducts, setFilteredProducts] = useState([])
 

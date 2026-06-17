@@ -26,6 +26,7 @@ const Home = () => {
   const { token, user } = useContext(AuthContext)
 
   const { products, setProducts, searchText, filteredProducts } = useContext(ProductContext)
+ 
 
   const displayProducts =
     searchText?.trim()?.length > 0 ? filteredProducts : products
@@ -119,7 +120,7 @@ const Home = () => {
       setPromoLoading(true)
       const res = await axios.get(`${apiBaseUrl}get-poromotios/`)
       setPromotions(res.data || [])
-      // console.log("res>>>>>>>>>>",res)
+      console.log("res>>>>>>>>>>",res)
     } catch (error) {
       console.log('PROMO API ERROR:', error.message)
     } finally {
@@ -308,7 +309,8 @@ const Home = () => {
                               marginTop: 8,
                             }}
                           >
-                            {data.package_name.toLowerCase()}
+                            {/* {data.package_name.toLowerCase()} */}
+                            {data?.package_name?.toLowerCase()}
                           </Text>
                         </TouchableOpacity>
                       )

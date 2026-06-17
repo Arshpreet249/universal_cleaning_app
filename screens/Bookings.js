@@ -239,29 +239,29 @@ const Bookings = () => {
     try {
       setUpdating(true)
 
-        if (
-      !editData.start_date ||
-      !editData.end_date ||
-      !editData.startTime ||
-      !editData.endTime
-    ) {
-      alert("Please select complete date & time")
-      return
-    }
-  
+      if (
+        !editData.start_date ||
+        !editData.end_date ||
+        !editData.startTime ||
+        !editData.endTime
+      ) {
+        alert("Please select complete date & time")
+        return
+      }
+
       //  CONVERT TO ISO FORMAT (REQUIRED BY BACKEND)
-    const start_from = `${editData.start_date}T${editData.startTime}`
-    const end_at = `${editData.end_date}T${editData.endTime}`
+      const start_from = `${editData.start_date}T${editData.startTime}`
+      const end_at = `${editData.end_date}T${editData.endTime}`
 
-        const payload = {
-      appointment_id: editData.appointment_id,
-      start_from,
-      end_at,
-      description: editData.description,
-    }
+      const payload = {
+        appointment_id: editData.appointment_id,
+        start_from,
+        end_at,
+        description: editData.description,
+      }
 
-    // console.log(" SENDING:", payload)
-    
+      // console.log(" SENDING:", payload)
+
       const response = await fetch(`${apiBaseUrl}appointment-edit/`, {
         method: 'POST',
         headers: {
@@ -275,11 +275,11 @@ const Bookings = () => {
       // console.log('Update response:', data)
 
 
-    //  BACKEND ERROR HANDLING
-    if (data?.error) {
-      alert(data.error)
-      return
-    }
+      //  BACKEND ERROR HANDLING
+      if (data?.error) {
+        alert(data.error)
+        return
+      }
 
       if (response.ok) {
         alert('Appointment updated successfully')
@@ -583,7 +583,7 @@ const Bookings = () => {
                         : 'Give Feedback'}
                     </Text>
                   </TouchableOpacity> */}
-                  {item.process?.toLowerCase() === 'completed' && (
+                  {/* {item.process?.toLowerCase() === 'completed' && (
                     <TouchableOpacity
                       onPress={() => openFeedbackModal(item)}
                       className="mt-4 bg-secondary py-2 rounded-lg items-center"
@@ -594,7 +594,7 @@ const Bookings = () => {
                           : 'Give Feedback'}
                       </Text>
                     </TouchableOpacity>
-                  )}
+                  )} */}
 
                   <Text className="text-xs text-gray-400 mt-2">
                     Appointment ID: #{item.id}
@@ -604,7 +604,7 @@ const Bookings = () => {
               )}
 
               {/* BOTTOM BUTTONS */}
-              <View className="flex-row justify-between items-center mt-4">
+              {/* <View className="flex-row justify-between items-center mt-4">
                 <TouchableOpacity
                   onPress={() => openEditModal(item)}
                 >
@@ -621,8 +621,38 @@ const Bookings = () => {
                   </Text>
                 </TouchableOpacity>
 
-              </View>
+              </View> */}
 
+              <View className="flex-row justify-between items-center mt-4">
+
+                {/* ✅ CONDITION BASED BUTTON */}
+                {item.process?.toLowerCase() === 'completed' ? (
+                  <TouchableOpacity
+                    onPress={() => openFeedbackModal(item)}
+                  >
+                    <Text className='text-secondary font-semibold'>
+                      {feedbackMap[item.id] ? 'Update Feedback' : 'Give Feedback'}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => openEditModal(item)}
+                  >
+                    <Text className='text-secondary font-semibold'>Edit</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* SHOW MORE BUTTON */}
+                <TouchableOpacity
+                  onPress={() => toggleExpand(item.id)}
+                  className="mt-3 items-center"
+                >
+                  <Text className="text-secondary font-semibold">
+                    {expandedId === item.id ? 'Show Less ▲' : 'Show More ▼'}
+                  </Text>
+                </TouchableOpacity>
+
+              </View>
             </View>
           )
         })}
@@ -691,12 +721,12 @@ const Bookings = () => {
             </Text>
 
             {/* START DATE */}
-             <Text className="text-secondary px-2 py-1 text-base">Start Date</Text>
+            <Text className="text-secondary px-2 py-1 text-base">Start Date</Text>
             <TouchableOpacity
               onPress={() => openEditPicker('startDate')}
               className="bg-gray-100 p-4 rounded-xl mb-3"
             >
-             
+
               <Text className="font-semibold mt-1 text-gray-800">
                 {formatDate(editData.start_date)}
               </Text>
@@ -708,31 +738,31 @@ const Bookings = () => {
               onPress={() => openEditPicker('endDate')}
               className="bg-gray-100 p-4 rounded-xl mb-3"
             >
-              
+
               <Text className="font-semibold mt-1 text-gray-800">
                 {formatDate(editData.end_date)}
               </Text>
             </TouchableOpacity>
 
             {/* START TIME */}
-             <Text className="text-secondary px-2 py-1 text-base">Start Time</Text>
+            <Text className="text-secondary px-2 py-1 text-base">Start Time</Text>
             <TouchableOpacity
               onPress={() => openEditPicker('startTime')}
               className="bg-gray-100 p-4 rounded-xl mb-3"
             >
-             
+
               <Text className="font-semibold mt-1 text-gray-800">
                 {formatTime(editData.startTime)}
               </Text>
             </TouchableOpacity>
 
             {/* END TIME */}
-             <Text className="text-secondary px-2 py-1 text-base">End Time</Text>
+            <Text className="text-secondary px-2 py-1 text-base">End Time</Text>
             <TouchableOpacity
               onPress={() => openEditPicker('endTime')}
               className="bg-gray-100 p-4 rounded-xl mb-3"
             >
-             
+
               <Text className="font-semibold mt-1 text-gray-800">
                 {formatTime(editData.endTime)}
               </Text>
