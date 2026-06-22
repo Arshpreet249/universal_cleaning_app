@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useContext, useCallback } from 'react'
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 
 const Basket = () => {
   const { token, setCartCount, setBasketItems } = useContext(AuthContext)
@@ -35,7 +35,7 @@ const Basket = () => {
 
     if (isRefresh) {
       setRefreshing(true)
-    } else {
+    } else if (cartData.length === 0) {
       setLoading(true)
     }
 
@@ -106,9 +106,11 @@ const Basket = () => {
     }
   }
 
-  useEffect(() => {
-    if (token) fetchCart()
-  }, [token])
+  useFocusEffect(
+    useCallback(() => {
+      if (token) fetchCart(true)
+    }, [token])
+  )
 
   // ---------------- DELETE ----------------
   const confirmDelete = async () => {
@@ -187,7 +189,9 @@ const Basket = () => {
               data={cartData}
               keyExtractor={(item) => item.id.toString()}
               showsVerticalScrollIndicator={false}
+              alwaysBounceVertical
               contentContainerStyle={{
+                flexGrow: 1,
                 paddingBottom: Platform.OS === 'ios' ? 110 : 80,
               }}
               refreshControl={

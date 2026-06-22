@@ -6,7 +6,6 @@ import {
   Share,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
   RefreshControl,
   Modal,
   Animated,
@@ -187,10 +186,10 @@ const Home = () => {
 
   const fetchProducts = async () => {
     try {
-      setLoading(true)
+      if (!products?.length) setLoading(true)
       const res = await axios.get(`${apiBaseUrl}get-products/`)
       setProducts(res.data || [])
-      // console.log(res.data)
+      console.log(res.data)
 
     } catch (error) {
       console.log('API ERROR:', error.message)
@@ -201,7 +200,7 @@ const Home = () => {
 
   const fetchPromotions = async () => {
     try {
-      setPromoLoading(true)
+      if (!promotions?.length) setPromoLoading(true)
       const res = await axios.get(`${apiBaseUrl}get-poromotios/`)
       setPromotions(res.data || [])
       console.log("res>>>>>>>>>>", res)
@@ -224,6 +223,96 @@ const Home = () => {
 
   const referPromo = promotions.find(isRefer)
   const normalPromos = promotions.filter(p => !isRefer(p))
+
+  const SkeletonBox = ({ style }) => (
+    <View
+      style={[
+        {
+          backgroundColor: 'rgba(226,232,240,0.95)',
+          borderRadius: 12,
+          overflow: 'hidden',
+        },
+        style,
+      ]}
+    />
+  )
+
+  const HighlightSkeleton = () => (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((item) => (
+        <View
+          key={item}
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.86)',
+            marginBottom: 16,
+            borderRadius: 12,
+            padding: 12,
+            alignItems: 'center',
+            width: '24%',
+          }}
+        >
+          <SkeletonBox style={{ width: 40, height: 40, borderRadius: 20 }} />
+          <SkeletonBox style={{ width: '86%', height: 10, marginTop: 10 }} />
+          <SkeletonBox style={{ width: '60%', height: 10, marginTop: 5 }} />
+        </View>
+      ))}
+    </View>
+  )
+
+  const PromoSkeleton = () => (
+    <View style={{ marginHorizontal: 0 }}>
+      {[0, 1].map((item) => (
+        <View
+          key={item}
+          style={{
+            height: 160,
+            marginBottom: 12,
+            borderRadius: 16,
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            overflow: 'hidden',
+            padding: 16,
+            justifyContent: 'space-between',
+          }}
+        >
+          <View>
+            <SkeletonBox style={{ width: '54%', height: 18 }} />
+            <SkeletonBox style={{ width: '82%', height: 11, marginTop: 10 }} />
+            <SkeletonBox style={{ width: '60%', height: 11, marginTop: 7 }} />
+          </View>
+          <SkeletonBox style={{ width: 120, height: 34, borderRadius: 12 }} />
+        </View>
+      ))}
+    </View>
+  )
+
+  const ExploreSkeleton = () => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16 }}>
+        {[0, 1].map((item) => (
+          <View
+            key={item}
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.9)',
+              width: 300,
+              height: 150,
+              marginRight: 12,
+              borderRadius: 12,
+              flexDirection: 'row',
+              overflow: 'hidden',
+            }}
+          >
+            <SkeletonBox style={{ width: '50%', height: '100%', borderRadius: 0 }} />
+            <View style={{ flex: 1, paddingHorizontal: 10, justifyContent: 'center' }}>
+              <SkeletonBox style={{ width: '88%', height: 14 }} />
+              <SkeletonBox style={{ width: '66%', height: 14, marginTop: 7 }} />
+              <SkeletonBox style={{ width: '92%', height: 10, marginTop: 14 }} />
+              <SkeletonBox style={{ width: '76%', height: 10, marginTop: 7 }} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  )
 
   const certificates = [
     {
@@ -487,7 +576,7 @@ const Home = () => {
               </View>
 
               {loading ? (
-                <ActivityIndicator size="large" color="blue" />
+                <HighlightSkeleton />
               ) : (
                 <View
                   style={{
@@ -642,7 +731,7 @@ const Home = () => {
               </Text>
 
               {promoLoading ? (
-                <ActivityIndicator size="large" color="blue" />
+                <PromoSkeleton />
               ) : normalPromos.length === 0 ? (
                 <Text className="px-2 py-2 text-gray-500">
                   No promotions available
@@ -742,7 +831,7 @@ const Home = () => {
               </View>
 
               {loading ? (
-                <ActivityIndicator size="large" color="blue" />
+                <ExploreSkeleton />
               ) : (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={{ flexDirection: 'row', paddingHorizontal: 16 }}>
