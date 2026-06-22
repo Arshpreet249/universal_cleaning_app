@@ -71,7 +71,7 @@ export default function App() {
               <Stack.Screen name="CoinTransaction" component={CoinTransaction} options={{title: 'CoinTransaction',headerShown: false,}}  />
             </Stack.Navigator>
             <Toast />
-            <StatusBar style="auto" />
+            <StatusBar style="dark" backgroundColor="#FFFFFF" />
           </NavigationContainer>
         </ProductProvider>
       </SafeAreaProvider>

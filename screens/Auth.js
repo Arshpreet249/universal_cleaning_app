@@ -358,13 +358,13 @@ const Auth = () => {
           {/* LOGIN */}
           {step === 'login' && (
             <>
-              <TextInput
+              <TextInput placeholderTextColor="#6B7280"
                 placeholder="Email / Username"
                 style={styles.input}
                 onChangeText={(t) => handleChange('username', t)}
               />
 
-              <TextInput
+              <TextInput placeholderTextColor="#6B7280"
                 placeholder="Password"
                 secureTextEntry
                 style={styles.input}
@@ -383,7 +383,7 @@ const Auth = () => {
               </TouchableOpacity>
 
               <View style={styles.footer}>
-                <Text>Don't have an account?</Text>
+                <Text style={styles.footerText}>Don't have an account?</Text>
                 <TouchableOpacity onPress={() => setStep('register')}>
                   <Text className='text-blue-500'> Sign Up</Text>
                 </TouchableOpacity>
@@ -394,20 +394,20 @@ const Auth = () => {
           {/* REGISTER */}
           {step === 'register' && (
             <>
-              <TextInput placeholder="Email" style={styles.input}
+              <TextInput placeholderTextColor="#6B7280" placeholder="Email" style={styles.input}
                 onChangeText={(t) => handleChange('email', t)}
               />
-              <TextInput placeholder="Username" style={styles.input}
+              <TextInput placeholderTextColor="#6B7280" placeholder="Username" style={styles.input}
                 onChangeText={(t) => handleChange('username', t)}
               />
-              <TextInput placeholder="Phone" style={styles.input}
+              <TextInput placeholderTextColor="#6B7280" placeholder="Phone" style={styles.input}
                 onChangeText={(t) => handleChange('mobile', t)}
               />
 
               <View style={{ marginBottom: 12 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
 
-                  <TextInput
+                  <TextInput placeholderTextColor="#6B7280"
                     placeholder="Referral Code (optional)"
                     style={[styles.input, { flex: 1, marginBottom: 0 }]}
                     value={referralCode}
@@ -444,10 +444,10 @@ const Auth = () => {
                   </Text>
                 )}
               </View>
-              <TextInput placeholder="Password" secureTextEntry style={styles.input}
+              <TextInput placeholderTextColor="#6B7280" placeholder="Password" secureTextEntry style={styles.input}
                 onChangeText={(t) => handleChange('password', t)}
               />
-              <TextInput placeholder="Confirm Password" secureTextEntry style={styles.input}
+              <TextInput placeholderTextColor="#6B7280" placeholder="Confirm Password" secureTextEntry style={styles.input}
                 onChangeText={(t) => handleChange('confirm_password', t)}
               />
 
@@ -457,7 +457,7 @@ const Auth = () => {
               </TouchableOpacity>
 
               <View style={styles.footer}>
-                <Text>Already have an account?</Text>
+                <Text style={styles.footerText}>Already have an account?</Text>
 
                 <TouchableOpacity onPress={() => setStep('login')}>
                   <Text className='text-blue-500'> Login</Text>
@@ -469,7 +469,7 @@ const Auth = () => {
           {/* OTP VERIFY */}
           {step === 'otp' && (
             <>
-              {/* <TextInput
+              {/* <TextInput placeholderTextColor="#6B7280"
                 placeholder="Enter OTP"
                 style={styles.input}
                 keyboardType="numeric"
@@ -478,7 +478,7 @@ const Auth = () => {
 
               <View style={styles.otpContainer}>
                 {otpArray.map((digit, index) => (
-                  <TextInput
+                  <TextInput placeholderTextColor="#6B7280"
                     key={index}
                     style={styles.otpBox}
                     keyboardType="numeric"
@@ -525,7 +525,7 @@ const Auth = () => {
           {/* FORGOT */}
           {step === 'forgot' && (
             <>
-              <TextInput
+              <TextInput placeholderTextColor="#6B7280"
                 placeholder="Enter Email"
                 style={styles.input}
                 onChangeText={(t) =>
@@ -548,7 +548,7 @@ const Auth = () => {
           {/* RESET */}
           {step === 'reset' && (
             <>
-              {/* <TextInput
+              {/* <TextInput placeholderTextColor="#6B7280"
                 placeholder="OTP"
                 style={styles.input}
                 keyboardType="numeric"
@@ -558,7 +558,7 @@ const Auth = () => {
               /> */}
               <View style={styles.otpContainer}>
                 {resetOtpArray.map((digit, index) => (
-                  <TextInput
+                  <TextInput placeholderTextColor="#6B7280"
                     key={index}
                     style={styles.otpBox}
                     keyboardType="numeric"
@@ -592,7 +592,7 @@ const Auth = () => {
               </TouchableOpacity>
 
 
-              <TextInput
+              <TextInput placeholderTextColor="#6B7280"
                 placeholder="New Password"
                 secureTextEntry
                 style={styles.input}
@@ -601,7 +601,7 @@ const Auth = () => {
                 }
               />
 
-              <TextInput
+              <TextInput placeholderTextColor="#6B7280"
                 placeholder="Confirm Password"
                 secureTextEntry
                 style={styles.input}
@@ -662,7 +662,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 12,
     marginBottom: 12,
-    fontSize: 15
+    fontSize: 15,
+    color: '#111827'
   },
 
 
@@ -676,6 +677,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 15
+  },
+  footerText: {
+    color: '#111827'
   },
 
   signinText: {
@@ -696,7 +700,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     textAlign: 'center',
     fontSize: 20,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: '#111827'
   },
   infoText: {
     textAlign: 'center',

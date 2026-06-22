@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
-  Platform
+  Platform,
+  RefreshControl
 } from 'react-native'
 
 import { AuthContext } from '../context/AuthContext'
@@ -20,6 +21,7 @@ const Basket = () => {
 
   const [cartData, setCartData] = useState([])
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
@@ -28,10 +30,14 @@ const Basket = () => {
 
 
   // ---------------- FETCH CART ----------------
-  const fetchCart = async () => {
+  const fetchCart = async (isRefresh = false) => {
     if (!token) return
 
-    setLoading(true)
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
 
     try {
       const res = await fetch(
@@ -96,6 +102,7 @@ const Basket = () => {
       Alert.alert('Error', 'Something went wrong')
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -183,6 +190,14 @@ const Basket = () => {
               contentContainerStyle={{
                 paddingBottom: Platform.OS === 'ios' ? 110 : 80,
               }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={() => fetchCart(true)}
+                  colors={['#0564BF']}
+                  tintColor="#0564BF"
+                />
+              }
               renderItem={({ item }) => (
                 <View className="bg-white p-4 rounded-2xl mb-3 border border-blue-100 shadow-sm">
 

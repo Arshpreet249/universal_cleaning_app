@@ -9,6 +9,7 @@ import {
   TextInput,
   Platform,
   KeyboardAvoidingView,
+  RefreshControl,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -50,6 +51,7 @@ const Bookings = () => {
 
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [expandedId, setExpandedId] = useState(null)
 
   const [modalVisible, setModalVisible] = useState(false)
@@ -80,9 +82,13 @@ const Bookings = () => {
   )
 
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (isRefresh = false) => {
     try {
-      setLoading(true)
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
 
       const response = await fetch(`${apiBaseUrl}all-appointments/`, {
         method: 'POST',
@@ -129,6 +135,7 @@ const Bookings = () => {
       setBookings([])
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -390,18 +397,29 @@ const Bookings = () => {
 
   if (!loading && bookings.length === 0) {
     return (
-      <SafeAreaView className="flex-1 justify-center items-center bg-gray-100 px-6">
-        <Text className="text-xl font-semibold text-gray-700 mb-2">
-          No Bookings Yet
-        </Text>
+      <SafeAreaView className="flex-1 bg-gray-100 px-6">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchAppointments(true)}
+              colors={['#0564BF']}
+              tintColor="#0564BF"
+            />
+          }
+        >
+          <Text className="text-xl font-semibold text-gray-700 mb-2">
+            No Bookings Yet
+          </Text>
 
-        <Text className="text-gray-500 text-center mb-6">
-          You haven’t booked any service yet.
-        </Text>
+          <Text className="text-gray-500 text-center mb-6">
+            You haven't booked any service yet.
+          </Text>
+        </ScrollView>
       </SafeAreaView>
     )
   }
-
   return (
     <SafeAreaView className="flex-1 bg-gray-100 px-4 pb-24">
 
@@ -409,7 +427,17 @@ const Bookings = () => {
         My Bookings
       </Text>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchAppointments(true)}
+            colors={['#0564BF']}
+            tintColor="#0564BF"
+          />
+        }
+      >
         {bookings.map((item) => {
 
           const txn = item.transaction

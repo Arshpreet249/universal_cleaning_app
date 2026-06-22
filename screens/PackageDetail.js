@@ -616,7 +616,7 @@ import {
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { AuthContext } from '../context/AuthContext'
-import { REACT_APP_HOST_API_URL } from '../components/variable'
+import { apiBaseUrl, REACT_APP_HOST_API_URL } from '../components/variable'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import BackButton from '../components/BackButton'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -710,6 +710,9 @@ const PackageDetail = ({ route }) => {
   const navigation = useNavigation()
   const { token, basketItems, setBasketItems } = useContext(AuthContext)
   const [selectedItems, setSelectedItems] = useState([])
+  const [packageFeedback, setPackageFeedback] = useState([])
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false)
 
   /* ── Helpers ── */
   const parseDescription = (data) => {
@@ -893,7 +896,7 @@ const PackageDetail = ({ route }) => {
               backdropFilter: 'blur(8px)',
             }}>
               <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
-                PREMIUM PACKAGE
+                REGULAR PACKAGE
               </Text>
             </View>
           </View>
@@ -1207,6 +1210,54 @@ const PackageDetail = ({ route }) => {
               ))}
             </>
           )}
+
+          <View style={{ marginTop: 12, marginBottom: 8 }}>
+            <SectionTitle title="Feedback" />
+
+            {feedbackLoading ? (
+              <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+                <ActivityIndicator color="#2563eb" />
+              </View>
+            ) : packageFeedback.length > 0 ? (
+              <>
+                {packageFeedback.slice(0, 4).map((feedback) => (
+                  <FeedbackCard key={feedback.id} feedback={feedback} />
+                ))}
+
+                {packageFeedback.length > 4 && (
+                  <TouchableOpacity
+                    onPress={() => setFeedbackModalVisible(true)}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: '#2563eb',
+                      borderRadius: 12,
+                      paddingVertical: 11,
+                      alignItems: 'center',
+                      marginTop: 2,
+                    }}
+                  >
+                    <Text style={{ color: '#2563eb', fontWeight: '700', fontSize: 13 }}>
+                      See more feedback
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            ) : (
+              <View
+                style={{
+                  backgroundColor: '#f8fafc',
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                  borderRadius: 14,
+                  padding: 14,
+                }}
+              >
+                <Text style={{ color: '#64748b', fontSize: 13, textAlign: 'center' }}>
+                  No feedback yet.
+                </Text>
+              </View>
+            )}
+          </View>
 
         </View>
       </ScrollView>
