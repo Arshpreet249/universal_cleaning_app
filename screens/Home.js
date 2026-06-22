@@ -26,7 +26,7 @@ const Home = () => {
   const { token, user } = useContext(AuthContext)
 
   const { products, setProducts, searchText, filteredProducts } = useContext(ProductContext)
- 
+
 
   const displayProducts =
     searchText?.trim()?.length > 0 ? filteredProducts : products
@@ -71,56 +71,56 @@ const Home = () => {
 
   const checkUpcomingBookings = (bookings, transactions = []) => {
     // console.log('DEBUG bookings received:', bookings?.length, 'transactions received:', transactions?.length)
- 
+
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     // console.log('DEBUG today is:', today.toString())
- 
+
     // ✅ Build a quick lookup: transaction id -> transaction status
     const transactionStatusById = {}
     transactions.forEach((t) => {
       transactionStatusById[t.id] = (t?.status || '').toLowerCase()
     })
     // console.log('DEBUG transactionStatusById:', JSON.stringify(transactionStatusById))
- 
+
     // ✅ Only consider bookings whose linked transaction succeeded
     const paidBookings = bookings.filter((item) => {
       const txStatus = transactionStatusById[item?.transaction_id]
       return txStatus === 'succeeded'
     })
     console.log('DEBUG paidBookings:', JSON.stringify(paidBookings))
- 
+
     // ✅ Check if any of them fall exactly on today
     const todayBooking = paidBookings.find((item) => {
       if (!item?.start_from) return false
- 
+
       const bookingDate = new Date(item.start_from)
       bookingDate.setHours(0, 0, 0, 0)
- 
+
       return bookingDate.getTime() === today.getTime()
     })
     console.log('DEBUG todayBooking found:', JSON.stringify(todayBooking))
- 
+
     if (todayBooking) {
       setUpcomingAlert({ ...todayBooking, isToday: true })
       return
     }
- 
+
     // ✅ Otherwise, find the next one within the next 2 days
     const upcoming = paidBookings.find((item) => {
       if (!item?.start_from) return false
- 
+
       const bookingDate = new Date(item.start_from)
       bookingDate.setHours(0, 0, 0, 0)
- 
+
       const diffDays = Math.ceil(
         (bookingDate - today) / (1000 * 60 * 60 * 24)
       )
- 
+
       return diffDays > 0 && diffDays <= 2
     })
     console.log('DEBUG upcoming found:', JSON.stringify(upcoming))
- 
+
     setUpcomingAlert(upcoming ? { ...upcoming, isToday: false } : null)
   }
 
@@ -147,10 +147,10 @@ const Home = () => {
         ? data.appointments
         : []
 
-          const transactions = Array.isArray(data?.transactions)
+      const transactions = Array.isArray(data?.transactions)
         ? data.transactions
         : []
- 
+
 
       setRecentBookings(bookings)
       checkUpcomingBookings(bookings, transactions)
@@ -179,7 +179,7 @@ const Home = () => {
       setPromoLoading(true)
       const res = await axios.get(`${apiBaseUrl}get-poromotios/`)
       setPromotions(res.data || [])
-      console.log("res>>>>>>>>>>",res)
+      console.log("res>>>>>>>>>>", res)
     } catch (error) {
       console.log('PROMO API ERROR:', error.message)
     } finally {
@@ -258,7 +258,7 @@ const Home = () => {
                 if (!data) return null
 
                 return (
-              
+
                   <TouchableOpacity
                     key={item.id}
                     style={{
@@ -394,10 +394,10 @@ const Home = () => {
 
             {/* ================= UPCOMING ALERT ================= */}
 
-           
 
-             <View style={{ marginTop: 20 }}>
- 
+
+            <View style={{ marginTop: 20 }}>
+
               {upcomingAlert && (
                 <View
                   style={{
@@ -428,7 +428,7 @@ const Home = () => {
                       })}
                     </Text>
                   </View>
- 
+
                   {/* ✅ HEADER ROW: Title + Status Badge */}
                   <View
                     style={{
@@ -443,7 +443,7 @@ const Home = () => {
                         ? "Today's Appointment"
                         : 'Upcoming Appointment'}
                     </Text>
- 
+
                     {/* ✅ STATUS BADGE (only if completed) */}
                     {(upcomingAlert.process || '').toLowerCase() === 'completed' && (
                       <View
@@ -467,7 +467,7 @@ const Home = () => {
                       </View>
                     )}
                   </View>
- 
+
                   <Text style={{ color: '#333', marginTop: 8 }}>
                     {upcomingAlert.title}
                   </Text>
@@ -476,7 +476,7 @@ const Home = () => {
                   </Text>
                 </View>
               )}
- 
+
             </View>
 
             {/* ================= PROMOS ================= */}
@@ -905,11 +905,60 @@ const Home = () => {
                         </View>
 
                       </View>
+
+                     
                     </View>
                   </BlurView>
                 </TouchableOpacity>
               </View>
             )}
+
+            {/* ================= WHY CHOOSE US ================= */}
+<View style={{ marginHorizontal: 16, marginTop: 28, marginBottom: 10 }}>
+
+  <View style={{ alignItems: 'center', marginBottom: 20 }}>
+    <Text style={{ fontSize: 11, fontWeight: '600', letterSpacing: 2, color: '#999', marginBottom: 4 }}>
+      TRUSTED & VERIFIED
+    </Text>
+    <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111', marginBottom: 6 }}>
+      Why choose us?
+    </Text>
+    <Text style={{ fontSize: 13, color: '#666', textAlign: 'center', lineHeight: 20 }}>
+      Recognised by leading Singapore authorities for safety, quality and excellence.
+    </Text>
+  </View>
+
+  {/* 2x2 GRID - BIG IMAGES */}
+  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+    {[
+      { icon: require('../assets/images/bizsafe3.jpeg') },
+      { icon: require('../assets/images/sme500.png') },
+      { icon: require('../assets/images/nea.png')},
+      { icon: require('../assets/images/ts.png') },
+    ].map((cert, index) => (
+      <View
+        key={index}
+        style={{
+          width: 100,
+          height: 100,
+          borderRadius: 50,
+          backgroundColor: cert.color,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 0.5,
+          borderColor: '#e0e0e0',
+        }}
+      >
+        <Image
+          source={cert.icon}
+          style={{ width: 75, height: 75 }}
+          resizeMode="contain"
+        />
+      </View>
+    ))}
+  </View>
+
+</View>
 
             <View style={{ height: 90 }} />
           </>
