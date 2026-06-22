@@ -27,8 +27,11 @@ import { useFocusEffect } from '@react-navigation/native'
 const Home = () => {
   const navigation = useNavigation()
   const { token, user } = useContext(AuthContext)
+  const userId = user?.id || user?.user?.id
 
   const { products, setProducts, searchText, filteredProducts } = useContext(ProductContext)
+  const productsLoadedRef = useRef(false)
+  const promotionsLoadedRef = useRef(false)
 
 
   const displayProducts =
@@ -58,8 +61,8 @@ const Home = () => {
     useCallback(() => {
       fetchProducts()
       fetchPromotions()
-      fetchrecentBookings()
-    }, [])
+      if (token && userId) fetchrecentBookings()
+    }, [token, userId])
   )
 
   const refreshHome = async () => {
@@ -68,7 +71,7 @@ const Home = () => {
       await Promise.all([
         fetchProducts(),
         fetchPromotions(),
-        fetchrecentBookings(),
+        token && userId ? fetchrecentBookings() : Promise.resolve(),
       ])
     } finally {
       setRefreshing(false)
@@ -148,6 +151,8 @@ const Home = () => {
   }
 
   const fetchrecentBookings = async () => {
+    if (!token || !userId) return
+
     try {
       // setLoading(true)
 
@@ -158,7 +163,7 @@ const Home = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: user?.id,
+          user_id: userId,
         }),
       })
 
@@ -186,10 +191,11 @@ const Home = () => {
 
   const fetchProducts = async () => {
     try {
-      if (!products?.length) setLoading(true)
+      if (!productsLoadedRef.current) setLoading(true)
       const res = await axios.get(`${apiBaseUrl}get-products/`)
       setProducts(res.data || [])
-      console.log(res.data)
+      productsLoadedRef.current = true
+      // console.log(res.data)
 
     } catch (error) {
       console.log('API ERROR:', error.message)
@@ -200,10 +206,11 @@ const Home = () => {
 
   const fetchPromotions = async () => {
     try {
-      if (!promotions?.length) setPromoLoading(true)
+      if (!promotionsLoadedRef.current) setPromoLoading(true)
       const res = await axios.get(`${apiBaseUrl}get-poromotios/`)
       setPromotions(res.data || [])
-      console.log("res>>>>>>>>>>", res)
+      promotionsLoadedRef.current = true
+      // console.log("res>>>>>>>>>>", res)
     } catch (error) {
       console.log('PROMO API ERROR:', error.message)
     } finally {
@@ -338,6 +345,35 @@ const Home = () => {
   ]
 
   const certificateCardWidth = (screenWidth - 76) / 2
+
+  const trustSections = [
+    {
+      title: 'Safety & Compliance',
+      accent: '#0564BF',
+      items: [
+        'BizSAFE Level 3 Certified (WSH Council Singapore)',
+        'NEA Certified Cleaning Service Provider',
+        'WICA & Public Liability Fully Insured',
+      ],
+    },
+    {
+      title: 'Business Recognition',
+      accent: '#12B76A',
+      items: [
+        'SME 500 Award Winner (2025)',
+        'Recognised for quality & trusted service standards',
+      ],
+    },
+    {
+      title: 'Professional Standards',
+      accent: '#F79009',
+      items: [
+        'TADF Compliant Operations',
+        'WageMark Plus Certified',
+        'FMO2 Certified Workforce',
+      ],
+    },
+  ]
 
 
   const parseDescription = (item) => {
@@ -1345,6 +1381,52 @@ const Home = () => {
                       >
                         {cert.subtitle}
                       </Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={{ marginTop: 18 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#101828', marginBottom: 12 }}>
+                    Trust & Certifications
+                  </Text>
+
+                  {trustSections.map((section) => (
+                    <View
+                      key={section.title}
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        borderColor: '#EEF2F6',
+                        padding: 14,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                        <View
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 8,
+                            backgroundColor: section.accent,
+                            marginRight: 8,
+                          }}
+                        />
+                        <Text style={{ fontSize: 14, fontWeight: '900', color: '#111827' }}>
+                          {section.title}
+                        </Text>
+                      </View>
+
+                      {section.items.map((item) => (
+                        <View key={item} style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: 7 }}>
+                          <Text style={{ color: section.accent, fontSize: 13, lineHeight: 18, marginRight: 7 }}>
+                            *
+                          </Text>
+                          <Text style={{ flex: 1, fontSize: 12, color: '#475467', lineHeight: 18 }}>
+                            {item}
+                          </Text>
+                        </View>
+                      ))}
                     </View>
                   ))}
                 </View>
