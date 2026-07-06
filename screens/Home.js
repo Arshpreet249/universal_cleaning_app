@@ -508,6 +508,7 @@ const Home = () => {
       />
 
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

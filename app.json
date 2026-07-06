@@ -6,25 +6,24 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-
     "newArchEnabled": true,
-
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-  
     "ios": {
       "supportsTablet": true,
-        "bundleIdentifier": "com.universalhra.cleaningapp",
+      "bundleIdentifier": "com.universalhra.cleaningapp",
+      "buildNumber": "1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to autofill your address.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location to improve service experience."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location to improve service experience.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-       "package": "com.universalhra.cleaningapp",
+      "package": "com.universalhra.cleaningapp",
       "versionCode": 1,
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
@@ -35,7 +34,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-           "bundler": "metro"
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "18207f66-8df6-4dff-ada4-b482bbb45b0e"
+      }
     }
   }
 }
