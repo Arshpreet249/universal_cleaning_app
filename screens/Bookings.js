@@ -14,8 +14,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { AuthContext } from '../context/AuthContext'
-import { apiBaseUrl } from '../components/variable'
+import { apiBaseUrl, REACT_APP_HOST_API_URL } from '../components/variable'
 import DateTimePickerModal from 'react-native-modal-datetime-picker'
+import * as FileSystem from 'expo-file-system/legacy'
+import * as Sharing from 'expo-sharing'
 
 const getStatusTextColor = (status) => {
   switch (status?.toLowerCase()) {
@@ -73,7 +75,7 @@ const Bookings = () => {
   // 🔥 PICKER
   const [pickerMode, setPickerMode] = useState(null)
   const [isPickerVisible, setPickerVisible] = useState(false)
-
+const [downloadingId, setDownloadingId] = useState(null)
 
   useFocusEffect(
     useCallback(() => {
@@ -368,6 +370,154 @@ const Bookings = () => {
     }
   }
 
+//   const downloadInvoice = async (item) => {
+//   try {
+//     setDownloadingId(item.id)
+
+//     const response = await fetch(
+//       `${REACT_APP_HOST_API_URL}/admin-user/download-employee-salary-slip/`,
+//       {
+//         method: 'POST',
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({
+//           user_id: user?.id,
+//           appointment_id: item.id,
+//         }),
+//       }
+//     )
+
+//     console.log("invoice response", response)
+//         console.log("invoice response", response.status)
+
+
+//     if (!response.ok) {
+//       const errorText = await response.text()
+//       console.log('Invoice error:', errorText)
+//       alert('Invoice not available')
+//       return
+//     }
+
+//     const blob = await response.blob()
+
+//     const reader = new FileReader()
+
+//     reader.onloadend = async () => {
+//       const base64data = reader.result.split(',')[1]
+
+//       const fileUri =
+//         FileSystem.documentDirectory + `invoice_${item.id}.pdf`
+
+//       await FileSystem.writeAsStringAsync(fileUri, base64data, {
+//         encoding: FileSystem.EncodingType.Base64,
+//       })
+
+//       await Sharing.shareAsync(fileUri, {
+//         mimeType: 'application/pdf',
+//         dialogTitle: 'Download Invoice',
+//         UTI: 'com.adobe.pdf',
+//       })
+//     }
+
+//     reader.readAsDataURL(blob)
+//   } catch (error) {
+//     console.log('Download invoice error:', error)
+//     alert('Failed to download invoice')
+//   } finally {
+//     setDownloadingId(null)
+//   }
+// }
+
+const blobToBase64 = (blob) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onloadend = () => {
+      const result = reader.result
+
+      if (!result) {
+        reject(new Error('Failed to convert PDF to Base64'))
+        return
+      }
+
+      const base64 = result.split(',')[1]
+      resolve(base64)
+    }
+
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+const downloadInvoice = async (item) => {
+  try {
+    setDownloadingId(item.id)
+
+    const invoiceUrl =
+      `${REACT_APP_HOST_API_URL}/admin-user/download-employee-salary-slip/`
+
+    const response = await fetch(invoiceUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: user?.id,
+        appointment_id: item.id,
+      }),
+    })
+
+    console.log('invoice response', response.status)
+    console.log('invoice content-type', response.headers.get('content-type'))
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.log('Invoice error:', errorText)
+      alert('Invoice not available')
+      return
+    }
+
+    const contentType = response.headers.get('content-type')
+
+    if (!contentType || !contentType.includes('application/pdf')) {
+      alert('Backend did not return PDF')
+      return
+    }
+
+    const blob = await response.blob()
+    const base64data = await blobToBase64(blob)
+
+    const fileUri =
+      FileSystem.documentDirectory + `invoice_${item.id}.pdf`
+
+    await FileSystem.writeAsStringAsync(fileUri, base64data, {
+      encoding: FileSystem.EncodingType.Base64,
+    })
+
+    console.log('Invoice saved at:', fileUri)
+
+    const canShare = await Sharing.isAvailableAsync()
+
+    if (canShare) {
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Save Invoice',
+        UTI: 'com.adobe.pdf',
+      })
+    } else {
+      alert('Invoice saved successfully')
+    }
+  } catch (error) {
+    console.log('Save invoice error:', error)
+    alert('Failed to save invoice')
+  } finally {
+    setDownloadingId(null)
+  }
+}
+
   const formatDate = (dateStr) => {
     if (!dateStr) return 'Select'
     const d = new Date(dateStr)
@@ -439,11 +589,17 @@ const Bookings = () => {
         }
       >
         {bookings.map((item) => {
+          
 
           const txn = item.transaction
 
           const startDate = new Date(item.start_from)
           const endDate = item.end_at ? new Date(item.end_at) : null
+          const now = new Date()
+const diffInMs = startDate.getTime() - now.getTime()
+const diffInHours = diffInMs / (1000 * 60 * 60)
+
+const canEditAppointment = diffInHours > 48
 
           const formattedDate = startDate.toLocaleDateString('en-IN', {
             day: 'numeric',
@@ -655,7 +811,7 @@ const Bookings = () => {
               <View className="flex-row justify-between items-center mt-4">
 
                 {/* ✅ CONDITION BASED BUTTON */}
-                {item.process?.toLowerCase() === 'completed' ? (
+                {/* {item.process?.toLowerCase() === 'completed' ? (
                   <TouchableOpacity
                     onPress={() => openFeedbackModal(item)}
                   >
@@ -669,7 +825,35 @@ const Bookings = () => {
                   >
                     <Text className='text-secondary font-semibold'>Edit</Text>
                   </TouchableOpacity>
-                )}
+                )} */}
+
+                {item.process?.toLowerCase() === 'completed' ? (
+           <TouchableOpacity
+             onPress={() => openFeedbackModal(item)}
+  >
+    <Text className='text-secondary font-semibold'>
+      {feedbackMap[item.id] ? 'Update Feedback' : 'Give Feedback'}
+    </Text>
+  </TouchableOpacity>
+) : canEditAppointment ? (
+  <TouchableOpacity
+    onPress={() => openEditModal(item)}
+  >
+    <Text className='text-secondary font-semibold'>Edit</Text>
+  </TouchableOpacity>
+) : null}
+
+                {paymentStatus?.toLowerCase() === 'succeeded' && (
+  <TouchableOpacity
+    onPress={() => downloadInvoice(item)}
+    disabled={downloadingId === item.id}
+    className="text-secondary font-semibold"
+  >
+    <Text className="text-secondary font-semibold">
+      {downloadingId === item.id ? 'Downloading...' : 'Download Invoice'}
+    </Text>
+  </TouchableOpacity>
+)}
 
                 {/* SHOW MORE BUTTON */}
                 <TouchableOpacity
