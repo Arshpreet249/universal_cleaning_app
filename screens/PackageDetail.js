@@ -628,13 +628,13 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 /* ─── Icon map: matches common service keywords to icons ─── */
 const SECTION_ICONS = {
-  'Description':          { lib: 'Ionicons',   name: 'document-text-outline',   color: '#3B82F6' },
-  'Terms & Conditions':   { lib: 'Ionicons',   name: 'shield-checkmark-outline', color: '#6366F1' },
-  'Deposit Policy':       { lib: 'Ionicons',   name: 'wallet-outline',           color: '#F59E0B' },
-  'Refund Policy':        { lib: 'Ionicons',   name: 'return-down-back-outline', color: '#10B981' },
-  'Additional Conditions':{ lib: 'Ionicons',   name: 'information-circle-outline',color: '#8B5CF6' },
-  'Policies':             { lib: 'Ionicons',   name: 'lock-closed-outline',      color: '#EF4444' },
-  'Our Work':             { lib: 'Ionicons',   name: 'images-outline',           color: '#3B82F6' },
+  'Description': { lib: 'Ionicons', name: 'document-text-outline', color: '#3B82F6' },
+  'Terms & Conditions': { lib: 'Ionicons', name: 'shield-checkmark-outline', color: '#6366F1' },
+  'Deposit Policy': { lib: 'Ionicons', name: 'wallet-outline', color: '#F59E0B' },
+  'Refund Policy': { lib: 'Ionicons', name: 'return-down-back-outline', color: '#10B981' },
+  'Additional Conditions': { lib: 'Ionicons', name: 'information-circle-outline', color: '#8B5CF6' },
+  'Policies': { lib: 'Ionicons', name: 'lock-closed-outline', color: '#EF4444' },
+  'Our Work': { lib: 'Ionicons', name: 'images-outline', color: '#3B82F6' },
 }
 
 const SectionIcon = ({ title }) => {
@@ -955,6 +955,19 @@ const PackageDetail = ({ route }) => {
 
           <Divider />
 
+          {/* PACKAGE TYPE */}
+          {parsed?.package_type && (
+            <View className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4 mb-5">
+              <Text className="text-base font-bold text-slate-900 mb-2">
+                Package Type
+              </Text>
+
+              <Text className="text-[14px] leading-6 font-semibold text-slate-700">
+                {parsed.package_type}
+              </Text>
+            </View>
+          )}
+
           {/* ── Description ── */}
           {parsed?.description && (
             <>
@@ -972,6 +985,44 @@ const PackageDetail = ({ route }) => {
                   </View>
                 )}
               <Divider />
+            </>
+          )}
+
+          {/* SCOPE OF WORK */}
+          {parsed?.scope_of_work && (
+            <>
+
+              <SectionTitle title="Scope of Work" />
+
+              {Object.entries(parsed.scope_of_work).map(([section, items], index) => (
+                <View key={index} className="mb-5">
+                  <View className="flex-row items-center mb-3">
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={18}
+                      color="#2563EB"
+                    />
+
+                    <Text className="ml-2 text-[15px] font-bold text-slate-900 capitalize">
+                      {section.replace(/_/g, ' ')}
+                    </Text>
+                  </View>
+
+                  {Array.isArray(items) &&
+                    items.map((item, i) => (
+                      <View
+                        key={i}
+                        className="flex-row bg-slate-50 rounded-xl border-l-4 border-blue-300 px-3 py-3 mb-2"
+                      >
+                        <View className="w-2 h-2 rounded-full bg-blue-600 mt-2 mr-3" />
+
+                        <Text className="flex-1 text-[13px] leading-5 text-slate-700">
+                          {item}
+                        </Text>
+                      </View>
+                    ))}
+                </View>
+              ))}
             </>
           )}
 
