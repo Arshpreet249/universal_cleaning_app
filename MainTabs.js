@@ -6,6 +6,7 @@ import Basket  from './screens/Basket'
 import Profile from './screens/Profile'
 
 import TabBar from './components/TabBar'
+import Premium from './screens/Premium'
 
 
 const Tab = createBottomTabNavigator()
@@ -18,8 +19,10 @@ export default function MainTabs() {
     >
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="Booking" component={Bookings} />
+        <Tab.Screen name='Premium' component={Premium}/>
       <Tab.Screen name="Basket" component={Basket} />
       <Tab.Screen name="Profile" component={Profile} />
+    
     </Tab.Navigator>
   )
 }

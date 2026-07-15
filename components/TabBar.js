@@ -10,6 +10,7 @@ const TabBar = ({ state, navigation }) => {
   const iconMap = {
     Home: 'home',
     Booking: 'calendar',
+     Premium: 'diamond',
     Basket: 'basket', // ✅ FIXED
     Profile: 'person',
   }

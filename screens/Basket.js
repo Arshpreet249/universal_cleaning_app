@@ -1,4 +1,4 @@
-import React, { useState, useContext, useCallback } from 'react'
+import React, { useState, useContext, useCallback, useMemo } from 'react'
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Platform,
   RefreshControl
 } from 'react-native'
-
+import { ProductContext } from '../context/ProductContext'
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL } from '../components/variable'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -18,6 +18,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native'
 
 const Basket = () => {
   const { token, setCartCount, setBasketItems } = useContext(AuthContext)
+  const { products } = useContext(ProductContext)
 
   const [cartData, setCartData] = useState([])
   const [loading, setLoading] = useState(false)
@@ -61,6 +62,7 @@ const Basket = () => {
 
           try {
             details = item.note ? JSON.parse(item.note) : {}
+            console.log(JSON.stringify(details, null, 2));
           } catch (e) { }
 
           const metaEntries = Object.entries(details).filter(
@@ -73,6 +75,7 @@ const Basket = () => {
                 'total',
                 'package_id',
                 'rowIndex',
+                'id'
               ].includes(key)
           )
 
@@ -92,6 +95,7 @@ const Basket = () => {
               (details.quantity || 1),
           }
         })
+
 
         setCartData(cleanedData)
         setBasketItems(cleanedData)
@@ -146,6 +150,32 @@ const Basket = () => {
     }
   }
 
+  const addOnPackageIds = useMemo(() => {
+    const ids = new Set()
+      ; (products || []).forEach(p => {
+        try {
+          const desc =
+            typeof p.description === 'string'
+              ? JSON.parse(p.description)
+              : p.description
+          if (desc?.package_name?.toUpperCase().includes('ADD ON')) {
+            ids.add(p.id)
+          }
+        } catch (e) {
+          // ignore malformed description
+        }
+      })
+    return ids
+  }, [products])
+
+  const isAddOn = item => {
+    const packageId = item.details?.package_id ?? item.package_id
+    return addOnPackageIds.has(packageId)
+  }
+
+  const packageCount = cartData.filter(item => !isAddOn(item)).length
+
+
   // ---------------- TOTAL ----------------
   const total = cartData.reduce((sum, item) => {
     return sum + (item.displayTotal || 0)
@@ -161,6 +191,10 @@ const Basket = () => {
   }
 
   const isCartEmpty = cartData.length === 0
+
+  const hasMultiSessionPackage = cartData.some(
+    item => Number(item.details?.total_sessions || 0) > 1
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-blue-50 ">
@@ -218,11 +252,14 @@ const Basket = () => {
                           {item.displayMeta.map((meta, i) => (
                             <View key={i} className="flex-row">
                               <Text className="text-gray-500 capitalize">
-                                {meta.key}:
+                                {/* {meta.key}: */}
+                                {meta.key.replace(/_/g, ' ')}:
                               </Text>
                               <Text className="ml-2 text-gray-700">
                                 {meta.value}
                               </Text>
+
+
                             </View>
                           ))}
                         </View>
@@ -231,6 +268,8 @@ const Basket = () => {
                       <Text className="text-secondary font-bold mt-2">
                         price: ${item.displayTotal}
                       </Text>
+
+
                     </View>
 
                     {/* REMOVE */}
@@ -258,6 +297,23 @@ const Basket = () => {
                 </View>
               }
             />
+            {hasMultiSessionPackage && (
+              <View
+                className="mx-4 mb-2 p-3 bg-white border border-blue-200 rounded-xl"
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: Platform.OS === 'ios' ? 120 : 140,
+                  zIndex: 1,
+                }}
+              >
+                <Text className="text-slate-500 text-sm font-medium text-center">
+                  You can select the date for each session according to your convenience after successful payment.
+                </Text>
+              </View>
+            )}
+
 
             {/* FOOTER */}
             <View
@@ -275,16 +331,63 @@ const Basket = () => {
                 <Text className="text-xl font-bold text-primary">
                   $ {total}
                 </Text>
+
+
               </View>
+
+
+
+              {/* <TouchableOpacity
+                onPress={() => {
+                  if (isCartEmpty) return;
+
+                  if (packageCount > 1) {
+                    Alert.alert(
+                      'Booking Restriction',
+                      'Only one package can be booked at a time. You may add Add-On services with the selected package.'
+                    );
+                    return;
+                  }
+
+                  navigation.navigate('BookAppointment', {
+                    appointmentData: cartData,
+                    totalAmount: total,
+                  });
+                }}
+                disabled={isCartEmpty}
+                className={`px-6 py-3 rounded-xl ${isCartEmpty ? 'bg-gray-300' : 'bg-primary'
+                  }`}
+              >
+                <Text className="text-white font-semibold">
+                  Proceed
+                </Text>
+              </TouchableOpacity> */}
 
               <TouchableOpacity
                 onPress={() => {
-                  if (!isCartEmpty) {
-                    navigation.navigate('BookAppointment', {
-                      appointmentData: cartData,
-                      totalAmount: total,
-                    })
+                  if (isCartEmpty) return;
+
+                  if (packageCount > 1) {
+                    Alert.alert(
+                      'Booking Restriction',
+                      'Only one package can be booked at a time. You may add Add-On services with the selected package.'
+                    );
+                    return;
                   }
+
+                  // ✅ NEW: block booking if cart has only add-on(s), no main package
+                  if (packageCount === 0) {
+                    Alert.alert(
+                      'Booking Restriction',
+                      'Add-On services cannot be booked on their own. Please add a package first.'
+                    );
+                    return;
+                  }
+
+                  navigation.navigate('BookAppointment', {
+                    appointmentData: cartData,
+                    totalAmount: total,
+                  });
                 }}
                 disabled={isCartEmpty}
                 className={`px-6 py-3 rounded-xl ${isCartEmpty ? 'bg-gray-300' : 'bg-primary'

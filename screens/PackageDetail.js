@@ -1,609 +1,4 @@
-// import React, { useState, useContext } from 'react'
-// import {
-//   View,
-//   Text,
-//   ScrollView,
-//   Image,
-//   TouchableOpacity,
-//   Alert
-// } from 'react-native'
-// import { useNavigation } from '@react-navigation/native'
-// import { AuthContext } from '../context/AuthContext'
-// import { REACT_APP_HOST_API_URL } from '../components/variable'
-// import { SafeAreaView } from 'react-native-safe-area-context'
-// import BackButton from '../components/BackButton'
-
-
-// const PackageDetail = ({ route }) => {
-//   const { item } = route.params
-//   const navigation = useNavigation()
-//   const { token, basketItems, setBasketItems } = useContext(AuthContext)
-
-//   const [selectedItems, setSelectedItems] = useState([])
-
-//   const parseDescription = (data) => {
-//     try {
-//       return typeof data === 'string' ? JSON.parse(data) : data
-//     } catch {
-//       return null
-//     }
-//   }
-
-//   const parsed = parseDescription(item.description)
-
-//   const getMinPrice = (price) => {
-//     if (!price) return null
-//     const str = String(price).toLowerCase().trim()
-//     const cleaned = str.replace(/from/g, '').trim()
-//     if (cleaned.includes('+')) {
-//       return parseFloat(cleaned.replace('+', '').trim())
-//     }
-//     if (/[–-]/.test(cleaned)) {
-//       return parseFloat(cleaned.split(/[–-]/)[0])
-//     }
-//     return parseFloat(cleaned)
-//   }
-
-//   const getDataArray = (parsed) => {
-//     if (!parsed) return []
-//     if (Array.isArray(parsed.pricing)) return parsed.pricing
-//     if (Array.isArray(parsed.packages)) return parsed.packages
-//     if (Array.isArray(parsed.sub_packages)) return parsed.sub_packages
-//     if (parsed.pricing_options?.option_b) return parsed.pricing_options.option_b
-//     return []
-//   }
-
-//   const data = getDataArray(parsed)
-
-//   const getStartingPrice = (data) => {
-//     if (!data || data.length === 0) return null
-//     let prices = data
-//       .map(item => {
-//         let price = item.price_sgd
-//         if (typeof price === 'string') {
-//           const num = price.split(/[–-]/)[0]
-//           return parseFloat(num)
-//         }
-//         return price
-//       })
-//       .filter(Boolean)
-//     return Math.min(...prices)
-//   }
-
-//   const startingPrice = getStartingPrice(data)
-
-//   const getHeaders = (data) => {
-//     if (!data.length) return []
-//     const sample = data[0]
-//     return Object.keys(sample)
-//       .filter(key => key !== 'payment_type')
-//       .map(key =>
-//         key === 'price_sgd'
-//           ? 'PRICE'
-//           : key.toUpperCase().replace(/_/g, ' ')
-//       )
-//   }
-
-//   const headers = getHeaders(data)
-//   const isShortTable = headers.length <= 3
-
-//   const isAddOn =
-//     parsed?.package_name?.toLowerCase().includes('add on') || false
-
-//   const toggleSelection = (row, index) => {
-//     const exists = selectedItems.find(i => i.rowIndex === index)
-//     if (isAddOn) {
-//       if (exists) {
-//         setSelectedItems(prev => prev.filter(i => i.rowIndex !== index))
-//       } else {
-//         setSelectedItems(prev => [...prev, { ...row, rowIndex: index, quantity: 1 }])
-//       }
-//     } else {
-//       if (exists) {
-//         setSelectedItems([])
-//       } else {
-//         setSelectedItems([{ ...row, rowIndex: index, quantity: 1 }])
-//       }
-//     }
-//   }
-
-//   const updateQuantity = (index, type) => {
-//     setSelectedItems(prev =>
-//       prev.map(item => {
-//         if (item.rowIndex === index) {
-//           let qty = item.quantity || 1
-//           if (type === 'inc') qty++
-//           if (type === 'dec' && qty > 1) qty--
-//           return { ...item, quantity: qty }
-//         }
-//         return item
-//       })
-//     )
-//   }
-
-//   const handleAddToCart = async () => {
-//     if (selectedItems.length === 0) return
-//     try {
-//       if (!token) {
-//         Alert.alert('Login Required', 'Please login first!')
-//         return
-//       }
-
-//       let newItems = []
-
-//       for (let row of selectedItems) {
-//         let price = getMinPrice(row.price_sgd)
-//         if (price === null || isNaN(price)) {
-//           Alert.alert('Invalid Plan', 'This plan requires a custom quote.')
-//           return
-//         }
-
-//         price = Number(price)
-//         const { price_sgd, ...cleanRow } = row
-//         const qty = row.quantity || 1
-//         const total = price * qty
-
-//         const itemToAdd = {
-//           package_id: item.id,
-//           service: parsed?.package_name || 'Package',
-//           ...cleanRow,
-//           price,
-//           quantity: qty,
-//           totalPrice: total,
-//         }
-
-//         const res = await fetch(`${REACT_APP_HOST_API_URL}/api/booking/add/`, {
-//           method: 'POST',
-//           headers: {
-//             'Content-Type': 'application/json',
-//             Authorization: `Bearer ${token}`,
-//           },
-//           body: JSON.stringify({
-//             note: JSON.stringify(itemToAdd),
-//             price: itemToAdd.totalPrice,
-//             package_id :item.id
-//           }),
-//         })
-
-//         const data = await res.json()
-
-//         if (data.status !== 200) {
-//           Alert.alert('Error', data.message || 'Booking failed')
-//           return
-//         }
-
-//         newItems.push(itemToAdd)
-//       }
-
-//       setBasketItems([...basketItems, ...newItems])
-
-//       navigation.navigate('Main', {
-//         screen: 'Basket',
-//       })
-
-//     } catch (err) {
-//       Alert.alert('Error', 'Something went wrong!')
-//     }
-//   }
-
-//   const SectionTitle = ({ title }) => (
-//     <Text className="text-[20px] font-bold mt-5 mb-2 text-blue-600">
-//       {title}
-//     </Text>
-//   )
-
-//   const renderList = (data) => {
-//     if (!data) return null
-//     return data.map((item, index) => (
-//       <Text
-//         key={index}
-//         className="text-[13px] text-gray-700 mb-2 leading-[18px] bg-gray-100 p-3 rounded-xl"
-//       >
-//         • {typeof item === 'string' ? item : item.description || '-'}
-//       </Text>
-//     ))
-//   }
-
-//   const renderTerms = (terms) => {
-//     if (!terms) return null
-//     return terms.map((item, index) => (
-//       <View key={index} className="mb-2">
-//         <Text className="text-[14px] font-semibold text-blue-600 mb-1">
-//           {item.heading || item.condition}
-//         </Text>
-//         {Array.isArray(item.description)
-//           ? item.description.map((d, i) => (
-//             <Text
-//               key={i}
-//               className="text-[13px] text-gray-700 mb-2 leading-[18px] bg-gray-100 p-3 rounded-xl"
-//             >
-//               • {d}
-//             </Text>
-//           ))
-//           : (
-//             <Text className="text-[13px] text-gray-700 mb-2 leading-[18px] bg-gray-100 p-3 rounded-xl">
-//               • {item.description}
-//             </Text>
-//           )}
-//       </View>
-//     ))
-//   }
-
-//   const renderRefund = (refund) => {
-//     if (!refund) return null
-//     return Object.entries(refund).map(([key, value], index) => (
-//       <Text
-//         key={index}
-//         className="text-[13px] text-gray-700 mb-2 leading-[18px] bg-gray-100 p-3 rounded-xl"
-//       >
-//         • {key.replace(/_/g, ' ').toUpperCase()} : {value}
-//       </Text>
-//     ))
-//   }
-
-//   const GalleryTile = ({ img, height, rounded = 16, style }) => (
-//     <View
-//       style={[
-//         {
-//           height,
-//           borderRadius: rounded,
-//           overflow: 'hidden',
-//           backgroundColor: '#e2e8f0',
-//         },
-//         style,
-//       ]}
-//     >
-//       <Image source={{ uri: img.image_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-//     </View>
-//   )
-
-//   return (
-//     <SafeAreaView className="flex-1">
-//       <View className="px-4 py-2">
-//         <BackButton />
-//       </View>
-//       <ScrollView className="flex-1">
-//         <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
-//           Package Details
-//         </Text>
-
-//         {/* IMAGE */}
-//         <Image
-//           source={{ uri: item.view_images_url }}
-//           className="w-full h-[220px]"
-//         />
-
-//         <View className="bg-white -mt-5 rounded-t-2xl p-4">
-
-//           {/* TITLE */}
-//           <Text className="text-[22px] font-bold mb-4 text-blue-600">
-//             {parsed?.package_name}
-//           </Text>
-
-//           {/* STARTING PRICE */}
-//           {startingPrice && (
-//             <View className="flex-row justify-between items-center mb-5">
-//               <View>
-//                 <Text className="text-[12px] text-gray-500">Starting from</Text>
-//                 <Text className="text-[26px] font-bold text-blue-600">
-//                   ${startingPrice}
-//                   <Text className="text-[14px] text-gray-500"></Text>
-//                 </Text>
-//               </View>
-//             </View>
-//           )}
-
-//           {/* DESCRIPTION */}
-//           {parsed?.description && (
-//             <>
-//               <SectionTitle title="Description" />
-//               {Array.isArray(parsed.description)
-//                 ? renderList(parsed.description)
-//                 : (
-//                   <Text className="text-[13px] text-gray-700 mb-2 bg-gray-100 p-3 rounded-xl">
-//                     {parsed.description}
-//                   </Text>
-//                 )}
-//             </>
-//           )}
-
-
-//           {/* SELECTION INFO */}
-//           <Text className="text-gray-500 mb-3 text-[12px]">
-//             {isAddOn
-//               ? 'You can select multiple add-on services'
-//               : 'Select one package'}
-//           </Text>
-
-//           {/* TABLE */}
-//           <ScrollView
-//             horizontal={!isShortTable}
-//             showsHorizontalScrollIndicator={false}
-//           >
-//             <View className={`${isShortTable ? 'w-full' : ''} border border-gray-200 rounded-xl overflow-hidden`}>
-
-//               {/* HEADER */}
-//               {headers.length > 0 && (
-//                 <View className="flex-row bg-blue-600">
-//                   {/* Checkbox column placeholder */}
-//                   <View className="w-10 border-r border-blue-400" />
-
-//                   {headers.map((h, i) => (
-//                     <View
-//                       key={i}
-//                       className={`py-3 px-2 items-center justify-center
-//                         ${isShortTable ? 'flex-1' : 'w-[110px]'}
-//                         ${i < headers.length - 1 ? 'border-r border-blue-400' : ''}
-//                       `}
-//                     >
-//                       <Text className="text-[12px] font-bold text-white text-center">
-//                         {h}
-//                       </Text>
-//                     </View>
-//                   ))}
-//                 </View>
-//               )}
-
-//               {/* ROWS */}
-//               {data.map((row, index) => {
-//                 const isSelected = selectedItems.some(i => i.rowIndex === index)
-
-//                 return (
-//                   <TouchableOpacity
-//                     key={index}
-//                     onPress={() => toggleSelection(row, index)}
-//                     className={`flex-row items-center border-t
-//                       ${isSelected
-//                         ? 'bg-blue-50 border-blue-200'
-//                         : 'bg-white border-gray-200'}
-//                     `}
-//                   >
-//                     {/* CHECKBOX — same w-10 as header placeholder */}
-//                     <View className={`w-10 py-4 items-center justify-center border-r
-//                       ${isSelected ? 'border-blue-200' : 'border-gray-200'}
-//                     `}>
-//                       <View className="w-5 h-5 border border-blue-600 rounded items-center justify-center">
-//                         <Text className="text-blue-600 font-bold text-[11px]">
-//                           {isSelected ? '✓' : ''}
-//                         </Text>
-//                       </View>
-//                     </View>
-
-//                     {/* VALUES */}
-//                     <View className="flex-1">
-//                       <View className="flex-row">
-//                         {headers.map((header, i) => {
-//                           let key = header === 'PRICE'
-//                             ? 'price_sgd'
-//                             : header.toLowerCase().replace(/ /g, '_')
-
-//                           let value = row[key]
-
-//                           if (key === 'duration_hours' && value) value = `${value} hrs`
-//                           if (key === 'duration_minutes' && value) value = `${value} mins`
-
-//                           return (
-//                             <View
-//                               key={i}
-//                               className={`py-4 px-2 items-center justify-center
-//                                 ${isShortTable ? 'flex-1' : 'w-[110px]'}
-//                                 ${i < headers.length - 1
-//                                   ? isSelected ? 'border-r border-blue-200' : 'border-r border-gray-200'
-//                                   : ''}
-//                               `}
-//                             >
-//                               <Text className="text-[13px] text-gray-900 text-center">
-//                                 {value ? `${key === 'price_sgd' ? '$' : ''}${value}` : '-'}
-//                               </Text>
-//                             </View>
-//                           )
-//                         })}
-//                       </View>
-
-//                       {/* QTY (ADD-ON only) */}
-//                       {isAddOn && isSelected && (
-//                         <>
-//                           <View className="flex-row items-center justify-center mt-2">
-//                             <TouchableOpacity
-//                               onPress={() => updateQuantity(index, 'dec')}
-//                               className="px-3 py-1 bg-gray-200 rounded-md"
-//                             >
-//                               <Text className="text-black font-bold">-</Text>
-//                             </TouchableOpacity>
-
-//                             <Text className="mx-4 text-base font-semibold">
-//                               {selectedItems.find(i => i.rowIndex === index)?.quantity || 1}
-//                             </Text>
-
-//                             <TouchableOpacity
-//                               onPress={() => updateQuantity(index, 'inc')}
-//                               className="px-3 py-1 bg-gray-200 rounded-md"
-//                             >
-//                               <Text className="text-black font-bold">+</Text>
-//                             </TouchableOpacity>
-//                           </View>
-
-//                           <Text className="text-center mt-2 mb-2 text-blue-600 font-semibold">
-//                             Total: $
-//                             {(
-//                               (selectedItems.find(i => i.rowIndex === index)?.quantity || 1) *
-//                               (getMinPrice(row.price_sgd) || 0)
-//                             ).toFixed(2)}
-//                           </Text>
-//                         </>
-//                       )}
-//                     </View>
-//                   </TouchableOpacity>
-//                 )
-//               })}
-
-//             </View>
-//           </ScrollView>
-
-//           {/* MULTIPLE IMAGES - VERTICAL */}
-//           {/* {item?.multiple_images?.length > 0 && (
-//             <>
-//               <SectionTitle title="Our Work" />
-
-//               <View className="mt-3 mb-5 px-2">
-//                 {item.multiple_images.map((img) => (
-//                   <Image
-//                     key={img.id}
-//                     source={{ uri: img.image_url }}
-//                     className="w-full h-[200px] rounded mb-3"
-//                     resizeMode="cover"
-//                   />
-//                 ))}
-//               </View>
-//             </>
-//           )} */}
-
-//           {item?.multiple_images?.length > 0 && (() => {
-//             const imgs = item.multiple_images
-//             const hero = imgs[0]
-//             const gallery = imgs.slice(1)
-
-//             return (
-//               <View style={{ marginTop: 28, marginBottom: 16 }}>
-//                 <SectionTitle title="Our Work" />
-
-//                 {hero && (
-//                   <View
-//                     style={{
-//                       marginTop: 8,
-//                       marginBottom: 10,
-//                       borderRadius: 20,
-//                       padding: 4,
-//                       backgroundColor: '#fff',
-//                       shadowColor: '#0f172a',
-//                       shadowOffset: { width: 0, height: 10 },
-//                       shadowOpacity: 0.12,
-//                       shadowRadius: 18,
-//                       elevation: 4,
-//                     }}
-//                   >
-//                     <GalleryTile img={hero} height={235} rounded={17} />
-//                   </View>
-//                 )}
-
-//                 {gallery.length > 0 && (
-//                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-//                     {gallery.map((img, i) => {
-//                       const isLastOdd = gallery.length % 2 === 1 && i === gallery.length - 1
-
-//                       return (
-//                         <View
-//                           key={img.id || img.image_url}
-//                           style={{
-//                             width: isLastOdd ? '100%' : '48.5%',
-//                             borderRadius: 16,
-//                             padding: 3,
-//                             backgroundColor: '#fff',
-//                             shadowColor: '#0f172a',
-//                             shadowOffset: { width: 0, height: 6 },
-//                             shadowOpacity: 0.08,
-//                             shadowRadius: 12,
-//                             elevation: 2,
-//                           }}
-//                         >
-//                           <GalleryTile img={img} height={isLastOdd ? 180 : 142} rounded={13} />
-//                         </View>
-//                       )
-//                     })}
-//                   </View>
-//                 )}
-
-//                 {imgs.length === 1 && (
-//                   <View
-//                     style={{
-//                       marginTop: 10,
-//                       backgroundColor: '#f8fafc',
-//                       borderRadius: 16,
-//                       padding: 14,
-//                       borderWidth: 1,
-//                       borderColor: '#e2e8f0',
-//                     }}
-//                   >
-//                     <Text style={{ color: '#64748b', fontSize: 12, textAlign: 'center' }}>
-//                       More work photos coming soon
-//                     </Text>
-//                   </View>
-//                 )}
-//               </View>
-//             )
-//           })()}
-
-//           {/* TERMS */}
-//           {parsed?.terms_and_conditions && (
-//             <>
-//               <SectionTitle title="Terms & Conditions" />
-//               {renderTerms(parsed.terms_and_conditions)}
-//             </>
-//           )}
-
-//           {/* DEPOSIT */}
-//           {parsed?.deposit_policy && (
-//             <>
-//               <SectionTitle title="Deposit Policy" />
-//               {renderList(parsed.deposit_policy)}
-//             </>
-//           )}
-
-//           {/* REFUND */}
-//           {parsed?.refund_policy && (
-//             <>
-//               <SectionTitle title="Refund Policy" />
-//               {renderRefund(parsed.refund_policy)}
-//             </>
-//           )}
-
-//           {/* ADDITIONAL */}
-//           {parsed?.additional_conditions && (
-//             <>
-//               <SectionTitle title="Additional Conditions" />
-//               {renderTerms(parsed.additional_conditions)}
-//             </>
-//           )}
-
-//           {/* POLICIES */}
-//           {parsed?.policies && (
-//             <>
-//               <SectionTitle title="Policies" />
-//               {Object.entries(parsed.policies).map(([key, value], i) => (
-//                 <View key={i} className="mb-2">
-//                   <Text className="text-[14px] font-semibold text-blue-600 mb-1">
-//                     {key.replace(/_/g, ' ').toUpperCase()}
-//                   </Text>
-//                   {renderList(value)}
-//                 </View>
-//               ))}
-//             </>
-//           )}
-
-//         </View>
-//       </ScrollView>
-
-//       {/* ADD TO CART BUTTON */}
-//       {selectedItems.length > 0 && (
-//         <View className="p-3 bg-white">
-//           <TouchableOpacity
-//             className="bg-blue-600 p-4 rounded-xl items-center"
-//             onPress={handleAddToCart}
-//           >
-//             <Text className="text-white font-bold">
-//               Add {selectedItems.length} items
-//             </Text>
-//           </TouchableOpacity>
-//         </View>
-//       )}
-//     </SafeAreaView>
-//   )
-// }
-
-// export default PackageDetail
-
-
-import React, { useState, useContext } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import {
   View,
   Text,
@@ -613,6 +8,9 @@ import {
   Alert,
   Dimensions,
   Platform,
+  ActivityIndicator,
+  Modal,
+  StatusBar,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { AuthContext } from '../context/AuthContext'
@@ -626,19 +24,50 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
-/* ─── Icon map: matches common service keywords to icons ─── */
-const SECTION_ICONS = {
-  'Description': { lib: 'Ionicons', name: 'document-text-outline', color: '#3B82F6' },
-  'Terms & Conditions': { lib: 'Ionicons', name: 'shield-checkmark-outline', color: '#6366F1' },
-  'Deposit Policy': { lib: 'Ionicons', name: 'wallet-outline', color: '#F59E0B' },
-  'Refund Policy': { lib: 'Ionicons', name: 'return-down-back-outline', color: '#10B981' },
-  'Additional Conditions': { lib: 'Ionicons', name: 'information-circle-outline', color: '#8B5CF6' },
-  'Policies': { lib: 'Ionicons', name: 'lock-closed-outline', color: '#EF4444' },
-  'Our Work': { lib: 'Ionicons', name: 'images-outline', color: '#3B82F6' },
-}
+/* ─── Theme builder: light theme by default, dark+gold for premium packages ─── */
+const buildTheme = (isPremium) => ({
+  isPremium,
+  screenBg: isPremium ? '#2A3348' : '#F0F4FF',
+  cardBg: isPremium ? '#333E58' : '#fff',
+  cardShadow: isPremium ? '#000' : '#0F172A',
+  textPrimary: isPremium ? '#F8FAFC' : '#0F172A',
+  textSecondary: isPremium ? '#CBD5E1' : '#64748B',
+  textMuted: isPremium ? '#94A3B8' : '#94A3B8',
+  heading: isPremium ? '#F8FAFC' : '#1E293B',
+  accent: isPremium ? '#FBBF24' : '#2563EB',
+  accentDark: isPremium ? '#B45309' : '#1D4ED8',
+  accentSoftBg: isPremium ? 'rgba(251,191,36,0.14)' : '#EFF6FF',
+  accentSoftBorder: isPremium ? 'rgba(251,191,36,0.4)' : '#BFDBFE',
+  border: isPremium ? '#465067' : '#F1F5F9',
+  bulletBg: isPremium ? '#3C4763' : '#F8FAFC',
+  bulletBorder: isPremium ? '#6B4A17' : '#BFDBFE',
+  bulletDot: isPremium ? '#FBBF24' : '#3B82F6',
+  tableGradient: isPremium ? ['#B45309', '#FBBF24'] : ['#2563EB', '#3B82F6'],
+  tableBorder: isPremium ? '#1E293B' : '#E2E8F0',
+  rowSelectedBg: isPremium ? 'rgba(251,191,36,0.12)' : '#EFF6FF',
+  rowSelectedBorder: isPremium ? 'rgba(251,191,36,0.35)' : '#BFDBFE',
+  checkboxOff: isPremium ? '#8492AC' : '#CBD5E1',
+  pillBg: isPremium ? 'rgba(251,191,36,0.16)' : '#EFF6FF',
+  pillText: isPremium ? '#FBBF24' : '#2563EB',
+  ctaTextOnAccent: isPremium ? '#1F2937' : '#fff',
+  badgeLabel: isPremium ? 'PREMIUM PACKAGE' : 'REGULAR PACKAGE',
+  addOnStripBg: isPremium ? 'rgba(251,191,36,0.12)' : '#F0F7FF',
+})
 
-const SectionIcon = ({ title }) => {
-  const cfg = SECTION_ICONS[title]
+/* ─── Icon map: matches common service keywords to icons ─── */
+const getSectionIcons = (theme) => ({
+  'Description': { name: 'document-text-outline', color: theme.accent },
+  'Terms & Conditions': { name: 'shield-checkmark-outline', color: theme.isPremium ? '#A78BFA' : '#6366F1' },
+  'Deposit Policy': { name: 'wallet-outline', color: '#F59E0B' },
+  'Refund Policy': { name: 'return-down-back-outline', color: '#10B981' },
+  'Additional Conditions': { name: 'information-circle-outline', color: theme.isPremium ? '#A78BFA' : '#8B5CF6' },
+  'Policies': { name: 'lock-closed-outline', color: '#EF4444' },
+  'Our Work': { name: 'images-outline', color: theme.accent },
+  'Feedback': { name: 'chatbubble-ellipses-outline', color: '#F59E0B' },
+})
+
+const SectionIcon = ({ title, theme }) => {
+  const cfg = getSectionIcons(theme)[title]
   if (!cfg) return null
   return (
     <View style={{
@@ -653,45 +82,45 @@ const SectionIcon = ({ title }) => {
 }
 
 /* ─── Divider ─── */
-const Divider = () => (
-  <View style={{ height: 1, backgroundColor: '#F1F5F9', marginVertical: 20 }} />
+const Divider = ({ theme }) => (
+  <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 20 }} />
 )
 
 /* ─── Section Title ─── */
-const SectionTitle = ({ title }) => (
+const SectionTitle = ({ title, theme }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 4 }}>
-    <SectionIcon title={title} />
-    <Text style={{ fontSize: 16, fontWeight: '700', color: '#1E293B', letterSpacing: 0.2 }}>
+    <SectionIcon title={title} theme={theme} />
+    <Text style={{ fontSize: 16, fontWeight: '700', color: theme.heading, letterSpacing: 0.2 }}>
       {title}
     </Text>
   </View>
 )
 
 /* ─── Pill Badge ─── */
-const Pill = ({ label, icon }) => (
+const Pill = ({ label, icon, theme }) => (
   <View style={{
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#EFF6FF', borderRadius: 20,
+    backgroundColor: theme.pillBg, borderRadius: 20,
     paddingHorizontal: 10, paddingVertical: 5, marginRight: 8, marginBottom: 8,
   }}>
-    {icon && <Ionicons name={icon} size={12} color="#3B82F6" style={{ marginRight: 4 }} />}
-    <Text style={{ fontSize: 11, fontWeight: '600', color: '#2563EB' }}>{label}</Text>
+    {icon && <Ionicons name={icon} size={12} color={theme.pillText} style={{ marginRight: 4 }} />}
+    <Text style={{ fontSize: 11, fontWeight: '600', color: theme.pillText }}>{label}</Text>
   </View>
 )
 
 /* ─── Bullet card ─── */
-const BulletCard = ({ text }) => (
+const BulletCard = ({ text, theme }) => (
   <View style={{
     flexDirection: 'row', alignItems: 'flex-start',
-    backgroundColor: '#F8FAFC', borderRadius: 12,
+    backgroundColor: theme.bulletBg, borderRadius: 12,
     padding: 12, marginBottom: 8,
-    borderLeftWidth: 3, borderLeftColor: '#BFDBFE',
+    borderLeftWidth: 3, borderLeftColor: theme.bulletBorder,
   }}>
     <View style={{
       width: 6, height: 6, borderRadius: 3,
-      backgroundColor: '#3B82F6', marginTop: 5, marginRight: 10, flexShrink: 0,
+      backgroundColor: theme.bulletDot, marginTop: 5, marginRight: 10, flexShrink: 0,
     }} />
-    <Text style={{ fontSize: 13, color: '#475569', lineHeight: 19, flex: 1 }}>
+    <Text style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 19, flex: 1 }}>
       {typeof text === 'string' ? text : text.description || '-'}
     </Text>
   </View>
@@ -704,6 +133,40 @@ const GalleryTile = ({ img, height, rounded = 16, style }) => (
   </View>
 )
 
+/* ─── Feedback Card ─── */
+const FeedbackCard = ({ feedback, theme }) => (
+  <View style={{
+    backgroundColor: theme.bulletBg, borderRadius: 12, padding: 12, marginBottom: 8,
+    borderLeftWidth: 3, borderLeftColor: '#F59E0B',
+  }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+      <Text style={{ fontSize: 13, fontWeight: '700', color: theme.heading, flex: 1 }} numberOfLines={1}>
+        {feedback.user_name || feedback.name || 'Anonymous'}
+      </Text>
+      <View style={{ flexDirection: 'row' }}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Ionicons
+            key={i}
+            name={i < Math.round(feedback.rating || 0) ? 'star' : 'star-outline'}
+            size={12}
+            color="#F59E0B"
+          />
+        ))}
+      </View>
+    </View>
+    {!!feedback.comment && (
+      <Text style={{ fontSize: 12, color: theme.textSecondary, lineHeight: 17 }}>
+        {feedback.comment}
+      </Text>
+    )}
+    {!!feedback.created_at && (
+      <Text style={{ fontSize: 10, color: theme.textMuted, marginTop: 6 }}>
+        {new Date(feedback.created_at).toLocaleDateString()}
+      </Text>
+    )}
+  </View>
+)
+
 /* ════════════════════════════════════════════════════════════ */
 const PackageDetail = ({ route }) => {
   const { item } = route.params
@@ -713,6 +176,9 @@ const PackageDetail = ({ route }) => {
   const [packageFeedback, setPackageFeedback] = useState([])
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false)
+
+  const isPremium = !!item.is_premium
+  const theme = buildTheme(isPremium)
 
   /* ── Helpers ── */
   const parseDescription = (data) => {
@@ -762,7 +228,7 @@ const PackageDetail = ({ route }) => {
   const getHeaders = (data) => {
     if (!data.length) return []
     return Object.keys(data[0])
-      .filter(k => k !== 'payment_type')
+      .filter(k => k !== 'payment_type'&& k !== 'id' && k !== 'package_id')
       .map(k => k.startsWith('price') ? 'PRICE' : k.toUpperCase().replace(/_/g, ' '))
   }
   const headers = getHeaders(data)
@@ -800,7 +266,18 @@ const PackageDetail = ({ route }) => {
         const { price_sgd, ...cleanRow } = row
         const qty = row.quantity || 1
         const total = price * qty
-        const itemToAdd = { package_id: item.id, service: parsed?.package_name || 'Package', ...cleanRow, price, quantity: qty, totalPrice: total }
+
+        const itemToAdd = {
+          package_id: item.id,
+          service: parsed?.package_name || 'Package',
+          ...cleanRow,
+          price,
+          quantity: qty,
+          totalPrice: total
+        }
+
+        console.log('Adding to basket:', itemToAdd)
+        
         const res = await fetch(`${REACT_APP_HOST_API_URL}/api/booking/add/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -815,9 +292,33 @@ const PackageDetail = ({ route }) => {
     } catch { Alert.alert('Error', 'Something went wrong!') }
   }
 
+  /* ── Fetch feedback for this package ── */
+  useEffect(() => {
+    let isMounted = true
+    const fetchFeedback = async () => {
+      setFeedbackLoading(true)
+      try {
+        const res = await fetch(`${REACT_APP_HOST_API_URL}/api/booking/feedback/?package_id=${item.id}`)
+        const json = await res.json()
+        const list = Array.isArray(json?.results)
+          ? json.results
+          : Array.isArray(json)
+            ? json
+            : []
+        if (isMounted) setPackageFeedback(list)
+      } catch {
+        if (isMounted) setPackageFeedback([])
+      } finally {
+        if (isMounted) setFeedbackLoading(false)
+      }
+    }
+    fetchFeedback()
+    return () => { isMounted = false }
+  }, [item.id])
+
   const renderList = (data) => {
     if (!data) return null
-    return data.map((item, i) => <BulletCard key={i} text={item} />)
+    return data.map((item, i) => <BulletCard key={i} text={item} theme={theme} />)
   }
 
   const renderTerms = (terms) => {
@@ -825,14 +326,14 @@ const PackageDetail = ({ route }) => {
     return terms.map((item, i) => (
       <View key={i} style={{ marginBottom: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-          <Ionicons name="chevron-forward-circle" size={15} color="#6366F1" style={{ marginRight: 6 }} />
-          <Text style={{ fontSize: 13, fontWeight: '700', color: '#1E293B' }}>
+          <Ionicons name="chevron-forward-circle" size={15} color={theme.isPremium ? '#A78BFA' : '#6366F1'} style={{ marginRight: 6 }} />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: theme.heading }}>
             {item.heading || item.condition}
           </Text>
         </View>
         {Array.isArray(item.description)
-          ? item.description.map((d, j) => <BulletCard key={j} text={d} />)
-          : <BulletCard text={item.description} />}
+          ? item.description.map((d, j) => <BulletCard key={j} text={d} theme={theme} />)
+          : <BulletCard text={item.description} theme={theme} />}
       </View>
     ))
   }
@@ -842,10 +343,10 @@ const PackageDetail = ({ route }) => {
     return Object.entries(refund).map(([key, value], i) => (
       <View key={i} style={{
         flexDirection: 'row', justifyContent: 'space-between',
-        backgroundColor: '#F8FAFC', borderRadius: 12, padding: 12, marginBottom: 8,
+        backgroundColor: theme.bulletBg, borderRadius: 12, padding: 12, marginBottom: 8,
         borderLeftWidth: 3, borderLeftColor: '#10B981',
       }}>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: '#64748B', flex: 1 }}>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: theme.textSecondary, flex: 1 }}>
           {key.replace(/_/g, ' ').toUpperCase()}
         </Text>
         <Text style={{ fontSize: 12, color: '#10B981', fontWeight: '600', flex: 1, textAlign: 'right' }}>
@@ -860,7 +361,8 @@ const PackageDetail = ({ route }) => {
 
   /* ──────────────────────── RENDER ──────────────────────── */
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.screenBg }}>
+      <StatusBar barStyle={isPremium ? 'light-content' : 'dark-content'} />
 
       {/* ── Floating Back Button ── */}
       <View style={{ position: 'absolute', top: Platform.OS === 'ios' ? 52 : 16, left: 16, zIndex: 99 }}>
@@ -868,13 +370,13 @@ const PackageDetail = ({ route }) => {
           onPress={() => navigation.goBack()}
           style={{
             width: 40, height: 40, borderRadius: 20,
-            backgroundColor: 'rgba(255,255,255,0.92)',
+            backgroundColor: isPremium ? 'rgba(17,26,46,0.85)' : 'rgba(255,255,255,0.92)',
             alignItems: 'center', justifyContent: 'center',
             shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.12, shadowRadius: 8, elevation: 5,
           }}
         >
-          <Ionicons name="arrow-back" size={20} color="#1E293B" />
+          <Ionicons name="arrow-back" size={20} color={isPremium ? '#F8FAFC' : '#1E293B'} />
         </TouchableOpacity>
       </View>
 
@@ -884,21 +386,36 @@ const PackageDetail = ({ route }) => {
         <View style={{ height: 280, width: '100%', position: 'relative' }}>
           <Image source={{ uri: item.view_images_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
           <LinearGradient
-            colors={['transparent', 'rgba(15,23,42,0.72)']}
+            colors={['transparent', isPremium ? 'rgba(11,17,32,0.9)' : 'rgba(15,23,42,0.72)']}
             style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 140 }}
           />
-          {/* Category pill on hero */}
+          {/* Category / premium pill on hero */}
           <View style={{ position: 'absolute', top: 18, right: 16 }}>
-            <View style={{
-              backgroundColor: 'rgba(255,255,255,0.18)',
-              borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
-              borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
-              backdropFilter: 'blur(8px)',
-            }}>
-              <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
-                REGULAR PACKAGE
-              </Text>
-            </View>
+            {isPremium ? (
+              <LinearGradient
+                colors={['#FDE68A', '#F59E0B']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={{
+                  flexDirection: 'row', alignItems: 'center',
+                  borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
+                }}
+              >
+                <Ionicons name="diamond" size={11} color="#78350F" style={{ marginRight: 5 }} />
+                <Text style={{ color: '#78350F', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>
+                  {theme.badgeLabel}
+                </Text>
+              </LinearGradient>
+            ) : (
+              <View style={{
+                backgroundColor: 'rgba(255,255,255,0.18)',
+                borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
+                borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+              }}>
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
+                  {theme.badgeLabel}
+                </Text>
+              </View>
+            )}
           </View>
           {/* Package name on hero */}
           <View style={{ position: 'absolute', bottom: 20, left: 20, right: 20 }}>
@@ -908,30 +425,30 @@ const PackageDetail = ({ route }) => {
           </View>
         </View>
 
-        {/* ── White card ── */}
+        {/* ── Main card ── */}
         <View style={{
-          backgroundColor: '#fff', marginTop: -20,
+          backgroundColor: theme.cardBg, marginTop: -20,
           borderTopLeftRadius: 24, borderTopRightRadius: 24,
           paddingHorizontal: 20, paddingTop: 24, paddingBottom: 120,
-          shadowColor: '#0F172A', shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.06, shadowRadius: 12,
+          shadowColor: theme.cardShadow, shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: isPremium ? 0.3 : 0.06, shadowRadius: 12,
         }}>
 
           {/* ── Price + Book strip ── */}
-          {startingPrice && (
+          {/* {startingPrice && (
             <View style={{
               flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-              backgroundColor: '#EFF6FF', borderRadius: 16,
+              backgroundColor: theme.accentSoftBg, borderRadius: 16,
               paddingHorizontal: 18, paddingVertical: 14, marginBottom: 20,
-              borderWidth: 1, borderColor: '#BFDBFE',
+              borderWidth: 1, borderColor: theme.accentSoftBorder,
             }}>
               <View>
-                <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '500', marginBottom: 2 }}>Starting from</Text>
+                <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500', marginBottom: 2 }}>Starting from</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                  <Text style={{ fontSize: 28, fontWeight: '800', color: '#2563EB', lineHeight: 32 }}>
+                  <Text style={{ fontSize: 28, fontWeight: '800', color: theme.accent, lineHeight: 32 }}>
                     ${startingPrice}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#94A3B8', marginLeft: 3, marginBottom: 4 }}>SGD</Text>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, marginLeft: 3, marginBottom: 4 }}>SGD</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -940,96 +457,146 @@ const PackageDetail = ({ route }) => {
                 <Ionicons name="star" size={14} color="#F59E0B" />
                 <Ionicons name="star" size={14} color="#F59E0B" />
                 <Ionicons name="star-half" size={14} color="#F59E0B" />
-                <Text style={{ fontSize: 11, color: '#94A3B8', marginLeft: 4 }}>4.8</Text>
+                <Text style={{ fontSize: 11, color: theme.textMuted, marginLeft: 4 }}>4.8</Text>
+              </View>
+            </View>
+          )} */}
+          {/* ── Price + Book strip ── */}
+          {startingPrice && (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                backgroundColor: theme.accentSoftBg,
+                borderRadius: 16,
+                paddingHorizontal: 18,
+                paddingVertical: 14,
+                marginBottom: 20,
+                borderWidth: 1,
+                borderColor: theme.accentSoftBorder,
+              }}
+            >
+              {/* Left Side */}
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: theme.textSecondary,
+                    fontWeight: '500',
+                    marginBottom: 2,
+                  }}
+                >
+                  Starting from
+                </Text>
+
+                <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                  <Text
+                    style={{
+                      fontSize: 28,
+                      fontWeight: '800',
+                      color: theme.accent,
+                      lineHeight: 32,
+                    }}
+                  >
+                    ${startingPrice}
+                  </Text>
+
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: theme.textMuted,
+                      marginLeft: 4,
+                      marginBottom: 4,
+                    }}
+                  >
+                    SGD
+                  </Text>
+                </View>
+
+                {/* Package Type */}
+                {parsed?.package_type && (
+                  <Text
+                    style={{
+                      marginTop: 10,
+                      fontSize: 13,
+                      lineHeight: 20,
+                      color: theme.textSecondary,
+                      fontWeight: '600',
+                    }}
+                  >
+                    {parsed.package_type}
+                  </Text>
+                )}
+              </View>
+
+              {/* Right Side */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginTop: 6,
+                }}
+              >
+                <Ionicons name="star" size={14} color="#F59E0B" />
+                <Ionicons name="star" size={14} color="#F59E0B" />
+                <Ionicons name="star" size={14} color="#F59E0B" />
+                <Ionicons name="star" size={14} color="#F59E0B" />
+                <Ionicons name="star-half" size={14} color="#F59E0B" />
+
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: theme.textMuted,
+                    marginLeft: 4,
+                  }}
+                >
+                  4.8
+                </Text>
               </View>
             </View>
           )}
 
+
+
           {/* ── Trust badges ── */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
-            <Pill label="Verified Service" icon="shield-checkmark-outline" />
-            <Pill label="Instant Booking" icon="flash-outline" />
-            <Pill label="Secure Payment" icon="lock-closed-outline" />
-            <Pill label="5★ Rated" icon="star-outline" />
+            <Pill label="Verified Service" icon="shield-checkmark-outline" theme={theme} />
+            <Pill label="Instant Booking" icon="flash-outline" theme={theme} />
+            <Pill label="Secure Payment" icon="lock-closed-outline" theme={theme} />
+            <Pill label="5★ Rated" icon="star-outline" theme={theme} />
           </ScrollView>
 
-          <Divider />
+          <Divider theme={theme} />
 
-          {/* PACKAGE TYPE */}
-          {parsed?.package_type && (
-            <View className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4 mb-5">
-              <Text className="text-base font-bold text-slate-900 mb-2">
-                Package Type
-              </Text>
 
-              <Text className="text-[14px] leading-6 font-semibold text-slate-700">
-                {parsed.package_type}
-              </Text>
-            </View>
-          )}
 
           {/* ── Description ── */}
           {parsed?.description && (
             <>
-              <SectionTitle title="Description" />
+              <SectionTitle title="Description" theme={theme} />
               {Array.isArray(parsed.description)
                 ? renderList(parsed.description)
                 : (
                   <View style={{
-                    backgroundColor: '#F8FAFC', borderRadius: 14,
-                    padding: 14, borderLeftWidth: 3, borderLeftColor: '#BFDBFE', marginBottom: 8,
+                    backgroundColor: theme.bulletBg, borderRadius: 14,
+                    padding: 14, borderLeftWidth: 3, borderLeftColor: theme.bulletBorder, marginBottom: 8,
                   }}>
-                    <Text style={{ fontSize: 13, color: '#475569', lineHeight: 19 }}>
+                    <Text style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 19 }}>
                       {parsed.description}
                     </Text>
                   </View>
                 )}
-              <Divider />
+              <Divider theme={theme} />
             </>
           )}
 
-          {/* SCOPE OF WORK */}
-          {parsed?.scope_of_work && (
-            <>
 
-              <SectionTitle title="Scope of Work" />
-
-              {Object.entries(parsed.scope_of_work).map(([section, items], index) => (
-                <View key={index} className="mb-5">
-                  <View className="flex-row items-center mb-3">
-                    <Ionicons
-                      name="checkmark-circle-outline"
-                      size={18}
-                      color="#2563EB"
-                    />
-
-                    <Text className="ml-2 text-[15px] font-bold text-slate-900 capitalize">
-                      {section.replace(/_/g, ' ')}
-                    </Text>
-                  </View>
-
-                  {Array.isArray(items) &&
-                    items.map((item, i) => (
-                      <View
-                        key={i}
-                        className="flex-row bg-slate-50 rounded-xl border-l-4 border-blue-300 px-3 py-3 mb-2"
-                      >
-                        <View className="w-2 h-2 rounded-full bg-blue-600 mt-2 mr-3" />
-
-                        <Text className="flex-1 text-[13px] leading-5 text-slate-700">
-                          {item}
-                        </Text>
-                      </View>
-                    ))}
-                </View>
-              ))}
-            </>
-          )}
 
           {/* ── Package selection ── */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <Ionicons name={isAddOn ? 'add-circle-outline' : 'radio-button-on-outline'} size={15} color="#3B82F6" style={{ marginRight: 6 }} />
-            <Text style={{ fontSize: 12, color: '#64748B' }}>
+            <Ionicons name={isAddOn ? 'add-circle-outline' : 'radio-button-on-outline'} size={15} color={theme.accent} style={{ marginRight: 6 }} />
+            <Text style={{ fontSize: 12, color: theme.textSecondary }}>
               {isAddOn ? 'Select one or more add-ons' : 'Select one package to continue'}
             </Text>
           </View>
@@ -1038,15 +605,15 @@ const PackageDetail = ({ route }) => {
           <ScrollView horizontal={!isShortTable} showsHorizontalScrollIndicator={false}>
             <View style={{
               borderRadius: 16, overflow: 'hidden',
-              borderWidth: 1, borderColor: '#E2E8F0',
+              borderWidth: 1, borderColor: theme.tableBorder,
               width: isShortTable ? SCREEN_WIDTH - 40 : undefined,
-              shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.06, shadowRadius: 10, elevation: 2,
-              backgroundColor: '#fff',
+              shadowColor: theme.cardShadow, shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isPremium ? 0.25 : 0.06, shadowRadius: 10, elevation: 2,
+              backgroundColor: theme.cardBg,
             }}>
               {/* Header row */}
               {headers.length > 0 && (
-                <LinearGradient colors={['#2563EB', '#3B82F6']} style={{ flexDirection: 'row' }}>
+                <LinearGradient colors={theme.tableGradient} style={{ flexDirection: 'row' }}>
                   <View style={{ width: 44, borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.2)' }} />
                   {headers.map((h, i) => (
                     <View key={i} style={{
@@ -1057,7 +624,7 @@ const PackageDetail = ({ route }) => {
                       borderRightWidth: i < headers.length - 1 ? 1 : 0,
                       borderRightColor: 'rgba(255,255,255,0.2)',
                     }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: '#fff', letterSpacing: 0.5 }}>{h}</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: isPremium ? '#1F2937' : '#fff', letterSpacing: 0.5 }}>{h}</Text>
                     </View>
                   ))}
                 </LinearGradient>
@@ -1073,23 +640,23 @@ const PackageDetail = ({ route }) => {
                     activeOpacity={0.8}
                     style={{
                       flexDirection: 'row', alignItems: 'center',
-                      borderTopWidth: 1, borderTopColor: '#F1F5F9',
-                      backgroundColor: isSelected ? '#EFF6FF' : '#fff',
+                      borderTopWidth: 1, borderTopColor: theme.border,
+                      backgroundColor: isSelected ? theme.rowSelectedBg : theme.cardBg,
                     }}
                   >
                     {/* Checkbox */}
                     <View style={{
                       width: 44, paddingVertical: 18,
                       alignItems: 'center', justifyContent: 'center',
-                      borderRightWidth: 1, borderRightColor: isSelected ? '#BFDBFE' : '#F1F5F9',
+                      borderRightWidth: 1, borderRightColor: isSelected ? theme.rowSelectedBorder : theme.border,
                     }}>
                       <View style={{
                         width: 22, height: 22, borderRadius: 6,
-                        borderWidth: 2, borderColor: isSelected ? '#2563EB' : '#CBD5E1',
-                        backgroundColor: isSelected ? '#2563EB' : 'transparent',
+                        borderWidth: 2, borderColor: isSelected ? theme.accent : theme.checkboxOff,
+                        backgroundColor: isSelected ? theme.accent : 'transparent',
                         alignItems: 'center', justifyContent: 'center',
                       }}>
-                        {isSelected && <Ionicons name="checkmark" size={13} color="#fff" />}
+                        {isSelected && <Ionicons name="checkmark" size={13} color={isPremium ? '#1F2937' : '#fff'} />}
                       </View>
                     </View>
 
@@ -1111,11 +678,11 @@ const PackageDetail = ({ route }) => {
                               flex: isShortTable ? 1 : undefined,
                               width: isShortTable ? undefined : 120,
                               borderRightWidth: i < headers.length - 1 ? 1 : 0,
-                              borderRightColor: isSelected ? '#BFDBFE' : '#F1F5F9',
+                              borderRightColor: isSelected ? theme.rowSelectedBorder : theme.border,
                             }}>
                               <Text style={{
                                 fontSize: 13,
-                                color: isPrice ? '#2563EB' : '#1E293B',
+                                color: isPrice ? theme.accent : theme.heading,
                                 fontWeight: isPrice ? '700' : '400',
                                 textAlign: 'center',
                               }}>
@@ -1131,31 +698,31 @@ const PackageDetail = ({ route }) => {
                         <View style={{
                           flexDirection: 'row', alignItems: 'center',
                           justifyContent: 'center', paddingVertical: 10,
-                          borderTopWidth: 1, borderTopColor: '#BFDBFE',
-                          backgroundColor: '#F0F7FF',
+                          borderTopWidth: 1, borderTopColor: theme.rowSelectedBorder,
+                          backgroundColor: theme.addOnStripBg,
                         }}>
                           <TouchableOpacity
                             onPress={() => updateQuantity(index, 'dec')}
                             style={{
                               width: 32, height: 32, borderRadius: 10,
-                              backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center',
+                              backgroundColor: theme.accentSoftBg, alignItems: 'center', justifyContent: 'center',
                             }}
                           >
-                            <Ionicons name="remove" size={16} color="#2563EB" />
+                            <Ionicons name="remove" size={16} color={theme.accent} />
                           </TouchableOpacity>
-                          <Text style={{ marginHorizontal: 16, fontSize: 15, fontWeight: '700', color: '#1E293B' }}>
+                          <Text style={{ marginHorizontal: 16, fontSize: 15, fontWeight: '700', color: theme.heading }}>
                             {selectedItems.find(i => i.rowIndex === index)?.quantity || 1}
                           </Text>
                           <TouchableOpacity
                             onPress={() => updateQuantity(index, 'inc')}
                             style={{
                               width: 32, height: 32, borderRadius: 10,
-                              backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center',
+                              backgroundColor: theme.accent, alignItems: 'center', justifyContent: 'center',
                             }}
                           >
-                            <Ionicons name="add" size={16} color="#fff" />
+                            <Ionicons name="add" size={16} color={isPremium ? '#1F2937' : '#fff'} />
                           </TouchableOpacity>
-                          <Text style={{ marginLeft: 14, fontSize: 13, fontWeight: '700', color: '#2563EB' }}>
+                          <Text style={{ marginLeft: 14, fontSize: 13, fontWeight: '700', color: theme.accent }}>
                             = ${((selectedItems.find(i => i.rowIndex === index)?.quantity || 1) * (getMinPrice(getPriceValue(row)) || 0)).toFixed(2)}
                           </Text>
                         </View>
@@ -1167,6 +734,41 @@ const PackageDetail = ({ route }) => {
             </View>
           </ScrollView>
 
+          {/* SCOPE OF WORK */}
+          {parsed?.scope_of_work && (
+
+            <>
+              <Divider theme={theme} />
+              <SectionTitle title="Scope of Work" theme={theme} />
+              {Object.entries(parsed.scope_of_work).map(([section, items], index) => (
+                <View key={index} style={{ marginBottom: 20 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                    <Ionicons name="checkmark-circle-outline" size={18} color={theme.accent} />
+                    <Text style={{ marginLeft: 8, fontSize: 15, fontWeight: '700', color: theme.heading, textTransform: 'capitalize' }}>
+                      {section.replace(/_/g, ' ')}
+                    </Text>
+                  </View>
+                  {Array.isArray(items) &&
+                    items.map((it, i) => (
+                      <View
+                        key={i}
+                        style={{
+                          flexDirection: 'row', backgroundColor: theme.bulletBg, borderRadius: 12,
+                          borderLeftWidth: 4, borderLeftColor: theme.bulletBorder,
+                          paddingHorizontal: 12, paddingVertical: 12, marginBottom: 8,
+                        }}
+                      >
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.bulletDot, marginTop: 6, marginRight: 12 }} />
+                        <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: theme.textSecondary }}>
+                          {it}
+                        </Text>
+                      </View>
+                    ))}
+                </View>
+              ))}
+            </>
+          )}
+
           {/* ── Gallery ── */}
           {item?.multiple_images?.length > 0 && (() => {
             const imgs = item.multiple_images
@@ -1174,14 +776,14 @@ const PackageDetail = ({ route }) => {
             const gallery = imgs.slice(1)
             return (
               <View style={{ marginTop: 28 }}>
-                <Divider />
-                <SectionTitle title="Our Work" />
+                <Divider theme={theme} />
+                <SectionTitle title="Our Work" theme={theme} />
                 {hero && (
                   <View style={{
                     borderRadius: 20, overflow: 'hidden',
                     marginBottom: 10,
-                    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 },
-                    shadowOpacity: 0.12, shadowRadius: 16, elevation: 4,
+                    shadowColor: theme.cardShadow, shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: isPremium ? 0.3 : 0.12, shadowRadius: 16, elevation: 4,
                   }}>
                     <GalleryTile img={hero} height={220} rounded={20} />
                   </View>
@@ -1194,8 +796,8 @@ const PackageDetail = ({ route }) => {
                         <View key={img.id || img.image_url} style={{
                           width: isLastOdd ? '100%' : '48.5%',
                           borderRadius: 14, overflow: 'hidden',
-                          shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
-                          shadowOpacity: 0.08, shadowRadius: 10, elevation: 2,
+                          shadowColor: theme.cardShadow, shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: isPremium ? 0.25 : 0.08, shadowRadius: 10, elevation: 2,
                         }}>
                           <GalleryTile img={img} height={isLastOdd ? 170 : 132} rounded={14} />
                         </View>
@@ -1210,8 +812,8 @@ const PackageDetail = ({ route }) => {
           {/* ── Terms ── */}
           {parsed?.terms_and_conditions && (
             <>
-              <Divider />
-              <SectionTitle title="Terms & Conditions" />
+              <Divider theme={theme} />
+              <SectionTitle title="Terms & Conditions" theme={theme} />
               {renderTerms(parsed.terms_and_conditions)}
             </>
           )}
@@ -1219,8 +821,8 @@ const PackageDetail = ({ route }) => {
           {/* ── Deposit ── */}
           {parsed?.deposit_policy && (
             <>
-              <Divider />
-              <SectionTitle title="Deposit Policy" />
+              <Divider theme={theme} />
+              <SectionTitle title="Deposit Policy" theme={theme} />
               {renderList(parsed.deposit_policy)}
             </>
           )}
@@ -1228,8 +830,8 @@ const PackageDetail = ({ route }) => {
           {/* ── Refund ── */}
           {parsed?.refund_policy && (
             <>
-              <Divider />
-              <SectionTitle title="Refund Policy" />
+              <Divider theme={theme} />
+              <SectionTitle title="Refund Policy" theme={theme} />
               {renderRefund(parsed.refund_policy)}
             </>
           )}
@@ -1237,8 +839,8 @@ const PackageDetail = ({ route }) => {
           {/* ── Additional ── */}
           {parsed?.additional_conditions && (
             <>
-              <Divider />
-              <SectionTitle title="Additional Conditions" />
+              <Divider theme={theme} />
+              <SectionTitle title="Additional Conditions" theme={theme} />
               {renderTerms(parsed.additional_conditions)}
             </>
           )}
@@ -1246,13 +848,13 @@ const PackageDetail = ({ route }) => {
           {/* ── Policies ── */}
           {parsed?.policies && (
             <>
-              <Divider />
-              <SectionTitle title="Policies" />
+              <Divider theme={theme} />
+              <SectionTitle title="Policies" theme={theme} />
               {Object.entries(parsed.policies).map(([key, value], i) => (
                 <View key={i} style={{ marginBottom: 10 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
                     <Ionicons name="lock-closed-outline" size={13} color="#EF4444" style={{ marginRight: 6 }} />
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#1E293B' }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: theme.heading }}>
                       {key.replace(/_/g, ' ').toUpperCase()}
                     </Text>
                   </View>
@@ -1262,17 +864,19 @@ const PackageDetail = ({ route }) => {
             </>
           )}
 
-          <View style={{ marginTop: 12, marginBottom: 8 }}>
-            <SectionTitle title="Feedback" />
+          {/* ── Feedback ── */}
+          <Divider theme={theme} />
+          <View style={{ marginTop: 4, marginBottom: 8 }}>
+            <SectionTitle title="Feedback" theme={theme} />
 
             {feedbackLoading ? (
               <View style={{ paddingVertical: 16, alignItems: 'center' }}>
-                <ActivityIndicator color="#2563eb" />
+                <ActivityIndicator color={theme.accent} />
               </View>
             ) : packageFeedback.length > 0 ? (
               <>
-                {packageFeedback.slice(0, 4).map((feedback) => (
-                  <FeedbackCard key={feedback.id} feedback={feedback} />
+                {packageFeedback.slice(0, 4).map((feedback, i) => (
+                  <FeedbackCard key={feedback.id ?? i} feedback={feedback} theme={theme} />
                 ))}
 
                 {packageFeedback.length > 4 && (
@@ -1280,15 +884,15 @@ const PackageDetail = ({ route }) => {
                     onPress={() => setFeedbackModalVisible(true)}
                     style={{
                       borderWidth: 1,
-                      borderColor: '#2563eb',
+                      borderColor: theme.accent,
                       borderRadius: 12,
                       paddingVertical: 11,
                       alignItems: 'center',
                       marginTop: 2,
                     }}
                   >
-                    <Text style={{ color: '#2563eb', fontWeight: '700', fontSize: 13 }}>
-                      See more feedback
+                    <Text style={{ color: theme.accent, fontWeight: '700', fontSize: 13 }}>
+                      See more feedback ({packageFeedback.length})
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -1296,14 +900,14 @@ const PackageDetail = ({ route }) => {
             ) : (
               <View
                 style={{
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: theme.bulletBg,
                   borderWidth: 1,
-                  borderColor: '#e2e8f0',
+                  borderColor: theme.border,
                   borderRadius: 14,
                   padding: 14,
                 }}
               >
-                <Text style={{ color: '#64748b', fontSize: 13, textAlign: 'center' }}>
+                <Text style={{ color: theme.textSecondary, fontSize: 13, textAlign: 'center' }}>
                   No feedback yet.
                 </Text>
               </View>
@@ -1313,23 +917,63 @@ const PackageDetail = ({ route }) => {
         </View>
       </ScrollView>
 
+      {/* ── Full Feedback Modal ── */}
+      <Modal
+        visible={feedbackModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setFeedbackModalVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(15,23,42,0.4)', justifyContent: 'flex-end' }}>
+          <View style={{
+            backgroundColor: theme.cardBg,
+            borderTopLeftRadius: 24, borderTopRightRadius: 24,
+            maxHeight: '80%', paddingTop: 16,
+          }}>
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+              paddingHorizontal: 20, paddingBottom: 12,
+              borderBottomWidth: 1, borderBottomColor: theme.border,
+            }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: theme.heading }}>
+                All Feedback ({packageFeedback.length})
+              </Text>
+              <TouchableOpacity
+                onPress={() => setFeedbackModalVisible(false)}
+                style={{
+                  width: 32, height: 32, borderRadius: 16,
+                  backgroundColor: theme.bulletBg, alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="close" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ paddingHorizontal: 20, paddingTop: 14 }} contentContainerStyle={{ paddingBottom: 30 }}>
+              {packageFeedback.map((feedback, i) => (
+                <FeedbackCard key={feedback.id ?? i} feedback={feedback} theme={theme} />
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* ── Sticky Add to Cart ── */}
       {selectedItems.length > 0 && (
         <View style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          backgroundColor: '#fff', paddingHorizontal: 20, paddingVertical: 14,
+          backgroundColor: theme.cardBg, paddingHorizontal: 20, paddingVertical: 14,
           paddingBottom: Platform.OS === 'ios' ? 28 : 14,
-          borderTopWidth: 1, borderTopColor: '#F1F5F9',
-          shadowColor: '#0F172A', shadowOffset: { width: 0, height: -6 },
-          shadowOpacity: 0.08, shadowRadius: 16, elevation: 10,
+          borderTopWidth: 1, borderTopColor: theme.border,
+          shadowColor: theme.cardShadow, shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: isPremium ? 0.3 : 0.08, shadowRadius: 16, elevation: 10,
         }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <Text style={{ fontSize: 12, color: '#94A3B8' }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted }}>
               {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 12, color: '#94A3B8', marginRight: 4 }}>Total</Text>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: '#2563EB' }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginRight: 4 }}>Total</Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: theme.accent }}>
                 ${cartTotal.toFixed(2)}
               </Text>
             </View>
@@ -1340,15 +984,15 @@ const PackageDetail = ({ route }) => {
             style={{ borderRadius: 14, overflow: 'hidden' }}
           >
             <LinearGradient
-              colors={['#2563EB', '#3B82F6']}
+              colors={theme.tableGradient}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={{
                 paddingVertical: 15, flexDirection: 'row',
                 alignItems: 'center', justifyContent: 'center', borderRadius: 14,
               }}
             >
-              <Ionicons name="cart-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
+              <Ionicons name="cart-outline" size={18} color={theme.ctaTextOnAccent} style={{ marginRight: 8 }} />
+              <Text style={{ color: theme.ctaTextOnAccent, fontWeight: '700', fontSize: 15 }}>
                 Add to Basket
               </Text>
             </LinearGradient>

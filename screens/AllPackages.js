@@ -54,6 +54,9 @@ const AllPackages = () => {
 
     return prices.length ? Math.min(...prices) : null
   }
+  const nonPremiumPackages = products.filter(
+    (item) => item.is_premium === false
+  )
 
   // 💎 CARD UI
   const renderItem = ({ item }) => {
@@ -65,12 +68,12 @@ const AllPackages = () => {
     return (
       <View
         className="w-[48%] h-[240px] mb-4 rounded-xl"
-        // style={{
-        //   shadowColor: '#000',
-        //   shadowOpacity: 0.25,
-        //   shadowRadius: 10,
-        //   // elevation: 6,
-        // }}
+      // style={{
+      //   shadowColor: '#000',
+      //   shadowOpacity: 0.25,
+      //   shadowRadius: 10,
+      //   // elevation: 6,
+      // }}
       >
         <TouchableOpacity
           activeOpacity={0.9}
@@ -100,7 +103,7 @@ const AllPackages = () => {
                 height: 100, // important for iOS
                 borderBottomLeftRadius: 24,
                 borderBottomRightRadius: 24,
-                paddingHorizontal:8
+                paddingHorizontal: 8
               }}
             >
               {/* TITLE */}
@@ -144,7 +147,7 @@ const AllPackages = () => {
         <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
           All Packages
         </Text>
-
+        {/* 
         {products.length === 0 ? (
           <Text className="text-center text-gray-500 mt-10">
             No packages available
@@ -152,6 +155,24 @@ const AllPackages = () => {
         ) : (
           <FlatList
             data={products}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+            numColumns={2}
+            showsVerticalScrollIndicator={false}
+            columnWrapperStyle={{
+              justifyContent: 'space-between',
+            }}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+        )} */}
+
+        {nonPremiumPackages.length === 0 ? (
+          <Text className="text-center text-gray-500 mt-10">
+            No packages available
+          </Text>
+        ) : (
+          <FlatList
+            data={nonPremiumPackages}
             renderItem={renderItem}
             keyExtractor={(item) => item.id.toString()}
             numColumns={2}

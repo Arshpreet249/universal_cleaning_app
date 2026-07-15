@@ -228,7 +228,9 @@ const Payment = ({ route, navigation }) => {
           latitude: Number(selectedAddress.lat),
           longitude: Number(selectedAddress.lon),
         },
-        package: item.package_ids || [],
+        // package: item.package_ids || [],
+      package: item.package_ids || [],
+        sub_package_id: item.sub_package_id ?? null,
       })),
 
     }
@@ -255,7 +257,10 @@ const Payment = ({ route, navigation }) => {
         let url = result?.data?.checkout_url
         if (!url && result?.data?.detail === "Transaction already exists") {
           if (checkoutUrl) {
-            navigation.navigate('Countdown', { checkoutUrl })
+            navigation.navigate('Countdown', 
+              { checkoutUrl ,
+                paymentRequestId: result?.data?.payment_request?.payment_request_id,
+              })
             return
           } else {
             Alert.alert("Error", "Payment already exists but no URL found")
@@ -266,7 +271,8 @@ const Payment = ({ route, navigation }) => {
           setCheckoutUrl(url)
 
           navigation.navigate('Countdown', {
-            checkoutUrl: url
+            checkoutUrl: url,
+            paymentRequestId: result?.data?.payment_request?.payment_request_id,
           })
         }
 
@@ -281,6 +287,8 @@ const Payment = ({ route, navigation }) => {
 
     setLoading(false)
   }
+
+  
 
   // ================= ICON =================
   const Icon = ({ name }) => (

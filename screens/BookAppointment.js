@@ -1,5 +1,5 @@
 
-import React, { useState, useContext } from 'react'
+import React, { useState, useContext ,useMemo} from 'react'
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker'
 import { AuthContext } from '../context/AuthContext'
 import { REACT_APP_HOST_API_URL, apiBaseUrl } from '../components/variable'
 import { useNavigation, useRoute } from '@react-navigation/native'
+import { ProductContext } from '../context/ProductContext'
 
 const BookAppointment = () => {
 
@@ -22,7 +23,8 @@ const BookAppointment = () => {
 
   const totalAmount = route?.params?.totalAmount
   const { token, basketItems } = useContext(AuthContext)
-  
+  const { products } = useContext(ProductContext)
+
 
   const [fromDate, setFromDate] = useState(new Date())
   const [date, setDate] = useState(new Date())
@@ -49,6 +51,24 @@ const BookAppointment = () => {
 
   const isSingleDate =
     fromDate.toDateString() === date.toDateString()
+
+    const addOnPackageIds = useMemo(() => {
+    const ids = new Set()
+    ;(products || []).forEach(p => {
+      try {
+        const desc =
+          typeof p.description === 'string'
+            ? JSON.parse(p.description)
+            : p.description
+        if (desc?.package_name?.toUpperCase().includes('ADD ON')) {
+          ids.add(p.id)
+        }
+      } catch (e) {
+        // ignore malformed description
+      }
+    })
+    return ids
+  }, [products])
 
   // ---------------- HELPERS ----------------
 
@@ -202,7 +222,7 @@ const BookAppointment = () => {
     setPickerVisible(false)
 
     let now = new Date()
-    let minTime = new Date(now.getTime() + 3 * 60 * 60 * 1000)
+    let minTime = new Date(now.getTime() + 2 * 60 * 60 * 1000)
     let newFromDate = fromDate
     let newToDate = date
     let newStartTime = startTime
@@ -243,7 +263,7 @@ const BookAppointment = () => {
       if (isToday && selected < minTime) {
         Alert.alert(
           'Invalid Time',
-          'Start time must be at least 3 hours from now'
+          'Start time must be at least 2hours from now'
         )
         return
       }
@@ -325,8 +345,52 @@ const BookAppointment = () => {
     // Alert.alert('Auto Assign', ' employees assigned')
   }
 
+  
 
-  const handleProceed = () => {
+  // const handleProceed = () => {
+  //   const dates = getDatesInRangeStrings()
+
+  //   if (!allDatesSelected()) {
+  //     Alert.alert('Incomplete', 'Assign employee for all dates')
+  //     return
+  //   }
+
+  //   const packageIds = basketItems
+  //     ?.map((item) => item.details?.package_id)
+  //     .filter(Boolean)
+
+  //   const packageNames = basketItems
+  //     ?.map((item) => item.displayName)
+
+  //   const bookingIds = basketItems?.map(item => item.id)
+
+  //   // console.log('BookAppointment Booking IDs:', bookingIds) 
+  //   const bookingData = dates.map((dateStr) => ({
+  //     start_date: dateStr,
+  //     employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
+  //     assigned_to_usernames: [
+  //       selectedEmployeesByDate[dateStr]?.employee_username,
+  //     ],
+  //     startTime,
+  //     endTime,
+
+  //     // ✅ SEND BOTH
+  //     package_ids: packageIds,
+  //     package_names: packageNames,
+  //     booking_ids: bookingIds,
+  //   }))
+
+  //   const numberOfDays = dates.length
+  //   const finalTotalAmount = (totalAmount || 0) * numberOfDays
+
+  //   navigation.navigate('Notes', {
+  //     appointmentData: bookingData,
+  //     totalAmount: finalTotalAmount,
+  //     numberOfDays,
+  //   })
+
+  // }
+const handleProceed = () => {
     const dates = getDatesInRangeStrings()
 
     if (!allDatesSelected()) {
@@ -334,16 +398,22 @@ const BookAppointment = () => {
       return
     }
 
-    const packageIds = basketItems
-      ?.map((item) => item.details?.package_id)
-      .filter(Boolean)
+    const validItems = basketItems?.filter(item => item.details?.package_id) || []
+
+    // all package ids (main package + add-ons)
+    const packageIds = validItems.map(item => item.details?.package_id)
+
+    // ✅ only the main (non-add-on) package's sub id — single value, no array, no null for add-ons
+    const mainItem = validItems.find(
+      item => !addOnPackageIds.has(item.details?.package_id)
+    )
+    const subPackageId = mainItem?.details?.id ?? null
 
     const packageNames = basketItems
       ?.map((item) => item.displayName)
 
     const bookingIds = basketItems?.map(item => item.id)
 
-    // console.log('BookAppointment Booking IDs:', bookingIds) 
     const bookingData = dates.map((dateStr) => ({
       start_date: dateStr,
       employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
@@ -353,18 +423,20 @@ const BookAppointment = () => {
       startTime,
       endTime,
 
-      // ✅ SEND BOTH
       package_ids: packageIds,
+      sub_package_id: subPackageId,
       package_names: packageNames,
       booking_ids: bookingIds,
     }))
 
+    const numberOfDays = dates.length
+    const finalTotalAmount = (totalAmount || 0) * numberOfDays
+
     navigation.navigate('Notes', {
       appointmentData: bookingData,
-      totalAmount: totalAmount,
-
+      totalAmount: finalTotalAmount,
+      numberOfDays,
     })
-
   }
   // ---------------- UI ----------------
 

@@ -78,22 +78,7 @@ const Home = () => {
     }
   }
 
-  // const checkUpcomingBookings = (bookings) => {
-  //   const today = new Date()
-
-  //   const upcoming = bookings.find((item) => {
-  //     if (!item?.start_from) return false
-
-  //     const bookingDate = new Date(item.start_from)
-  //     const diffDays = Math.ceil(
-  //       (bookingDate - today) / (1000 * 60 * 60 * 24)
-  //     )
-
-  //     return diffDays >= 0 && diffDays <= 2
-  //   })
-
-  //   setUpcomingAlert(upcoming || null)
-  // }
+ 
 
   const checkUpcomingBookings = (bookings, transactions = []) => {
     // console.log('DEBUG bookings received:', bookings?.length, 'transactions received:', transactions?.length)

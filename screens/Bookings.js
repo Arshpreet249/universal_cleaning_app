@@ -75,7 +75,7 @@ const Bookings = () => {
   // 🔥 PICKER
   const [pickerMode, setPickerMode] = useState(null)
   const [isPickerVisible, setPickerVisible] = useState(false)
-const [downloadingId, setDownloadingId] = useState(null)
+  const [downloadingId, setDownloadingId] = useState(null)
 
   useFocusEffect(
     useCallback(() => {
@@ -370,153 +370,93 @@ const [downloadingId, setDownloadingId] = useState(null)
     }
   }
 
-//   const downloadInvoice = async (item) => {
-//   try {
-//     setDownloadingId(item.id)
+  const blobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
 
-//     const response = await fetch(
-//       `${REACT_APP_HOST_API_URL}/admin-user/download-employee-salary-slip/`,
-//       {
-//         method: 'POST',
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({
-//           user_id: user?.id,
-//           appointment_id: item.id,
-//         }),
-//       }
-//     )
+      reader.onloadend = () => {
+        const result = reader.result
 
-//     console.log("invoice response", response)
-//         console.log("invoice response", response.status)
+        if (!result) {
+          reject(new Error('Failed to convert PDF to Base64'))
+          return
+        }
 
+        const base64 = result.split(',')[1]
+        resolve(base64)
+      }
 
-//     if (!response.ok) {
-//       const errorText = await response.text()
-//       console.log('Invoice error:', errorText)
-//       alert('Invoice not available')
-//       return
-//     }
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  }
 
-//     const blob = await response.blob()
+  const downloadInvoice = async (item) => {
+    try {
+      setDownloadingId(item.id)
 
-//     const reader = new FileReader()
+      const invoiceUrl =
+        `${REACT_APP_HOST_API_URL}/admin-user/download-employee-salary-slip/`
 
-//     reader.onloadend = async () => {
-//       const base64data = reader.result.split(',')[1]
+      const response = await fetch(invoiceUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          appointment_id: item.id,
+        }),
+      })
 
-//       const fileUri =
-//         FileSystem.documentDirectory + `invoice_${item.id}.pdf`
+      console.log('invoice response', response.status)
+      console.log('invoice content-type', response.headers.get('content-type'))
 
-//       await FileSystem.writeAsStringAsync(fileUri, base64data, {
-//         encoding: FileSystem.EncodingType.Base64,
-//       })
-
-//       await Sharing.shareAsync(fileUri, {
-//         mimeType: 'application/pdf',
-//         dialogTitle: 'Download Invoice',
-//         UTI: 'com.adobe.pdf',
-//       })
-//     }
-
-//     reader.readAsDataURL(blob)
-//   } catch (error) {
-//     console.log('Download invoice error:', error)
-//     alert('Failed to download invoice')
-//   } finally {
-//     setDownloadingId(null)
-//   }
-// }
-
-const blobToBase64 = (blob) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-
-    reader.onloadend = () => {
-      const result = reader.result
-
-      if (!result) {
-        reject(new Error('Failed to convert PDF to Base64'))
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.log('Invoice error:', errorText)
+        alert('Invoice not available')
         return
       }
 
-      const base64 = result.split(',')[1]
-      resolve(base64)
-    }
+      const contentType = response.headers.get('content-type')
 
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
-}
+      if (!contentType || !contentType.includes('application/pdf')) {
+        alert('Backend did not return PDF')
+        return
+      }
 
-const downloadInvoice = async (item) => {
-  try {
-    setDownloadingId(item.id)
+      const blob = await response.blob()
+      const base64data = await blobToBase64(blob)
 
-    const invoiceUrl =
-      `${REACT_APP_HOST_API_URL}/admin-user/download-employee-salary-slip/`
+      const fileUri =
+        FileSystem.documentDirectory + `invoice_${item.id}.pdf`
 
-    const response = await fetch(invoiceUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        user_id: user?.id,
-        appointment_id: item.id,
-      }),
-    })
-
-    console.log('invoice response', response.status)
-    console.log('invoice content-type', response.headers.get('content-type'))
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.log('Invoice error:', errorText)
-      alert('Invoice not available')
-      return
-    }
-
-    const contentType = response.headers.get('content-type')
-
-    if (!contentType || !contentType.includes('application/pdf')) {
-      alert('Backend did not return PDF')
-      return
-    }
-
-    const blob = await response.blob()
-    const base64data = await blobToBase64(blob)
-
-    const fileUri =
-      FileSystem.documentDirectory + `invoice_${item.id}.pdf`
-
-    await FileSystem.writeAsStringAsync(fileUri, base64data, {
-      encoding: FileSystem.EncodingType.Base64,
-    })
-
-    console.log('Invoice saved at:', fileUri)
-
-    const canShare = await Sharing.isAvailableAsync()
-
-    if (canShare) {
-      await Sharing.shareAsync(fileUri, {
-        mimeType: 'application/pdf',
-        dialogTitle: 'Save Invoice',
-        UTI: 'com.adobe.pdf',
+      await FileSystem.writeAsStringAsync(fileUri, base64data, {
+        encoding: FileSystem.EncodingType.Base64,
       })
-    } else {
-      alert('Invoice saved successfully')
+
+      console.log('Invoice saved at:', fileUri)
+
+      const canShare = await Sharing.isAvailableAsync()
+
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Save Invoice',
+          UTI: 'com.adobe.pdf',
+        })
+      } else {
+        alert('Invoice saved successfully')
+      }
+    } catch (error) {
+      console.log('Save invoice error:', error)
+      alert('Failed to save invoice')
+    } finally {
+      setDownloadingId(null)
     }
-  } catch (error) {
-    console.log('Save invoice error:', error)
-    alert('Failed to save invoice')
-  } finally {
-    setDownloadingId(null)
   }
-}
 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'Select'
@@ -589,17 +529,22 @@ const downloadInvoice = async (item) => {
         }
       >
         {bookings.map((item) => {
-          
+
 
           const txn = item.transaction
 
           const startDate = new Date(item.start_from)
           const endDate = item.end_at ? new Date(item.end_at) : null
           const now = new Date()
-const diffInMs = startDate.getTime() - now.getTime()
-const diffInHours = diffInMs / (1000 * 60 * 60)
+          const diffInMs = startDate.getTime() - now.getTime()
+          const diffInHours = diffInMs / (1000 * 60 * 60)
 
-const canEditAppointment = diffInHours > 48
+          // const canEditAppointment = diffInHours > 48
+          const paymentSucceeded =
+            paymentStatus?.toLowerCase() === 'succeeded'
+
+          const canEditAppointment =
+            diffInHours > 48 && paymentSucceeded
 
           const formattedDate = startDate.toLocaleDateString('en-IN', {
             day: 'numeric',
@@ -640,18 +585,18 @@ const canEditAppointment = diffInHours > 48
           const shouldShowAmount = hasValidTransaction || (item.amount && item.amount !== "0.0000")
 
           const formattedAmount =
-            rawAmount && !isNaN(rawAmount) ? Number(rawAmount).toFixed(4) : null
+            rawAmount && !isNaN(rawAmount) ? Number(rawAmount).toFixed(2) : null
 
           return (
             <View
               key={item.id}
-              className="bg-white mb-5 p-4 rounded-2xl"
-              style={{
-                shadowColor: '#000',
-                shadowOpacity: 0.08,
-                shadowRadius: 10,
-                elevation: 4,
-              }}
+              className="bg-white mb-5 p-4 rounded-2xl shadow shadow-slate-200"
+            // style={{
+            //   shadowColor: '#000',
+            //   shadowOpacity: 0.08,
+            //   shadowRadius: 10,
+            //   elevation: 4,
+            // }}
             >
 
               {/* TITLE */}
@@ -758,28 +703,6 @@ const canEditAppointment = diffInHours > 48
                     </Text>
                   )}
 
-                  {/* <TouchableOpacity
-                    onPress={() => openFeedbackModal(item)}
-                    className="mt-4 bg-secondary py-2 rounded-lg items-center"
-                  >
-                    <Text className="text-white font-semibold">
-                      {feedbackMap[item.id]
-                        ? 'Update Feedback'
-                        : 'Give Feedback'}
-                    </Text>
-                  </TouchableOpacity> */}
-                  {/* {item.process?.toLowerCase() === 'completed' && (
-                    <TouchableOpacity
-                      onPress={() => openFeedbackModal(item)}
-                      className="mt-4 bg-secondary py-2 rounded-lg items-center"
-                    >
-                      <Text className="text-white font-semibold">
-                        {feedbackMap[item.id]
-                          ? 'Update Feedback'
-                          : 'Give Feedback'}
-                      </Text>
-                    </TouchableOpacity>
-                  )} */}
 
                   <Text className="text-xs text-gray-400 mt-2">
                     Appointment ID: #{item.id}
@@ -788,30 +711,13 @@ const canEditAppointment = diffInHours > 48
                 </View>
               )}
 
-              {/* BOTTOM BUTTONS */}
-              {/* <View className="flex-row justify-between items-center mt-4">
-                <TouchableOpacity
-                  onPress={() => openEditModal(item)}
-                >
-                  <Text className='text-secondary font-semibold'>Edit</Text>
-                </TouchableOpacity>
 
-
-                <TouchableOpacity
-                  onPress={() => toggleExpand(item.id)}
-                  className="mt-3 items-center"
-                >
-                  <Text className="text-secondary font-semibold">
-                    {expandedId === item.id ? 'Show Less ▲' : 'Show More ▼'}
-                  </Text>
-                </TouchableOpacity>
-
-              </View> */}
 
               <View className="flex-row justify-between items-center mt-4">
 
-                {/* ✅ CONDITION BASED BUTTON */}
-                {/* {item.process?.toLowerCase() === 'completed' ? (
+
+
+                {item.process?.toLowerCase() === 'completed' ? (
                   <TouchableOpacity
                     onPress={() => openFeedbackModal(item)}
                   >
@@ -819,41 +725,25 @@ const canEditAppointment = diffInHours > 48
                       {feedbackMap[item.id] ? 'Update Feedback' : 'Give Feedback'}
                     </Text>
                   </TouchableOpacity>
-                ) : (
+                ) : canEditAppointment ? (
                   <TouchableOpacity
                     onPress={() => openEditModal(item)}
                   >
                     <Text className='text-secondary font-semibold'>Edit</Text>
                   </TouchableOpacity>
-                )} */}
-
-                {item.process?.toLowerCase() === 'completed' ? (
-           <TouchableOpacity
-             onPress={() => openFeedbackModal(item)}
-  >
-    <Text className='text-secondary font-semibold'>
-      {feedbackMap[item.id] ? 'Update Feedback' : 'Give Feedback'}
-    </Text>
-  </TouchableOpacity>
-) : canEditAppointment ? (
-  <TouchableOpacity
-    onPress={() => openEditModal(item)}
-  >
-    <Text className='text-secondary font-semibold'>Edit</Text>
-  </TouchableOpacity>
-) : null}
+                ) : null}
 
                 {paymentStatus?.toLowerCase() === 'succeeded' && (
-  <TouchableOpacity
-    onPress={() => downloadInvoice(item)}
-    disabled={downloadingId === item.id}
-    className="text-secondary font-semibold"
-  >
-    <Text className="text-secondary font-semibold">
-      {downloadingId === item.id ? 'Downloading...' : 'Download Invoice'}
-    </Text>
-  </TouchableOpacity>
-)}
+                  <TouchableOpacity
+                    onPress={() => downloadInvoice(item)}
+                    disabled={downloadingId === item.id}
+                    className="text-secondary font-semibold"
+                  >
+                    <Text className="text-secondary font-semibold">
+                      {downloadingId === item.id ? 'Downloading...' : 'Download Invoice'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
 
                 {/* SHOW MORE BUTTON */}
                 <TouchableOpacity
@@ -877,58 +767,58 @@ const canEditAppointment = diffInHours > 48
           className="flex-1"
         >
           <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-white p-5 rounded-t-2xl max-h-[80%]">
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-
-            <Text className="text-lg font-bold mb-3">
-              Give Feedback
-            </Text>
-
-            <View className="flex-row mb-4">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                  <Text className={`text-2xl ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}>
-                    ★
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TextInput
-              placeholder="Write your feedback..."
-              value={feedbackText}
-              onChangeText={setFeedbackText}
-              multiline
-              textAlignVertical="top"
-              className="border border-gray-300 rounded-xl p-3 mb-4 min-h-[120px] text-gray-900"
-            />
-
-            <View className="flex-row justify-between mb-2">
-
-              <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                className="bg-gray-200 px-5 py-3 rounded-xl"
+            <View className="bg-white p-5 rounded-t-2xl max-h-[80%]">
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
               >
-                <Text className="font-semibold text-gray-800">Cancel</Text>
-              </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={submitFeedback}
-                disabled={submitting}
-                className={`px-5 py-3 rounded-xl ${submitting ? 'bg-gray-400' : 'bg-secondary'}`}
-              >
-                <Text className="text-white font-semibold">
-                  {submitting ? 'Submitting...' : 'Submit'}
+                <Text className="text-lg font-bold mb-3">
+                  Give Feedback
                 </Text>
-              </TouchableOpacity>
 
+                <View className="flex-row mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                      <Text className={`text-2xl ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}>
+                        ★
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <TextInput
+                  placeholder="Write your feedback..."
+                  value={feedbackText}
+                  onChangeText={setFeedbackText}
+                  multiline
+                  textAlignVertical="top"
+                  className="border border-gray-300 rounded-xl p-3 mb-4 min-h-[120px] text-gray-900"
+                />
+
+                <View className="flex-row justify-between mb-2">
+
+                  <TouchableOpacity
+                    onPress={() => setModalVisible(false)}
+                    className="bg-gray-200 px-5 py-3 rounded-xl"
+                  >
+                    <Text className="font-semibold text-gray-800">Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={submitFeedback}
+                    disabled={submitting}
+                    className={`px-5 py-3 rounded-xl ${submitting ? 'bg-gray-400' : 'bg-secondary'}`}
+                  >
+                    <Text className="text-white font-semibold">
+                      {submitting ? 'Submitting...' : 'Submit'}
+                    </Text>
+                  </TouchableOpacity>
+
+                </View>
+
+              </ScrollView>
             </View>
-
-            </ScrollView>
-          </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
