@@ -212,6 +212,11 @@ const PackageDetail = ({ route }) => {
   }
   const data = getDataArray(parsed)
 
+  const rowHasQty = (row) => row?.quantity_enabled === true
+
+  const allowMultiSelect = isAddOn || data.some(rowHasQty)
+
+
   const getStartingPrice = (data) => {
     if (!data || data.length === 0) return null
     const prices = data.map(row => {
@@ -235,14 +240,23 @@ const PackageDetail = ({ route }) => {
   const isShortTable = headers.length <= 3
   const isAddOn = parsed?.package_name?.toLowerCase().includes('add on') || false
 
+  // const toggleSelection = (row, index) => {
+  //   const exists = selectedItems.find(i => i.rowIndex === index)
+  //   if (isAddOn) {
+  //     setSelectedItems(prev => exists ? prev.filter(i => i.rowIndex !== index) : [...prev, { ...row, rowIndex: index, quantity: 1 }])
+  //   } else {
+  //     setSelectedItems(exists ? [] : [{ ...row, rowIndex: index, quantity: 1 }])
+  //   }
+  // }
+
   const toggleSelection = (row, index) => {
-    const exists = selectedItems.find(i => i.rowIndex === index)
-    if (isAddOn) {
-      setSelectedItems(prev => exists ? prev.filter(i => i.rowIndex !== index) : [...prev, { ...row, rowIndex: index, quantity: 1 }])
-    } else {
-      setSelectedItems(exists ? [] : [{ ...row, rowIndex: index, quantity: 1 }])
-    }
+  const exists = selectedItems.find(i => i.rowIndex === index)
+  if (allowMultiSelect) {
+    setSelectedItems(prev => exists ? prev.filter(i => i.rowIndex !== index) : [...prev, { ...row, rowIndex: index, quantity: 1 }])
+  } else {
+    setSelectedItems(exists ? [] : [{ ...row, rowIndex: index, quantity: 1 }])
   }
+}
 
   const updateQuantity = (index, type) => {
     setSelectedItems(prev => prev.map(i => {
@@ -435,33 +449,6 @@ const PackageDetail = ({ route }) => {
         }}>
 
           {/* ── Price + Book strip ── */}
-          {/* {startingPrice && (
-            <View style={{
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-              backgroundColor: theme.accentSoftBg, borderRadius: 16,
-              paddingHorizontal: 18, paddingVertical: 14, marginBottom: 20,
-              borderWidth: 1, borderColor: theme.accentSoftBorder,
-            }}>
-              <View>
-                <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '500', marginBottom: 2 }}>Starting from</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                  <Text style={{ fontSize: 28, fontWeight: '800', color: theme.accent, lineHeight: 32 }}>
-                    ${startingPrice}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: theme.textMuted, marginLeft: 3, marginBottom: 4 }}>SGD</Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="star" size={14} color="#F59E0B" />
-                <Ionicons name="star" size={14} color="#F59E0B" />
-                <Ionicons name="star" size={14} color="#F59E0B" />
-                <Ionicons name="star" size={14} color="#F59E0B" />
-                <Ionicons name="star-half" size={14} color="#F59E0B" />
-                <Text style={{ fontSize: 11, color: theme.textMuted, marginLeft: 4 }}>4.8</Text>
-              </View>
-            </View>
-          )} */}
-          {/* ── Price + Book strip ── */}
           {startingPrice && (
             <View
               style={{
@@ -597,7 +584,9 @@ const PackageDetail = ({ route }) => {
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <Ionicons name={isAddOn ? 'add-circle-outline' : 'radio-button-on-outline'} size={15} color={theme.accent} style={{ marginRight: 6 }} />
             <Text style={{ fontSize: 12, color: theme.textSecondary }}>
-              {isAddOn ? 'Select one or more add-ons' : 'Select one package to continue'}
+              {/* {isAddOn ? 'Select one or more add-ons' : 'Select one package to continue'} */}
+                {allowMultiSelect ? 'Select one or more items' : 'Select one package to continue'}
+
             </Text>
           </View>
 
@@ -694,7 +683,9 @@ const PackageDetail = ({ route }) => {
                       </View>
 
                       {/* Qty for add-on */}
-                      {isAddOn && isSelected && (
+                      {/* {isAddOn && isSelected && ( */}
+                      {(isAddOn || rowHasQty(row)) && isSelected && (
+
                         <View style={{
                           flexDirection: 'row', alignItems: 'center',
                           justifyContent: 'center', paddingVertical: 10,

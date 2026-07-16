@@ -75,7 +75,9 @@ const Basket = () => {
                 'total',
                 'package_id',
                 'rowIndex',
-                'id'
+                'id',
+                'quantity_enabled',
+                
               ].includes(key)
           )
 
