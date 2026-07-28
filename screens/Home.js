@@ -81,7 +81,8 @@ const Home = () => {
  
 
   const checkUpcomingBookings = (bookings, transactions = []) => {
-    // console.log('DEBUG bookings received:', bookings?.length, 'transactions received:', transactions?.length)
+    // 
+    le.log('DEBUG bookings received:', bookings?.length, 'transactions received:', transactions?.length)
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)

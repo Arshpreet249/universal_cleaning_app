@@ -233,7 +233,7 @@ const PackageDetail = ({ route }) => {
   const getHeaders = (data) => {
     if (!data.length) return []
     return Object.keys(data[0])
-      .filter(k => k !== 'payment_type'&& k !== 'id' && k !== 'package_id')
+      .filter(k => k !== 'payment_type'&& k !== 'id' && k !== 'package_id'  && k !== 'validity_in_months' )
       .map(k => k.startsWith('price') ? 'PRICE' : k.toUpperCase().replace(/_/g, ' '))
   }
   const headers = getHeaders(data)
@@ -379,7 +379,7 @@ const PackageDetail = ({ route }) => {
       <StatusBar barStyle={isPremium ? 'light-content' : 'dark-content'} />
 
       {/* ── Floating Back Button ── */}
-      <View style={{ position: 'absolute', top: Platform.OS === 'ios' ? 52 : 16, left: 16, zIndex: 99 }}>
+      <View style={{ position: 'absolute', top: Platform.OS === 'ios' ? 52 : 26, left: 16, zIndex: 99 }}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={{

@@ -9,7 +9,7 @@ const BackButton = () => {
 
   return (
     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.container}>
-      <Text style={styles.text}>‹ Back</Text>
+      <Text style={styles.text}>‹</Text>
     </TouchableOpacity>
   )
 }
@@ -19,7 +19,7 @@ export default BackButton
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 10,
-    paddingVertical: 5
+    paddingVertical: 8
   },
   text: {
     fontSize: 18,
