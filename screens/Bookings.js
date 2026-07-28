@@ -396,7 +396,7 @@ const Bookings = () => {
       setDownloadingId(item.id)
 
       const invoiceUrl =
-        `${REACT_APP_HOST_API_URL}/admin-user/download-employee-salary-slip/`
+        `${REACT_APP_HOST_API_URL}/admin-user/download-invoice/`
 
       const response = await fetch(invoiceUrl, {
         method: 'POST',
