@@ -154,7 +154,7 @@ const Home = () => {
       })
 
       const data = await response.json()
-      console.log('Recent Bookings:', data)
+      // console.log('Recent Bookings:', data)
       // setRecentBookings(Array.isArray(data?.appointments) ? data.appointments : [])
 
       const bookings = Array.isArray(data?.appointments)

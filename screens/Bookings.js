@@ -47,6 +47,54 @@ const getStatusTextColor = (status) => {
   }
 }
 
+// 🔥 GROUP APPOINTMENTS THAT SHARE A related_appointments ID (PACKAGE BOOKINGS)
+const buildDisplayList = (list) => {
+  const groups = {}
+  const singles = []
+
+  list.forEach((item) => {
+    if (item.related_appointments) {
+      const key = item.related_appointments
+      if (!groups[key]) groups[key] = []
+      groups[key].push(item)
+    } else {
+      singles.push(item)
+    }
+  })
+
+  const groupedEntries = []
+
+  Object.entries(groups).forEach(([key, items]) => {
+    // 🔥 IF ONLY ONE APPOINTMENT SHARES THIS related_appointments ID,
+    // TREAT IT AS A NORMAL SINGLE CARD — NOT A PACKAGE
+    if (items.length === 1) {
+      singles.push(items[0])
+      return
+    }
+
+    const sorted = [...items].sort(
+      (a, b) => new Date(a.start_from) - new Date(b.start_from)
+    )
+    groupedEntries.push({
+      isGroup: true,
+      groupId: key,
+      items: sorted,
+    })
+  })
+
+  const singleEntries = singles.map((item) => ({
+    isGroup: false,
+    item,
+  }))
+
+  // newest groups/singles first, roughly matching original ordering by first item id
+  return [...groupedEntries, ...singleEntries].sort((a, b) => {
+    const aId = a.isGroup ? a.items[0].id : a.item.id
+    const bId = b.isGroup ? b.items[0].id : b.item.id
+    return bId - aId
+  })
+}
+
 const Bookings = () => {
   const { token, user } = useContext(AuthContext)
   const navigation = useNavigation()
@@ -72,6 +120,9 @@ const Bookings = () => {
     description: '',
   })
   const [updating, setUpdating] = useState(false)
+  // 🔥 PACKAGE DATE RANGE — WHEN EDITING A GROUPED (PACKAGE) APPOINTMENT,
+  // THE NEW DATE MUST STAY BETWEEN THE PACKAGE'S START AND END DATE
+  const [editDateRange, setEditDateRange] = useState({ min: null, max: null })
   // 🔥 PICKER
   const [pickerMode, setPickerMode] = useState(null)
   const [isPickerVisible, setPickerVisible] = useState(false)
@@ -143,7 +194,9 @@ const Bookings = () => {
 
 
   // 🔥 OPEN EDIT
-  const openEditModal = (item) => {
+  // packageRange (optional): { min: package_start_date, max: package_end_date }
+  // Passed in for grouped/package appointments so the new date stays within the package window
+  const openEditModal = (item, packageRange = null) => {
     const start = new Date(item.start_from)
     const end = item.end_at ? new Date(item.end_at) : new Date()
 
@@ -155,6 +208,12 @@ const Bookings = () => {
       endTime: end.toTimeString().split(' ')[0],
       description: item.description || '',
     })
+
+    setEditDateRange(
+      packageRange
+        ? { min: packageRange.min, max: packageRange.max }
+        : { min: null, max: null }
+    )
 
     setEditModalVisible(true)
   }
@@ -183,6 +242,27 @@ const Bookings = () => {
         return
       }
 
+      // 🔥 PACKAGE DATE RANGE CHECK (GROUPED APPOINTMENTS ONLY)
+      if (editDateRange.min) {
+        const packageMin = new Date(editDateRange.min)
+        packageMin.setHours(0, 0, 0, 0)
+
+        if (selected < packageMin) {
+          alert('Date must be within the package start and end date')
+          return
+        }
+      }
+
+      if (editDateRange.max) {
+        const packageMax = new Date(editDateRange.max)
+        packageMax.setHours(0, 0, 0, 0)
+
+        if (selected > packageMax) {
+          alert('Date must be within the package start and end date')
+          return
+        }
+      }
+
       updated.start_date = selected.toISOString().split('T')[0]
     }
 
@@ -192,6 +272,17 @@ const Bookings = () => {
       if (selected < startDate) {
         alert('End date cannot be before start date')
         return
+      }
+
+      // 🔥 PACKAGE DATE RANGE CHECK (GROUPED APPOINTMENTS ONLY)
+      if (editDateRange.max) {
+        const packageMax = new Date(editDateRange.max)
+        packageMax.setHours(0, 0, 0, 0)
+
+        if (selected > packageMax) {
+          alert('Date must be within the package start and end date')
+          return
+        }
       }
 
       updated.end_date = selected.toISOString().split('T')[0]
@@ -410,12 +501,12 @@ const Bookings = () => {
         }),
       })
 
-      console.log('invoice response', response.status)
-      console.log('invoice content-type', response.headers.get('content-type'))
+      // console.log('invoice response', response.status)
+      // console.log('invoice content-type', response.headers.get('content-type'))
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.log('Invoice error:', errorText)
+        // console.log('Invoice error:', errorText)
         alert('Invoice not available')
         return
       }
@@ -437,7 +528,7 @@ const Bookings = () => {
         encoding: FileSystem.EncodingType.Base64,
       })
 
-      console.log('Invoice saved at:', fileUri)
+      // console.log('Invoice saved at:', fileUri)
 
       const canShare = await Sharing.isAvailableAsync()
 
@@ -451,7 +542,7 @@ const Bookings = () => {
         alert('Invoice saved successfully')
       }
     } catch (error) {
-      console.log('Save invoice error:', error)
+      // console.log('Save invoice error:', error)
       alert('Failed to save invoice')
     } finally {
       setDownloadingId(null)
@@ -510,14 +601,18 @@ const Bookings = () => {
       </SafeAreaView>
     )
   }
+
+  // 🔥 GROUPED (PACKAGE) + SINGLE ENTRIES, COMBINED IN ONE LIST
+  const displayList = buildDisplayList(bookings)
+
   return (
-    <SafeAreaView className="flex-1 bg-gray-100 px-4 pb-24">
+    <SafeAreaView className="flex-1 px-4 ">
 
       <Text className="text-2xl font-bold text-center mt-4 mb-4 text-primary">
         My Bookings
       </Text>
 
-      <ScrollView
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 46 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -528,9 +623,246 @@ const Bookings = () => {
           />
         }
       >
-        {bookings.map((item) => {
+        {displayList.map((entry) => {
+
+          // ======================================================
+          // 🔥 PACKAGE / GROUPED CARD
+       
+          // ======================================================
+          if (entry.isGroup) {
+            const items = entry.items
+            const firstItem = items[0]
+            const txn = firstItem.transaction
+            const groupPaymentStatus = txn?.status || 'N/A'
+            const totalSessions = firstItem.sessions || items.length
+            const groupKey = `group-${entry.groupId}`
+            const isGroupExpanded = expandedId === groupKey
+
+            // ✅ FINAL AMOUNT (SAME LOGIC AS SINGLE CARD)
+            const hasValidTransaction =
+              txn &&
+              txn.final_amount &&
+              txn.final_amount !== "0.00000" &&
+              txn.final_amount !== "0.0000"
+
+            const rawAmount = txn?.final_amount || firstItem.amount
+
+            const shouldShowAmount =
+              hasValidTransaction || (firstItem.amount && firstItem.amount !== "0.0000")
+
+            const formattedAmount =
+              rawAmount && !isNaN(rawAmount) ? Number(rawAmount).toFixed(2) : null
+
+            // 🔥 SHARED DATA — SAME ACROSS THE PACKAGE, SHOWN ONCE
+            const packageNotes = firstItem.description
+              ?.split('Notes:')[1]
+              ?.split('Package:')[0]
+              ?.trim() || 'No notes'
+
+            return (
+              <View
+                key={groupKey}
+                className="bg-white mb-5 p-4 rounded-2xl shadow shadow-slate-200"
+              >
+                {/* TITLE + PAYMENT STATUS */}
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-gray-900 font-semibold text-base">
+                    {firstItem.title}
+                  </Text>
+
+                </View>
+
+                {/* PRICE */}
+                <View className="flex-row justify-between items-center mt-4">
+                  {shouldShowAmount && formattedAmount && (
+                    <Text className="text-2xl font-bold text-secondary">
+                      ${formattedAmount}
+                    </Text>
+                  )}
+                </View>
 
 
+
+                {/* PACKAGE START DATE | SESSIONS | PAYMENT STATUS — WHOLE PACKAGE, NOT PER SESSION */}
+                <View className="mt-4">
+                  <View className="flex-row justify-between pt-2 ">
+                    <Text className="text-gray-400 text-xs w-[45%]">Start date</Text>
+                    <Text className="text-gray-400 text-xs w-[25%]">Sessions</Text>
+                    <Text className="text-gray-400 text-xs w-[30%]">Payment</Text>
+                  </View>
+
+                  {(() => {
+                    const packageStartDate = firstItem.package_start_date
+                      ? new Date(firstItem.package_start_date).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                      : new Date(firstItem.start_from).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+
+                    return (
+                      <View className="flex-row justify-between items-center py-2 ">
+                        <Text className="text-gray-700 text-sm w-[45%]">
+                          {packageStartDate}
+                        </Text>
+                        <Text className="text-gray-700 text-sm w-[25%]">
+                          {totalSessions}
+                        </Text>
+                        <Text
+                          className={`text-sm w-[30%] ${getStatusTextColor(
+                            groupPaymentStatus
+                          )}`}
+                        >
+                          {groupPaymentStatus}
+                        </Text>
+                      </View>
+                    )
+                  })()}
+                </View>
+
+                {isGroupExpanded && (
+                  <View className="mt-2 pt-3 border-t border-gray-100">
+
+                    {/* ADDRESS — SHOWN ONCE FOR THE WHOLE PACKAGE */}
+
+
+
+                    {/* PER-SESSION: DATE, TIME, EDIT, FEEDBACK */}
+                    {items.map((session, idx) => {
+                      const sessionStart = new Date(session.start_from)
+                      const sessionEnd = session.end_at ? new Date(session.end_at) : null
+                      const now = new Date()
+                      const diffInHours =
+                        (sessionStart.getTime() - now.getTime()) / (1000 * 60 * 60)
+                      const sessionPaymentStatus =
+                        session.transaction?.status || groupPaymentStatus
+                      const paymentSucceeded =
+                        sessionPaymentStatus?.toLowerCase() === 'succeeded'
+                      const canEditSession = diffInHours > 48 && paymentSucceeded
+
+                      const sDate = sessionStart.toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                      const sTime = sessionStart.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                      const eTime = sessionEnd
+                        ? sessionEnd.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                        : 'N/A'
+
+                      return (
+                        <View
+                          key={`detail-${session.id}`}
+                          className="flex-row justify-between items-center py-2 border-t border-gray-50"
+                        >
+                          <View>
+                            <Text className="text-gray-400 text-xs">
+                              Session {idx + 1}
+                            </Text>
+                            <Text className="text-gray-700 text-sm">{sDate}</Text>
+                          </View>
+
+                          <View>
+                            <Text className="text-gray-400 text-xs">Time</Text>
+                            <Text className="text-gray-700 text-sm">
+                              {sTime} - {eTime}
+                            </Text>
+                          </View>
+
+                          {session.process?.toLowerCase() === 'completed' ? (
+                            <TouchableOpacity onPress={() => openFeedbackModal(session)}>
+                              <Text className="text-secondary font-semibold">
+                                {feedbackMap[session.id] ? 'Update Feedback' : 'Give Feedback'}
+                              </Text>
+                            </TouchableOpacity>
+                          ) : (
+                            <TouchableOpacity
+                              onPress={() =>
+                                openEditModal(session, {
+                                  min: firstItem.package_start_date,
+                                  max: firstItem.package_end_date,
+                                })
+                              }
+                              disabled={!canEditSession}
+                            >
+                              <Text
+                                className={`font-semibold ${canEditSession ? 'text-secondary' : 'text-gray-300'
+                                  }`}
+                              >
+                                Edit
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      )
+                    })}
+                    <View className='mt-4'>
+
+                      <Text className="text-gray-400 text-xs">Address</Text>
+                      <Text className="text-gray-700 text-sm mb-2">
+                        {firstItem.address || 'N/A'}
+                      </Text>
+
+                      {/* REFERENCE NO + NOTES — SHOWN ONCE */}
+                      {txn?.reference_number && (
+                        <>
+                          <Text className="text-gray-400 text-xs">Reference No</Text>
+                          <Text className="text-gray-700 text-sm mb-2">
+                            {txn.reference_number}
+                          </Text>
+                        </>
+                      )}
+
+                      <Text className="text-gray-400 text-xs">Notes</Text>
+                      <Text className="text-gray-700 text-sm mb-3">
+                        {packageNotes}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                <View className="flex-row justify-between items-center mt-4">
+
+                  {groupPaymentStatus?.toLowerCase() === 'succeeded' && (
+                    <TouchableOpacity
+                      onPress={() => downloadInvoice(firstItem)}
+                      disabled={downloadingId === firstItem.id}
+                      className="text-secondary font-semibold"
+                    >
+                      <Text className="text-secondary font-semibold">
+                        {downloadingId === firstItem.id ? 'Downloading...' : 'Download Invoice'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  <TouchableOpacity
+                    onPress={() => toggleExpand(groupKey)}
+                    className="mt-3 items-center"
+                  >
+                    <Text className="text-secondary font-semibold">
+                      {isGroupExpanded ? 'Show Less ▲' : 'Show More ▼'}
+                    </Text>
+                  </TouchableOpacity>
+
+                </View>
+              </View>
+            )
+          }
+
+          // ======================================================
+          // 🔥 SINGLE (NON-GROUPED) BOOKING CARD — UNCHANGED
+          // ======================================================
+          const item = entry.item
           const txn = item.transaction
 
           const startDate = new Date(item.start_from)
@@ -538,6 +870,9 @@ const Bookings = () => {
           const now = new Date()
           const diffInMs = startDate.getTime() - now.getTime()
           const diffInHours = diffInMs / (1000 * 60 * 60)
+
+          // ✅ PAYMENT STATUS FROM API (RAW)
+          const paymentStatus = txn?.status || 'N/A'
 
           // const canEditAppointment = diffInHours > 48
           const paymentSucceeded =
@@ -568,8 +903,7 @@ const Bookings = () => {
           let bookingStatus =
             item.process || (item.status ? 'Completed' : 'In Progress')
 
-          // ✅ PAYMENT STATUS FROM API (RAW)
-          const paymentStatus = txn?.status || 'N/A'
+
 
           // ✅ FINAL AMOUNT
           // const finalAmount = txn?.final_amount || item.amount
@@ -590,7 +924,7 @@ const Bookings = () => {
           return (
             <View
               key={item.id}
-              className="bg-white mb-5 p-4 rounded-2xl shadow shadow-slate-200"
+              className="bg-white mb-5 p-4 rounded-2xl shadow shadow-slate-200 "
             // style={{
             //   shadowColor: '#000',
             //   shadowOpacity: 0.08,
@@ -725,13 +1059,19 @@ const Bookings = () => {
                       {feedbackMap[item.id] ? 'Update Feedback' : 'Give Feedback'}
                     </Text>
                   </TouchableOpacity>
-                ) : canEditAppointment ? (
+                ) : (
                   <TouchableOpacity
                     onPress={() => openEditModal(item)}
+                    disabled={!canEditAppointment}
                   >
-                    <Text className='text-secondary font-semibold'>Edit</Text>
+                    <Text
+                      className={`font-semibold ${canEditAppointment ? 'text-secondary' : 'text-gray-300'
+                        }`}
+                    >
+                      Edit
+                    </Text>
                   </TouchableOpacity>
-                ) : null}
+                )}
 
                 {paymentStatus?.toLowerCase() === 'succeeded' && (
                   <TouchableOpacity

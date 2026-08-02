@@ -86,7 +86,7 @@ const PremiumCard = ({ item, onPress }) => {
       onPress={onPress}
       style={{
         borderRadius: 26,
-        marginBottom: 20,
+        marginBottom: 36,
         overflow: 'hidden',
         backgroundColor: '#0F172A',
         shadowColor: '#0F172A',
