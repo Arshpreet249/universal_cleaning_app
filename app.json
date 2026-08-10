@@ -19,7 +19,10 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to autofill your address.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location to improve service experience.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       }
     },
     "android": {
