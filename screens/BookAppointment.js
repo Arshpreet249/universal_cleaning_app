@@ -345,51 +345,7 @@ const BookAppointment = () => {
     // Alert.alert('Auto Assign', ' employees assigned')
   }
 
-  
 
-  // const handleProceed = () => {
-  //   const dates = getDatesInRangeStrings()
-
-  //   if (!allDatesSelected()) {
-  //     Alert.alert('Incomplete', 'Assign employee for all dates')
-  //     return
-  //   }
-
-  //   const packageIds = basketItems
-  //     ?.map((item) => item.details?.package_id)
-  //     .filter(Boolean)
-
-  //   const packageNames = basketItems
-  //     ?.map((item) => item.displayName)
-
-  //   const bookingIds = basketItems?.map(item => item.id)
-
-  //   // console.log('BookAppointment Booking IDs:', bookingIds) 
-  //   const bookingData = dates.map((dateStr) => ({
-  //     start_date: dateStr,
-  //     employee_id: selectedEmployeesByDate[dateStr]?.employee_id,
-  //     assigned_to_usernames: [
-  //       selectedEmployeesByDate[dateStr]?.employee_username,
-  //     ],
-  //     startTime,
-  //     endTime,
-
-  //     // ✅ SEND BOTH
-  //     package_ids: packageIds,
-  //     package_names: packageNames,
-  //     booking_ids: bookingIds,
-  //   }))
-
-  //   const numberOfDays = dates.length
-  //   const finalTotalAmount = (totalAmount || 0) * numberOfDays
-
-  //   navigation.navigate('Notes', {
-  //     appointmentData: bookingData,
-  //     totalAmount: finalTotalAmount,
-  //     numberOfDays,
-  //   })
-
-  // }
 const handleProceed = () => {
     const dates = getDatesInRangeStrings()
 

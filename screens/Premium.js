@@ -75,7 +75,15 @@ const truncate = (text = '', max = 90) =>
 const PremiumCard = ({ item, onPress }) => {
   const details = parseDescription(item.description)
   // const startingPrice = getStartingPrice(details.pricing)
-  const startingPrice = getStartingPrice(details)
+  const calculatedStartingPrice = getStartingPrice(details)
+  // const startingPrice = getStartingPrice(details)
+  const startingPrice =
+  details?.start_from_sgd !== undefined &&
+  details?.start_from_sgd !== null &&
+  details?.start_from_sgd !== ''
+    ? Number(details.start_from_sgd)
+    : calculatedStartingPrice
+
   const desc = details.description?.[0] || ''
   const imageUrl = item.view_images_url || item.icon_url
   const sessionCount = details.pricing?.[0]?.total_sessions
@@ -185,7 +193,8 @@ const PremiumCard = ({ item, onPress }) => {
 
           {/* Footer: price + CTA */}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            {startingPrice != null ? (
+            {/* {startingPrice != null ? ( */}
+             {startingPrice != null && !isNaN(startingPrice) ? (
               <View>
                 <Text style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.55)', fontWeight: '600', letterSpacing: 0.4 }}>
                   STARTS FROM

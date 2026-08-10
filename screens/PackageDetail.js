@@ -141,7 +141,7 @@ const FeedbackCard = ({ feedback, theme }) => (
   }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
       <Text style={{ fontSize: 13, fontWeight: '700', color: theme.heading, flex: 1 }} numberOfLines={1}>
-        {feedback.user_name || feedback.name || 'Anonymous'}
+        {feedback.user || 'Anonymous'}
       </Text>
       <View style={{ flexDirection: 'row' }}>
         {Array.from({ length: 5 }).map((_, i) => (
@@ -154,11 +154,24 @@ const FeedbackCard = ({ feedback, theme }) => (
         ))}
       </View>
     </View>
-    {!!feedback.comment && (
+    {/* {!!feedback.employee && (
       <Text style={{ fontSize: 12, color: theme.textSecondary, lineHeight: 17 }}>
-        {feedback.comment}
+         Cleaned by:{feedback.employee}
+      </Text>
+    )} */}
+    {/* Review */}
+    {!!feedback.content && (
+      <Text
+        style={{
+          fontSize: 12,
+          color: theme.textSecondary,
+          lineHeight: 18,
+        }}
+      >
+        {feedback.content}
       </Text>
     )}
+
     {!!feedback.created_at && (
       <Text style={{ fontSize: 10, color: theme.textMuted, marginTop: 6 }}>
         {new Date(feedback.created_at).toLocaleDateString()}
@@ -182,9 +195,11 @@ const PackageDetail = ({ route }) => {
 
   /* ── Helpers ── */
   const parseDescription = (data) => {
-    try { return typeof data === 'string' ? JSON.parse(data) : data } catch { return null }
+    try { return typeof data === 'string' ? JSON.parse(data) : data }
+     catch { return null }
   }
   const parsed = parseDescription(item.description)
+  
 
   const getPriceValue = (row) => {
     // Support both price_sgd and price_sgd_per_hour (and any other price_ key)
@@ -228,12 +243,15 @@ const PackageDetail = ({ route }) => {
     if (!prices.length) return null
     return Math.min(...prices)
   }
-  const startingPrice = getStartingPrice(data)
+  // const startingPrice = getStartingPrice(data)
+  const startingPrice = parsed?.start_from_sgd != null
+  ? parsed.start_from_sgd
+  : getStartingPrice(data)
 
   const getHeaders = (data) => {
     if (!data.length) return []
     return Object.keys(data[0])
-      .filter(k => k !== 'payment_type'&& k !== 'id' && k !== 'package_id'  && k !== 'validity_in_months' )
+      .filter(k => k !== 'payment_type' && k !== 'id' && k !== 'package_id' && k !== 'validity_in_months')
       .map(k => k.startsWith('price') ? 'PRICE' : k.toUpperCase().replace(/_/g, ' '))
   }
   const headers = getHeaders(data)
@@ -250,13 +268,13 @@ const PackageDetail = ({ route }) => {
   // }
 
   const toggleSelection = (row, index) => {
-  const exists = selectedItems.find(i => i.rowIndex === index)
-  if (allowMultiSelect) {
-    setSelectedItems(prev => exists ? prev.filter(i => i.rowIndex !== index) : [...prev, { ...row, rowIndex: index, quantity: 1 }])
-  } else {
-    setSelectedItems(exists ? [] : [{ ...row, rowIndex: index, quantity: 1 }])
+    const exists = selectedItems.find(i => i.rowIndex === index)
+    if (allowMultiSelect) {
+      setSelectedItems(prev => exists ? prev.filter(i => i.rowIndex !== index) : [...prev, { ...row, rowIndex: index, quantity: 1 }])
+    } else {
+      setSelectedItems(exists ? [] : [{ ...row, rowIndex: index, quantity: 1 }])
+    }
   }
-}
 
   const updateQuantity = (index, type) => {
     setSelectedItems(prev => prev.map(i => {
@@ -291,7 +309,7 @@ const PackageDetail = ({ route }) => {
         }
 
         console.log('Adding to basket:', itemToAdd)
-        
+
         const res = await fetch(`${REACT_APP_HOST_API_URL}/api/booking/add/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -307,28 +325,77 @@ const PackageDetail = ({ route }) => {
   }
 
   /* ── Fetch feedback for this package ── */
+
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
+
     const fetchFeedback = async () => {
-      setFeedbackLoading(true)
+      setFeedbackLoading(true);
+
       try {
-        const res = await fetch(`${REACT_APP_HOST_API_URL}/api/booking/feedback/?package_id=${item.id}`)
-        const json = await res.json()
-        const list = Array.isArray(json?.results)
-          ? json.results
-          : Array.isArray(json)
-            ? json
-            : []
-        if (isMounted) setPackageFeedback(list)
-      } catch {
-        if (isMounted) setPackageFeedback([])
+        const res = await fetch(
+          `${REACT_APP_HOST_API_URL}/user-app/package-feedback/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              // Authorization: `Bearer ${token}`, // Uncomment if required
+            },
+            body: JSON.stringify({
+              package_id: item.id,
+            }),
+          }
+        );
+
+        console.log("Status:", res.status);
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.log("Error Response:", errorText);
+          throw new Error(`Request failed with status ${res.status}`);
+        }
+
+        const json = await res.json();
+
+        console.log("Feedback API Response:", json);
+
+        const sortedFeedback = Array.isArray(json)
+          ? [...json].sort((a, b) => {
+            // Highest rating first
+            if ((b.rating || 0) !== (a.rating || 0)) {
+              return (b.rating || 0) - (a.rating || 0);
+            }
+
+            // If ratings are equal, newest feedback first
+            return new Date(b.created_at) - new Date(a.created_at);
+          })
+          : [];
+
+        if (isMounted) {
+          setPackageFeedback(sortedFeedback);
+        }
+      } catch (error) {
+        console.error("Error fetching feedback:", error);
+
+        if (isMounted) {
+          setPackageFeedback([]);
+        }
       } finally {
-        if (isMounted) setFeedbackLoading(false)
+        if (isMounted) {
+          setFeedbackLoading(false);
+        }
       }
+    };
+
+    if (item?.id) {
+      fetchFeedback();
     }
-    fetchFeedback()
-    return () => { isMounted = false }
-  }, [item.id])
+
+    return () => {
+      isMounted = false;
+    };
+  }, [item?.id]);
+
 
   const renderList = (data) => {
     if (!data) return null
@@ -585,7 +652,7 @@ const PackageDetail = ({ route }) => {
             <Ionicons name={isAddOn ? 'add-circle-outline' : 'radio-button-on-outline'} size={15} color={theme.accent} style={{ marginRight: 6 }} />
             <Text style={{ fontSize: 12, color: theme.textSecondary }}>
               {/* {isAddOn ? 'Select one or more add-ons' : 'Select one package to continue'} */}
-                {allowMultiSelect ? 'Select one or more items' : 'Select one package to continue'}
+              {allowMultiSelect ? 'Select one or more items' : 'Select one package to continue'}
 
             </Text>
           </View>

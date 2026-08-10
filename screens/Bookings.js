@@ -127,6 +127,8 @@ const Bookings = () => {
   const [pickerMode, setPickerMode] = useState(null)
   const [isPickerVisible, setPickerVisible] = useState(false)
   const [downloadingId, setDownloadingId] = useState(null)
+  // 🔥 PER-SESSION EXPAND/COLLAPSE (inside a package/group card)
+  const [expandedSessionId, setExpandedSessionId] = useState(null)
 
   useFocusEffect(
     useCallback(() => {
@@ -181,6 +183,8 @@ const Bookings = () => {
           map[fb.appointment] = fb
         })
       }
+
+      // console.log("feedbackmap", map);
 
       setFeedbackMap(map)
     } catch (error) {
@@ -461,6 +465,22 @@ const Bookings = () => {
     }
   }
 
+
+
+  const canUpdateFeedback = (feedback) => {
+    if (!feedback?.created_at) return false;
+
+    const createdAt = new Date(feedback.created_at);
+    const now = new Date();
+
+    const diffMs = now.getTime() - createdAt.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+
+
+    return diffHours < 24;
+  };
+
   const blobToBase64 = (blob) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -558,6 +578,24 @@ const Bookings = () => {
       year: 'numeric',
     })
   }
+  const formatFeedbackDate = (createdAt, updatedAt) => {
+    const dateStr = updatedAt || createdAt
+
+    if (!dateStr) return 'N/A'
+
+    const d = new Date(dateStr)
+
+    if (isNaN(d.getTime())) return 'N/A'
+
+    return d.toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+  }
 
   const formatTime = (timeStr) => {
     if (!timeStr) return 'Select'
@@ -627,7 +665,7 @@ const Bookings = () => {
 
           // ======================================================
           // 🔥 PACKAGE / GROUPED CARD
-       
+
           // ======================================================
           if (entry.isGroup) {
             const items = entry.items
@@ -724,14 +762,11 @@ const Bookings = () => {
                   })()}
                 </View>
 
+                {/* 🔥 EXPANDED — SHOWN ONLY ON "Show More" CLICK:
+                    per-session date/time/status/feedback/edit, then
+                    shared package details (address / reference / notes) */}
                 {isGroupExpanded && (
                   <View className="mt-2 pt-3 border-t border-gray-100">
-
-                    {/* ADDRESS — SHOWN ONCE FOR THE WHOLE PACKAGE */}
-
-
-
-                    {/* PER-SESSION: DATE, TIME, EDIT, FEEDBACK */}
                     {items.map((session, idx) => {
                       const sessionStart = new Date(session.start_from)
                       const sessionEnd = session.end_at ? new Date(session.end_at) : null
@@ -743,6 +778,8 @@ const Bookings = () => {
                       const paymentSucceeded =
                         sessionPaymentStatus?.toLowerCase() === 'succeeded'
                       const canEditSession = diffInHours > 48 && paymentSucceeded
+                      const sessionStatus =
+                        session.process || (session.status ? 'Completed' : 'In Progress')
 
                       const sDate = sessionStart.toLocaleDateString('en-IN', {
                         day: 'numeric',
@@ -760,60 +797,133 @@ const Bookings = () => {
                         })
                         : 'N/A'
 
+                      const isSessionExpanded = expandedSessionId === session.id
+
                       return (
                         <View
                           key={`detail-${session.id}`}
-                          className="flex-row justify-between items-center py-2 border-t border-gray-50"
+                          className="py-2 border-t border-gray-50"
                         >
-                          <View>
-                            <Text className="text-gray-400 text-xs">
-                              Session {idx + 1}
-                            </Text>
-                            <Text className="text-gray-700 text-sm">{sDate}</Text>
+                          <View className="flex-row justify-between items-center">
+                            <View>
+                              <Text className="text-gray-400 text-xs">
+                                Session {idx + 1}
+                              </Text>
+                              <Text className="text-gray-700 text-sm">{sDate}</Text>
+                            </View>
+
+                            <View>
+                              <Text className="text-gray-400 text-xs">Time</Text>
+                              <Text className="text-gray-700 text-sm">
+                                {sTime} - {eTime}
+                              </Text>
+                            </View>
+
+                            <View>
+                              <Text className="text-gray-400 text-xs">Status</Text>
+                              <Text className={`text-sm ${getStatusTextColor(sessionStatus)}`}>
+                                {sessionStatus}
+                              </Text>
+                            </View>
                           </View>
 
-                          <View>
-                            <Text className="text-gray-400 text-xs">Time</Text>
-                            <Text className="text-gray-700 text-sm">
-                              {sTime} - {eTime}
-                            </Text>
-                          </View>
+                          {/* 🔥 FULL SESSION DETAIL — ONLY WHEN THIS SESSION IS EXPANDED */}
+                          {isSessionExpanded && (
+                            <View className="mt-3 pt-2 border-t border-gray-50">
+                              <Text className="text-gray-400 text-xs">Feedback</Text>
+                              {feedbackMap[session.id] ? (
+                                <View className="mb-3">
+                                  <Text className="text-gray-700 text-sm mb-2">
+                                    {feedbackMap[session.id].content}
+                                  </Text>
 
-                          {session.process?.toLowerCase() === 'completed' ? (
-                            <TouchableOpacity onPress={() => openFeedbackModal(session)}>
-                              <Text className="text-secondary font-semibold">
-                                {feedbackMap[session.id] ? 'Update Feedback' : 'Give Feedback'}
-                              </Text>
-                            </TouchableOpacity>
-                          ) : (
-                            <TouchableOpacity
-                              onPress={() =>
-                                openEditModal(session, {
-                                  min: firstItem.package_start_date,
-                                  max: firstItem.package_end_date,
-                                })
-                              }
-                              disabled={!canEditSession}
-                            >
-                              <Text
-                                className={`font-semibold ${canEditSession ? 'text-secondary' : 'text-gray-300'
-                                  }`}
-                              >
-                                Edit
-                              </Text>
-                            </TouchableOpacity>
+                                  <Text className="text-gray-400 text-xs">
+                                    {feedbackMap[session.id].updated_at &&
+                                      feedbackMap[session.id].updated_at !== feedbackMap[session.id].created_at
+                                      ? `Updated: ${formatFeedbackDate(
+                                        feedbackMap[session.id].created_at,
+                                        feedbackMap[session.id].updated_at
+                                      )}`
+                                      : `Created: ${formatFeedbackDate(
+                                        feedbackMap[session.id].created_at,
+                                        feedbackMap[session.id].updated_at
+                                      )}`}
+                                  </Text>
+                                </View>
+                              ) : (
+                                <Text className="text-gray-400 text-xs mb-2">
+                                  No feedback yet
+                                </Text>
+                              )}
+
+
+                              {session.process?.toLowerCase() === 'completed' ? (
+                                feedbackMap[session.id] ? (
+                                  <TouchableOpacity
+                                    onPress={() => openFeedbackModal(session)}
+                                    disabled={!canUpdateFeedback(feedbackMap[session.id])}
+                                  >
+                                    <Text
+                                      className={`font-semibold ${canUpdateFeedback(feedbackMap[session.id])
+                                        ? 'text-secondary'
+                                        : 'text-gray-400'
+                                        }`}
+                                    >
+                                      {canUpdateFeedback(feedbackMap[session.id])
+                                        ? 'Update Feedback'
+                                        : ' Update Feedback'}
+                                    </Text>
+                                  </TouchableOpacity>
+                                ) : (
+                                  <TouchableOpacity onPress={() => openFeedbackModal(session)}>
+                                    <Text className="text-secondary font-semibold">
+                                      Give Feedback
+                                    </Text>
+                                  </TouchableOpacity>
+                                )
+                              ) : (
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    openEditModal(session, {
+                                      min: firstItem.package_start_date,
+                                      max: firstItem.package_end_date,
+                                    })
+                                  }
+                                  disabled={!canEditSession}
+                                >
+                                  <Text
+                                    className={`font-semibold ${canEditSession ? 'text-secondary' : 'text-gray-300'
+                                      }`}
+                                  >
+                                    Edit
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
                           )}
+
+                          {/* 🔥 SINGLE SHOW MORE/LESS — BOTTOM OF THE DETAIL DATA,
+                              SAME PLACEMENT STYLE AS THE PACKAGE-LEVEL TOGGLE */}
+                          <TouchableOpacity
+                            onPress={() =>
+                              setExpandedSessionId(isSessionExpanded ? null : session.id)
+                            }
+                            className="mt-3 items-end"
+                          >
+                            <Text className="text-secondary font-semibold">
+                              {isSessionExpanded ? 'Show Less ▲' : 'Show More ▼'}
+                            </Text>
+                          </TouchableOpacity>
                         </View>
                       )
                     })}
-                    <View className='mt-4'>
 
+                    <View className="mt-4">
                       <Text className="text-gray-400 text-xs">Address</Text>
                       <Text className="text-gray-700 text-sm mb-2">
                         {firstItem.address || 'N/A'}
                       </Text>
 
-                      {/* REFERENCE NO + NOTES — SHOWN ONCE */}
                       {txn?.reference_number && (
                         <>
                           <Text className="text-gray-400 text-xs">Reference No</Text>
@@ -1030,6 +1140,18 @@ const Bookings = () => {
                       <Text className="text-gray-700 text-sm mt-1">
                         {feedbackMap[item.id].content}
                       </Text>
+                      <Text className="text-gray-400 text-xs mt-2">
+                        {feedbackMap[item.id].updated_at &&
+                          feedbackMap[item.id].updated_at !== feedbackMap[item.id].created_at
+                          ? `Updated: ${formatFeedbackDate(
+                            feedbackMap[item.id].created_at,
+                            feedbackMap[item.id].updated_at
+                          )}`
+                          : `Created: ${formatFeedbackDate(
+                            feedbackMap[item.id].created_at,
+                            feedbackMap[item.id].updated_at
+                          )}`}
+                      </Text>
                     </View>
                   ) : (
                     <Text className="text-gray-400 text-xs mt-2">
@@ -1051,7 +1173,7 @@ const Bookings = () => {
 
 
 
-                {item.process?.toLowerCase() === 'completed' ? (
+                {/* {item.process?.toLowerCase() === 'completed' ? (
                   <TouchableOpacity
                     onPress={() => openFeedbackModal(item)}
                   >
@@ -1059,6 +1181,42 @@ const Bookings = () => {
                       {feedbackMap[item.id] ? 'Update Feedback' : 'Give Feedback'}
                     </Text>
                   </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => openEditModal(item)}
+                    disabled={!canEditAppointment}
+                  >
+                    <Text
+                      className={`font-semibold ${canEditAppointment ? 'text-secondary' : 'text-gray-300'
+                        }`}
+                    >
+                      Edit
+                    </Text>
+                  </TouchableOpacity>
+                )} */}
+
+                {item.process?.toLowerCase() === 'completed' ? (
+                  feedbackMap[item.id] ? (
+                    <TouchableOpacity
+                      onPress={() => openFeedbackModal(item)}
+                      disabled={!canUpdateFeedback(feedbackMap[item.id])}
+                    >
+                      <Text
+                        className={`font-semibold ${canUpdateFeedback(feedbackMap[item.id])
+                          ? 'text-secondary'
+                          : 'text-gray-400'
+                          }`}
+                      >
+                        Update Feedback
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={() => openFeedbackModal(item)}>
+                      <Text className="text-secondary font-semibold">
+                        Give Feedback
+                      </Text>
+                    </TouchableOpacity>
+                  )
                 ) : (
                   <TouchableOpacity
                     onPress={() => openEditModal(item)}
