@@ -2,7 +2,7 @@
   "expo": {
     "name": "Universal HRA",
     "slug": "universal-hra",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.universalhra.cleaningapp",
-      "buildNumber": "1",
+      "buildNumber": "3",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to autofill your address.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location to improve service experience.",
@@ -27,7 +27,7 @@
     },
     "android": {
       "package": "com.universalhra.cleaningapp",
-      "versionCode": 2,
+      "versionCode": 3,
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
